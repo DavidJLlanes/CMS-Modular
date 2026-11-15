@@ -6,6 +6,13 @@
 - Panel: `https://luxaeterna.es/admin` (prefijo configurable).
 - Proveedor: IONOS.
 
+## Perfiles de despliegue (ADR-0007)
+
+- **A · VPS** (IONOS del propietario, 4 vCore / 4 GB): Nginx + PHP-FPM, usuarios de sistema separados.
+- **B · Hosting compartido**: Apache/LiteSpeed + `.htaccess`, sin root ni procesos residentes, cola por lotes con cron o desde el panel. El diseño parte de este mínimo.
+
+El diagrama muestra el perfil A; en B desaparecen los usuarios separados y el trabajador residente.
+
 ## Configuración de referencia (provisional)
 
 Sin datos del VPS real, las mediciones usan **1 vCPU, 1 GB de RAM** (incluida la memoria del sistema), Ubuntu LTS, Nginx, PHP 8.3 (ver ADR-0001, ADR-0006). Se sustituirá por el inventario real cuando el propietario lo aporte.

@@ -24,3 +24,6 @@ Requiere espacio para al menos dos versiones y política de limpieza segura. La 
 
 ## Verificación / revisión
 Simulacros de la Fase 4: publicación doble, caída del proceso, disco casi lleno, error de configuración, dependencia inexistente.
+
+## Enmienda 2026-11-15 (ADR-0007)
+En hosting compartido no se garantizan los enlaces simbólicos. El diagnóstico los prueba; si fallan, la activación usa **renombrado de directorios** (`site` → `site.prev`, `site.new` → `site`) con un script de recuperación que restaura `site.prev` si se interrumpe entre ambos pasos. La ventana entre renombrados es de milisegundos y se documenta como atómica "en la práctica", no estricta. Las reglas de redirección se emiten en `.htaccess` y en fragmento Nginx.

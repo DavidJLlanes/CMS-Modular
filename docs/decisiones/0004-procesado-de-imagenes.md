@@ -23,3 +23,7 @@ Hasta la Fase 6 no se instalan extensiones de imagen más allá de las que traig
 
 ## Verificación / revisión
 Tabla comparativa de la Fase 6 y prueba de cambio de calidad con regeneración desde el original.
+
+## Enmienda 2026-11-15 (ADR-0007)
+- GD con WebP es el mínimo exigido; Imagick/libvips son mejoras opcionales detectadas por el diagnóstico.
+- El procesado se hace en **lotes reanudables** que respetan `memory_limit` y `max_execution_time` (pico objetivo ≤ 96 MB por foto en el perfil B). Una foto que no cabe en memoria se rechaza con mensaje claro y se ofrece procesarla en un PC y subir el derivado.

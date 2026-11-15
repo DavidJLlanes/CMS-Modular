@@ -8,6 +8,7 @@ Versión 0.1. Define cómo se mide para que los resultados sean comparables entr
 |---|---|---|
 | Referencia | 1 vCPU, 1 GB RAM total, Ubuntu LTS, Nginx, PHP 8.3 | `sintético-ref` |
 | VPS real | El servidor objetivo del propietario, cuando haya acceso | `vps-real` |
+| Hosting compartido | 1 vCPU compartida, `memory_limit=128M`, `max_execution_time=30`, Apache, PHP 8.1 (suelo de diseño, ADR-0007) | `sintético-b` |
 | Desarrollo | Máquina de desarrollo; no vale para cifras de rendimiento | `dev` |
 
 Cada informe declara entorno, versión de PHP/Nginx/GD/Imagick, commit y fecha. Sin credenciales ni datos privados.
@@ -41,7 +42,8 @@ Cada medición se hace con **caché fría** y **caché caliente**. Mínimo 5 eje
 | Núcleo común de galería + visor | ≤ 30 KiB comprimidos | Sin efectos avanzados |
 | Tipografías, fotos, efectos | Medidos por separado | |
 | Panel (JS+CSS inicial) | A fijar en Fase 2 con medición | R03 |
-| Generador | A fijar en Fase 4 (RAM pico, tiempo) | |
+| Lote de publicación o de imágenes | ≤ 96 MB de RAM y ≤ 20 s por lote en `sintético-b` |
+| Generador | A fijar en Fase 4 (RAM pico, tiempo total) | |
 
 ## Procedimiento de reproducción
 

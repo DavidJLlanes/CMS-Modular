@@ -7,10 +7,10 @@ Fecha: 2026-11-15
 El CMS debe correr en un VPS económico con Ubuntu y Nginx, sin compilación obligatoria para el usuario final, y la web pública debe servirse sin ningún proceso de aplicación (R01, R11, R03).
 
 ## Decisión
-- **PHP 8.3** (versión incluida en Ubuntu 24.04 LTS, con soporte de seguridad). Se confirma o sube a 8.4 en cuanto D1 aporte datos del VPS real. Requisito mínimo declarado: PHP ≥ 8.3.
-- **PHP-FPM** para panel y endpoint de formularios; **PHP CLI** para generador, cola y tareas de mantenimiento.
+- **PHP ≥ 8.1**, probado en 8.1 y 8.3 (8.3 es la de Ubuntu 24.04 LTS). El mínimo se fija por compatibilidad con hosting compartido (ADR-0007) y se revisa si 8.1 sale de soporte de seguridad.
+- **PHP-FPM** (o el SAPI que ofrezca el hosting) para panel y formularios; **PHP CLI** para generador, cola y mantenimiento cuando exista; en su defecto, lotes cortos disparados desde el panel (ADR-0007).
 - **SQLite** (PDO, modo WAL) con un sitio por instancia. Se mide concurrencia en la Fase 14 antes de proponer otra base de datos.
-- **Nginx** sirve `releases/current` en solo lectura.
+- **Nginx** (perfil VPS) o **Apache/LiteSpeed con `.htaccess`** (perfil hosting compartido) sirven `releases/current` en solo lectura.
 - **JavaScript nativo con módulos ES**, sin paso de compilación obligatorio, tanto en panel como en web pública.
 - Autoloader PSR-4 propio y mínimo; Composer solo como herramienta de desarrollo, nunca requerido en producción.
 

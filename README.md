@@ -17,7 +17,7 @@ El panel administra el contenido; el generador lo publica como HTML, CSS, JS y r
 
 | Documento | Contenido |
 |---|---|
-| [docs/00-contrato-de-producto.md](docs/00-contrato-de-producto.md) | Alcance, requisitos R01–R11 y trazabilidad a fase y verificación |
+| [docs/00-contrato-de-producto.md](docs/00-contrato-de-producto.md) | Alcance, requisitos R01–R12 y trazabilidad a fase y verificación |
 | [docs/01-mapa-del-repositorio.md](docs/01-mapa-del-repositorio.md) | Estructura de carpetas y responsabilidades |
 | [docs/02-despliegue-y-flujos.md](docs/02-despliegue-y-flujos.md) | Diagrama de despliegue, flujos de datos y límites de confianza |
 | [docs/03-modelo-de-amenazas.md](docs/03-modelo-de-amenazas.md) | Activos, atacantes, controles y cobertura ASVS |

@@ -77,3 +77,5 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 - Un único operador de confianza instala plugins y diseños con código; un editor no.
 - Una imagen publicada puede descargarse o capturarse; la protección de galerías es solo disuasoria.
 - El aislamiento por usuario de sistema depende de una configuración correcta del VPS (Fase 1 y auditoría de Fase 14).
+
+- **Perfil B (hosting compartido):** todo el PHP corre bajo un único usuario, sin aislamiento entre panel, publicador y plugins; el instalador web es una superficie extra (token de un solo uso, autobloqueo, eliminación). La exposición de `var/` se comprueba automáticamente en el diagnóstico y en cada instalación (amenaza #10).

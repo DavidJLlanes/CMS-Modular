@@ -10,6 +10,7 @@ Se registra un ADR cuando una elección afecta al contrato del contenido, los m�
 | [0004](0004-procesado-de-imagenes.md) | Procesado de imágenes y WebP | Provisional |
 | [0005](0005-politica-de-dependencias.md) | Política de dependencias (R03) | Aceptada |
 | [0006](0006-entorno-de-referencia.md) | Entorno de referencia para mediciones | Provisional |
+| [0007](0007-compatibilidad-hosting-compartido.md) | Compatibilidad con hosting compartido barato | Aceptada |
 
 ## Plantilla
 

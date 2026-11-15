@@ -4,7 +4,7 @@ Mientras no se resuelvan, se avanza con el valor provisional indicado y en tarea
 
 | # | Pregunta | Valor provisional | Afecta a | Necesaria antes de |
 |---|---|---|---|---|
-| D1 | Recursos reales del VPS. **Proveedor: IONOS.** Faltan vCPU, RAM, disco, PHP disponible y acceso root/SSH | 1 vCPU, 1 GB, Ubuntu LTS, PHP 8.3 | Mediciones, ADR-0001/0004/0006 | Fase 1 (cierre) |
+| D1 | ✅ **Parcial (2026-11-15): IONOS, 4 vCore, 4 GB RAM.** Faltan disco y PHP disponible | `vps-real` 4 vCore / 4 GB; diseño contra `sintético-b` | Mediciones, ADR-0001/0004/0006 | Fase 1 (cierre) |
 | D2 | Método de despliegue (git pull, rsync, paquete) | `git pull` de una etiqueta + script en `deploy/` | Fase 1 | Fase 1 |
 | D3 | ✅ **Resuelta (2026-11-15): solo raíz.** Dominio `https://luxaeterna.es`; URL base explícita, subcarpeta fuera de alcance | Solo raíz | Rutas, PWA, canonicals | Fase 1 |
 | D4 | ✅ **Resuelta (2026-11-15): ruta `/admin`** | Ruta `/admin` (prefijo configurable) | Nginx, cookies, CSP | Fase 1 |
@@ -15,3 +15,4 @@ Mientras no se resuelvan, se avanza con el valor provisional indicado y en tarea
 | D9 | MFA obligatorio en producción (TOTP) | Sí, TOTP | Fase 2 | Fase 2 |
 | D10 | Licencia del proyecto | Sin licencia (todos los derechos reservados) | Repositorio | Primera versión |
 | D11 | Servidor IONOS donde se instalará (Nginx/correo o Virtualmin/Apache) y sus vCPU, RAM y disco | Nginx dedicado, entorno de referencia | ADR-0006, Fase 1 | Fase 1 |
+| D12 | ¿Hosting compartido concreto para pruebas reales (proveedor, plan, PHP, SSH/cron)? | Simulado con `sintético-b` | Fase 14 | Fase 14 |
