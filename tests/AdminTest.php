@@ -400,3 +400,13 @@ T::test('http (localhost): cookie sin prefijo __Secure- ni Secure, sin HSTS', fu
     T::ok(!str_contains($r->cookies[0], '__Secure-') && !str_contains($r->cookies[0], '; Secure'));
     T::ok(!isset($r->headers['Strict-Transport-Security']));
 });
+T::test('petición: la query se toma de REQUEST_URI aunque $_GET llegue vacío', function () {
+    $bak = [$_SERVER, $_GET];
+    $_SERVER = ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/admin/setup?token=abc_DEF-123&x[]=1', 'REMOTE_ADDR' => '1.2.3.4'];
+    $_GET = [];
+    $r = Request::fromGlobals();
+    [$_SERVER, $_GET] = $bak;
+    T::eq('/admin/setup', $r->path);
+    T::eq('abc_DEF-123', $r->query['token'] ?? null);
+    T::ok(!isset($r->query['x']), 'los arrays no cuentan como cadenas');
+});

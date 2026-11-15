@@ -70,6 +70,8 @@ done
 # 3) Con PHP-FPM activo, el panel responde y es el único PHP ejecutable.
 rm -f "$T/fpm.sock"; $FPM -R -y "$T/fpm.conf" 2>"$T/fpm2.err" || $FPM -y "$T/fpm.conf"; sleep 0.8
 check "panel sin sesión redirige al login" 303 "$(code $B/admin/)"
+LINK=$(cd "$ROOT" && php bin/lux admin:create "smoke$RANDOM@example.org" --role=editor | grep -o '/admin/setup?token=[A-Za-z0-9_-]*')
+check "enlace de alta con token llega al panel (query intacta)" 200 "$(code "$B$LINK")"
 check "login del panel" 200 "$(code $B/admin/login)"
 check "css del panel (estático)" 200 "$(code $B/admin/assets/admin.css)"
 check "panel: CSP de la aplicación" 1 "$(curl -sI $B/admin/login | grep -ci "content-security-policy: default-src 'none'; style-src 'self'")"

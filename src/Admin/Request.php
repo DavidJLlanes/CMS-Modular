@@ -30,11 +30,14 @@ final class Request
                 $headers[strtolower(str_replace('_', '-', substr($k, 5)))] = $v;
             }
         }
-        $path = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+        $path = (string)parse_url($uri, PHP_URL_PATH);
+        // La query se lee de REQUEST_URI (siempre íntegra), no de $_GET: una redirección interna de Nginx puede perderla.
+        parse_str((string)parse_url($uri, PHP_URL_QUERY), $query);
         return new self(
             strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')),
             rawurldecode($path),
-            array_filter($_GET, 'is_string'),
+            array_filter($query, 'is_string'),
             $_POST,
             array_filter($_COOKIE, 'is_string'),
             $headers,
