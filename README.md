@@ -4,7 +4,7 @@ CMS estático de uso general, autohospedable en un VPS económico (Ubuntu + Ngin
 
 El panel administra el contenido; el generador lo publica como HTML, CSS, JS y recursos estáticos. **Nginx sirve la web pública con el panel, la base de datos y el generador apagados.**
 
-> Estado: **Fase 4 — motor de publicación, coherencia y reversión** implementada (verificación en el VPS pendiente). Ver [docs/fase-4.md](docs/fase-4.md); fases anteriores en [fase-1](docs/fase-1.md), [fase-2](docs/fase-2.md) y [fase-3](docs/fase-3.md).
+> Estado: **Fase 5 — contrato de diseños por carpeta y personalización** implementada (verificación en el VPS pendiente). Ver [docs/fase-5.md](docs/fase-5.md); fase anterior [fase-4](docs/fase-4.md); fases anteriores en [fase-1](docs/fase-1.md), [fase-2](docs/fase-2.md) y [fase-3](docs/fase-3.md).
 
 ```bash
 bin/lux install --url=https://tu-dominio && bin/lux publish && bin/lux doctor
@@ -36,6 +36,7 @@ Requisitos: PHP ≥ 8.1 con `pdo_sqlite`, `mbstring`, `fileinfo`, `ctype`, `json
 | [docs/fase-2.md](docs/fase-2.md) | Entrega de la Fase 2: seguridad del panel, pruebas y puesta en marcha |
 | [docs/fase-3.md](docs/fase-3.md) | Entrega de la Fase 3: contenido, revisiones, previsualización y publicación |
 | [docs/fase-4.md](docs/fase-4.md) | Entrega de la Fase 4: trabajos de publicación, reversión y reglas 301 |
+| [docs/fase-5.md](docs/fase-5.md) | Entrega de la Fase 5: diseños por carpeta, tema, tipografía y logo |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
 
 Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0* (proyecto LuxAeterna en Claude).

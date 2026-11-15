@@ -24,7 +24,7 @@ final class View
         }
         return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             . '<meta name="robots" content="noindex,nofollow"><title>' . self::h($title) . ' · LuxAeterna</title>'
-            . '<link rel="stylesheet" href="' . self::h($p) . '/assets/admin.css"></head><body><header><strong>LuxAeterna</strong>' . $nav . '</header>'
+            . '<link rel="stylesheet" href="' . self::h($p) . '/assets/admin.css">' . (!empty($ctx['extra_css']) ? '<link rel="stylesheet" href="' . self::h((string)$ctx['extra_css']) . '">' : '') . '</head><body><header><strong>LuxAeterna</strong>' . $nav . '</header>'
             . '<main>' . (isset($ctx['flash']) ? '<p class="flash">' . self::h((string)$ctx['flash']) . '</p>' : '')
             . (isset($ctx['error']) ? '<p class="error" role="alert">' . self::h((string)$ctx['error']) . '</p>' : '')
             . $body . '</main></body></html>';

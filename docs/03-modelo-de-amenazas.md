@@ -105,3 +105,16 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 | Archivos privados en la versión pública | Preflight bloquea ocultos (salvo los permitidos), ejecutables, bases de datos y enlaces simbólicos | `PublishTest` |
 | Disco lleno | Guarda `min_free_mb` y fallo limpio sin tocar la versión activa | `ResilienceTest` (tmpfs real) |
 
+## Controles añadidos en la Fase 5 (diseños y personalización)
+
+| Amenaza | Control | Verificación |
+|---|---|---|
+| Diseño de terceros que ejecuta código o carga recursos externos | Plantillas sin lógica; rechazo de `<script>`, `<iframe>`, `<form>`, `style=`, `on*=`, URL remotas, `@import`, `eval`/`fetch` en JS; comprobación previa de dependencias remotas en la salida | `DesignTest` |
+| Escape de directorio / enlaces simbólicos en un diseño | Solo nombres de archivo sin ruta, `realpath` dentro de `components/`, ningún enlace simbólico | `DesignTest` |
+| Manifiesto malicioso (DoS, campos reservados, duplicados) | Límites de tamaño, número de campos y longitudes; `id` duplicado ignora ambos | `DesignTest` |
+| Inyección de CSS/HTML por valores de campos | Los valores se validan por tipo, los textos se escapan y los colores/números solo llegan al CSS como variables con formato estricto | `DesignTest`, `DesignPanelTest` |
+| Estilos en línea que debilitan la CSP | Valores por instancia como clases generadas; muestras de contraste servidas como hoja validada | `DesignPanelTest`, `nginx-smoke.sh` |
+| Fuentes/terceros que rastrean a visitantes | Catálogo local con licencia; solo variantes usadas; sin peticiones externas | `nginx-smoke.sh`, `DesignTest` |
+| Logo malicioso (SVG con script, imagen falsa) | Solo PNG/WebP/JPEG verificados y SVG sin scripts ni referencias externas, ≤ 512 KB | `DesignTest` |
+| Ajustes de diseño obsoletos rompen la publicación | Diseño retirado o de otra familia → ranura omitida y aviso; el sitio se publica | `DesignTest` |
+

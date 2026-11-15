@@ -15,6 +15,7 @@ Se registra un ADR cuando una elección afecta al contrato del contenido, los m�
 | [0009](0009-identidad-sesiones-y-mfa.md) | Identidad, sesiones y segundo factor | Aceptada |
 | [0010](0010-contenido-revisiones-y-previsualizacion.md) | Contenido, revisiones, URLs y previsualización | Aceptada |
 | [0011](0011-motor-de-publicacion-y-reversion.md) | Motor de publicación, coherencia y reversión | Aceptada |
+| [0012](0012-contrato-de-disenos-por-carpeta.md) | Contrato de diseños por carpeta, tema y tipografía | Aceptada |
 
 ## Plantilla
 

@@ -49,6 +49,13 @@ check() { # nombre, esperado, obtenido
 code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 B="http://127.0.0.1:$PORT"
 
+# Publica una versión con tema tipográfico propio (fuentes locales) para comprobar su entrega real.
+php -r 'require "'"$ROOT"'/src/Core/Autoloader.php"; LuxAeterna\Core\Autoloader::register("'"$ROOT"'/src");
+$c=LuxAeterna\Core\Config::load("'"$ROOT"'"); $st=new LuxAeterna\Publishing\ReleaseStore($c->path("publish"));
+$pages=(new LuxAeterna\Content\ContentLoader())->load("'"$ROOT"'/examples/sitio-demo/content.json");
+$d=["theme"=>["typography"=>["body"=>["family"=>"inter","size"=>17,"line"=>1.6,"align"=>"left"],"heading"=>["family"=>"lora","weight"=>700]]]];
+(new LuxAeterna\Publishing\Publisher($c,$st,new LuxAeterna\Core\Logger($c->path("data")."/logs"),"'"$ROOT"'/components/layouts/base"))->publishSnapshot(new LuxAeterna\Content\SiteSnapshot($pages,[],[],[],$d),["force"=>true]);' >/dev/null || { echo "No se pudo publicar con fuentes"; exit 2; }
+
 # 1) Con el panel y PHP-FPM detenidos, el sitio público sigue sirviéndose.
 kill "$(cat "$T/fpm.pid")"; sleep 0.5; rm -f "$T/fpm.pid"
 check "portada con PHP-FPM detenido" 200 "$(code $B/)"
@@ -56,8 +63,17 @@ check "página interior con PHP-FPM detenido" 200 "$(code $B/sobre-nosotros/)"
 check "404 real en ruta inexistente" 404 "$(code $B/no-existe/)"
 check "cuerpo 404 personalizado" 1 "$(curl -s $B/no-existe/ | grep -c '<h1>Página no encontrada')"
 check "panel sin PHP-FPM no es 200" 502 "$(code $B/admin/)"
-CSS=$(curl -s $B/ | grep -o '/assets/style\.[0-9a-f]*\.css')
+CSS=$(curl -s $B/ | grep -o '/assets/core\.[0-9a-f]*\.css')
 check "css con huella servido" 200 "$(code $B$CSS)"
+CCSS=$(curl -s $B/ | grep -o '/assets/c/[a-z0-9-]*\.[0-9a-f]*\.css' | head -1)
+check "css de componente con huella" 200 "$(code $B$CCSS)"
+check "css de componente caché inmutable" 1 "$(curl -sI $B$CCSS | grep -ci 'cache-control: public, max-age=31536000, immutable')"
+FONT=$(curl -s $B/ | grep -o '/assets/fonts/inter-400-normal\.[0-9a-f]*\.woff2' | head -1)
+check "fuente local servida" 200 "$(code $B$FONT)"
+check "fuente con tipo MIME woff2" 1 "$(curl -sI $B$FONT | grep -ci 'content-type: font/woff2')"
+check "fuente caché inmutable" 1 "$(curl -sI $B$FONT | grep -ci 'cache-control: public, max-age=31536000, immutable')"
+check "sin peticiones a terceros en la portada" 0 "$(curl -s $B/ | grep -Eic '(href|src)="(https?:)?//(fonts|cdn|ajax)')"
+check "inventario de recursos oculto" 404 "$(code $B/.lux-inventory.json)"
 check "css caché inmutable" 1 "$(curl -sI $B$CSS | grep -ci 'cache-control: public, max-age=31536000, immutable')"
 check "html con no-cache" 1 "$(curl -sI $B/ | grep -ci 'cache-control: no-cache')"
 check "cabecera nosniff" 1 "$(curl -sI $B/ | grep -ci 'x-content-type-options: nosniff')"

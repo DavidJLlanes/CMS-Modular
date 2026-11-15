@@ -38,6 +38,7 @@ Uso: bin/lux <comando> [opciones]
   releases                       Lista las versiones y marca la activa
   designs[:refresh]              Diseños detectados en components/ (y errores de contrato)
   fonts[:check] | fonts:add <Familia> --license=OFL-1.1 [--weights=400,700] [--category=sans-serif]
+  design:show | design:set ARCHIVO.json   Ver o sustituir los ajustes de diseño (incluye niveles por página)
   resources [--path=/ruta/]      Inventario de recursos de la versión activa
   jobs                           Últimos trabajos de publicación
   jobs:run                       Ejecuta los trabajos pendientes (para cron)
@@ -299,6 +300,31 @@ try {
                 break;
             }
             echo count($inv['pages']) . " páginas; módulos: " . implode(', ', array_keys($inv['modules'])) . "\nCompartidos por todas: " . implode(', ', $inv['shared']) . "\n";
+            break;
+
+        case 'design:show':
+            $sv = services($root, true);
+            echo json_encode($sv->designSettings(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+            break;
+
+        case 'design:set':
+            // Sustituye TODOS los ajustes de diseño (global, tipos, páginas, instancias, tema, logo) por los de un JSON validado.
+            $file = $pos[1] ?? '';
+            $json = is_file($file) ? json_decode((string)file_get_contents($file), true) : null;
+            if (!is_array($json)) {
+                fwrite(STDERR, "Uso: bin/lux design:set ARCHIVO.json (ver docs/fase-5.md)\n");
+                exit(1);
+            }
+            $sv = services($root, true);
+            try {
+                $norm = \LuxAeterna\Design\DesignSettings::validate($json, new \LuxAeterna\Design\DesignRegistry($root . '/components', $sv->config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT), new \LuxAeterna\Design\FontCatalog($root . '/components/fonts'), $root . '/components/logos');
+            } catch (\InvalidArgumentException $e) {
+                fwrite(STDERR, 'Ajustes no válidos: ' . $e->getMessage() . "\n");
+                exit(1);
+            }
+            $sv->settings->set('design', json_encode($norm, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            $sv->audit->log('design.save', null, 'cli', null, []);
+            echo "Ajustes de diseño guardados. Se aplican en la próxima publicación.\n";
             break;
 
         case 'migrate':
