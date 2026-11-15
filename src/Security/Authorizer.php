@@ -9,7 +9,7 @@ final class Authorizer
     /** @var array<string,list<string>> */
     private const ROLES = [
         'admin' => ['*'],
-        'editor' => ['panel.access', 'account.self', 'content.read', 'content.write', 'media.read', 'media.write'],
+        'editor' => ['panel.access', 'account.self', 'content.read', 'content.write', 'content.publish', 'media.read', 'media.write'],
     ];
 
     /** @param array<string,mixed>|null $user */

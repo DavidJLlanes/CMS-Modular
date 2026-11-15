@@ -119,7 +119,14 @@ final class App
                 }
                 return $this->audit($user);
         }
-        return $this->notFound($user);
+        $ip = $this->ip;
+        $ctx = fn(?array $u, ?string $e, ?string $f): array => $this->ctx($u, $e, $f);
+        if (preg_match('#^/(content|preview)(/|$)#', $p)) {
+            $res = (new ContentController($this->sv, $this->prefix, $ctx, $ip))->handle($r, $user, $p, $this->sid());
+        } else {
+            $res = (new SiteController($this->sv, $this->prefix, $ctx, $ip))->handle($r, $user, $p);
+        }
+        return $res ?? $this->notFound($user);
     }
 
     /* ---------- login ---------- */
@@ -280,7 +287,10 @@ final class App
     {
         $body = '<h1>Hola' . ($user['name'] !== '' ? ', ' . View::h((string)$user['name']) : '') . '</h1>'
             . '<p>Has entrado como <strong>' . View::h((string)$user['email']) . '</strong> (' . View::h((string)$user['role']) . ').</p>'
-            . '<p>El gestor de contenidos llegará en las próximas fases. Por ahora puedes gestionar tu cuenta y revisar la seguridad.</p>';
+            . '<ul class="menu"><li><a href="' . $this->prefix . '/content">Contenido (páginas y entradas)</a></li>'
+            . '<li><a href="' . $this->prefix . '/terms">Categorías y etiquetas</a></li>'
+            . (Authorizer::can($user, 'site.manage') ? '<li><a href="' . $this->prefix . '/menus">Menús</a></li><li><a href="' . $this->prefix . '/settings">Ajustes y generación del sitio</a></li>' : '')
+            . '</ul>';
         return new Response(200, View::page('Inicio', $body, $this->ctx($user)));
     }
 
@@ -485,7 +495,7 @@ final class App
         $res->headers += [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'no-store',
-            'Content-Security-Policy' => "default-src 'none'; style-src 'self'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+            'Content-Security-Policy' => "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
             'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'DENY',
             'Referrer-Policy' => 'same-origin',

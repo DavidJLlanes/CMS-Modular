@@ -22,11 +22,16 @@ final class Client
 
     public function req(string $method, string $path, array $post = [], array $headers = [], array $query = []): Response
     {
+        $post = self::wire($post);
         $h = ['user-agent' => 'Mozilla/5.0 (iPhone) Safari'] + $headers;
         if ($method === 'POST' && !isset($h['origin'])) {
             $h['origin'] = 'https://luxaeterna.es';
         }
         $res = (new App($this->sv))->handle(new Request($method, $path, $query, $post, $this->cookies, $h, $this->ip));
+        if ($res->status === 500) { // un 500 inesperado en pruebas: mostrar el detalle del log privado
+            $log = (string)shell_exec('tail -n 3 ' . escapeshellarg($this->sv->config->path('data') . '/logs') . '/*.log 2>/dev/null');
+            throw new \RuntimeException("HTTP 500 en $method $path: $log");
+        }
         foreach ($res->cookies as $c) {
             [$nv] = explode(';', $c, 2);
             [$n, $v] = explode('=', $nv, 2);
@@ -37,6 +42,12 @@ final class Client
             }
         }
         return $this->last = $res;
+    }
+
+    /** Un navegador envía siempre cadenas: reproduce eso en las pruebas. */
+    private static function wire(array $v): array
+    {
+        return array_map(static fn($x) => is_array($x) ? self::wire($x) : (is_bool($x) ? ($x ? '1' : '0') : (string)$x), $v);
     }
 
     public function get(string $path, array $query = []): Response
