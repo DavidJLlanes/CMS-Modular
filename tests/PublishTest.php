@@ -21,7 +21,7 @@ $ctx = function (string $mode, int $keep = 5): array {
 foreach (['symlink', 'rename'] as $mode) {
     T::test("publicación [$mode]: genera index.html y activa", function () use ($ctx, $mode) {
         [$d, , $store, $pub, $content] = $ctx($mode);
-        $r = $pub->publish($content);
+        $r = $pub->publish($content, true);
         T::eq($r['id'], $store->currentId());
         T::ok(is_file("$d/pub/current/index.html"));
         T::ok(is_file("$d/pub/current/sobre-nosotros/index.html"));
@@ -34,8 +34,8 @@ foreach (['symlink', 'rename'] as $mode) {
     });
     T::test("publicación [$mode]: segunda versión y reversión", function () use ($ctx, $mode) {
         [$d, $c, $store, $pub, $content] = $ctx($mode);
-        $a = $pub->publish($content)['id'];
-        $b = $pub->publish($content)['id'];
+        $a = $pub->publish($content, true)['id'];
+        $b = $pub->publish($content, true)['id'];
         T::eq($b, $store->currentId());
         T::eq([$a, $b], $store->all());
         (new Activator($store, $mode))->activate($a);
@@ -46,7 +46,7 @@ foreach (['symlink', 'rename'] as $mode) {
     });
     T::test("publicación [$mode]: contenido inválido deja el sitio activo intacto", function () use ($ctx, $mode) {
         [$d, , $store, $pub, $content] = $ctx($mode);
-        $ok = $pub->publish($content)['id'];
+        $ok = $pub->publish($content, true)['id'];
         file_put_contents("$d/malo.json", '{"schema":1,"pages":[{"id":"a","slug":"x","title":"X","body":[]}]}');
         T::throws(LuxException::class, fn() => $pub->publish("$d/malo.json"), 'portada');
         T::eq($ok, $store->currentId());
@@ -59,7 +59,7 @@ T::test('publicación: la retención conserva las N más recientes y la activa',
     [, , $store, $pub, $content] = $ctx('symlink', 2);
     $ids = [];
     for ($i = 0; $i < 4; $i++) {
-        $ids[] = $pub->publish($content)['id'];
+        $ids[] = $pub->publish($content, true)['id'];
     }
     $left = $store->all();
     T::eq(2, count($left));
@@ -70,14 +70,14 @@ T::test('publicación: dos publicaciones simultáneas, la segunda se rechaza', f
     $store->init();
     $lock = fopen("$d/pub/.publish.lock", 'c');
     flock($lock, LOCK_EX);
-    T::throws(LuxException::class, fn() => $pub->publish($content), 'en curso');
+    T::throws(LuxException::class, fn() => $pub->publish($content, true), 'en curso');
     flock($lock, LOCK_UN);
-    T::ok($pub->publish($content)['id'] !== '');
+    T::ok($pub->publish($content, true)['id'] !== '');
 });
 T::test('activación [rename]: recuperación tras caída entre los dos renombrados', function () use ($ctx) {
     [$d, , $store, $pub, $content] = $ctx('rename');
-    $a = $pub->publish($content)['id'];
-    $b = $pub->publish($content)['id'];
+    $a = $pub->publish($content, true)['id'];
+    $b = $pub->publish($content, true)['id'];
     // Simula la caída: la activa (b) se retiró a releases/ y todavía no se movió la nueva (a).
     rename("$d/pub/current", "$d/pub/releases/$b");
     file_put_contents("$d/pub/.activating.json", json_encode(['from' => $b, 'to' => $a]));
@@ -113,4 +113,60 @@ T::test('borrado seguro: no sale del área ni sigue enlaces', function () {
     LuxAeterna\Core\Fs::removeTree("$d/in/sub", "$d/in");
     T::ok(is_file("$d/fuera/a.txt"), 'el destino del enlace sigue intacto');
     T::throws(LuxException::class, fn() => LuxAeterna\Core\Fs::removeTree("$d/fuera", "$d/in"), 'fuera del área');
+});
+
+T::test('publicación: contenido idéntico se omite salvo force', function () use ($ctx) {
+    [$d, , $store, $pub, $content] = $ctx('symlink');
+    $a = $pub->publish($content);
+    T::ok(!$a['skipped']);
+    $b = $pub->publish($content);
+    T::ok($b['skipped']);
+    T::eq($a['id'], $b['id']);
+    T::eq(1, count($store->stored()));
+    $c = $pub->publish($content, true);
+    T::ok(!$c['skipped'] && $c['id'] !== $a['id']);
+    T::ok(!glob("$d/pub/releases/.building-*"), 'sin restos de construcción');
+});
+T::test('publicación: restos .building-* de una caída se limpian', function () use ($ctx) {
+    [$d, , $store, $pub, $content] = $ctx('symlink');
+    $pub->publish($content);
+    mkdir("$d/pub/releases/.building-20200101000000000000-aaaa/x", 0755, true);
+    $pub->publish($content, true);
+    T::ok(!glob("$d/pub/releases/.building-*"));
+});
+T::test('publicación: recursos con hash de versiones previas se conservan y constan en los metadatos', function () use ($ctx) {
+    [$d, , $store, $pub, $content] = $ctx('symlink');
+    $a = $pub->publish($content)['id'];
+    $oldCss = ($store->meta($a)['assets_own'] ?? [])[0];
+    file_put_contents("$d/pub/releases/$a/assets/viejo.abc123.css", 'x');
+    $m = json_decode(file_get_contents("$d/pub/releases/$a/.lux-release.json"), true);
+    $m['assets_own'][] = '/assets/viejo.abc123.css';
+    file_put_contents("$d/pub/releases/$a/.lux-release.json", json_encode($m));
+    $b = $pub->publish($content, true)['id'];
+    T::ok(is_file("$d/pub/releases/$b/assets/viejo.abc123.css"), 'recurso antiguo arrastrado');
+    T::ok(is_file("$d/pub/releases/$b$oldCss"));
+    T::ok(in_array('/assets/viejo.abc123.css', $store->meta($b)['assets'], true));
+    T::ok(!in_array('/assets/viejo.abc123.css', $store->meta($b)['assets_own'], true));
+});
+T::test('publicación: la guarda de espacio impide publicar y deja el sitio activo', function () use ($ctx) {
+    [$d, $c, $store, , $content] = $ctx('symlink');
+    $cfg = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 999999999]], dirname(__DIR__));
+    $ok = (new Publisher($c, $store, new Logger("$d/var/logs"), dirname(__DIR__) . '/components/layouts/base'))->publish($content);
+    $bad = new Publisher($cfg, $store, new Logger("$d/var/logs"), dirname(__DIR__) . '/components/layouts/base');
+    T::throws(LuxException::class, fn() => $bad->publish($content, true), 'Espacio');
+    T::eq($ok['id'], $store->currentId());
+});
+T::test('preflight: avisos editoriales no bloquean y noindex accidental sí', function () {
+    $d = T::tmpDir();
+    $page = fn(string $t, string $x = '') => "<!doctype html><title>$t</title><link rel=\"canonical\" href=\"https://x.es/\">$x";
+    file_put_contents("$d/index.html", $page('Igual'));
+    file_put_contents("$d/404.html", $page('No'));
+    mkdir("$d/a");
+    file_put_contents("$d/a/index.html", $page('Igual'));
+    $r = (new Preflight())->run($d);
+    T::eq([], $r['errors']);
+    T::contains('Título repetido', implode("\n", $r['warnings']));
+    T::contains('Sin descripción', implode("\n", $r['warnings']));
+    file_put_contents("$d/a/index.html", $page('Otro', '<meta name="robots" content="noindex">'));
+    T::contains('noindex accidental', implode("\n", (new Preflight())->check($d)));
 });
