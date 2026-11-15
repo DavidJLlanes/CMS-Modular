@@ -13,8 +13,8 @@ trap cleanup EXIT
 
 # Servidor: solo el bloque HTTPS, sin TLS, con rutas y socket temporales.
 awk '/^server \{/{n++} n>=2' "$ROOT/deploy/nginx/luxaeterna.conf" \
- | sed -e "s#listen 443 ssl;#listen 127.0.0.1:$PORT;#" -e '/listen \[::\]:443/d' -e '/http2 on/d' -e '/ssl_certificate/d' \
-       -e "s#/srv/luxaeterna/publish/current#$PUBLISH/current#" -e "s#/srv/luxaeterna/app/public#$ROOT/public#" \
+ | sed -e "s#listen 443 ssl http2;#listen 127.0.0.1:$PORT;#" -e '/listen \[::\]:443/d' -e '/ssl_certificate/d' \
+       -e "s#/var/www/luxaeterna.es/publish/current#$PUBLISH/current#" -e "s#/var/www/luxaeterna.es/app/public#$ROOT/public#" \
        -e "s#unix:/run/php/luxaeterna-panel.sock#unix:$T/fpm.sock#" > "$T/server.conf"
 cp /etc/nginx/fastcgi_params "$T/fastcgi_params"
 cat > "$T/nginx.conf" <<EOF

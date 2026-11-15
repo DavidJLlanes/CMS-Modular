@@ -22,7 +22,10 @@ final class Config
         if (!is_file($file)) {
             throw new LuxException('No hay configuración. Ejecuta: bin/lux install --url=https://tu-dominio', "Falta $file");
         }
-        $raw = file_get_contents($file);
+        $raw = @file_get_contents($file);
+        if ($raw === false) {
+            throw new LuxException('No se puede leer la configuración. Revisa los permisos de config/lux.json.', "No legible: $file");
+        }
         try {
             $data = json_decode((string)$raw, true, 16, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {

@@ -31,3 +31,9 @@ T::test('config: JSON inválido da error controlado sin ruta', function () {
         T::ok(!str_contains($e->getMessage(), $d));
     }
 });
+T::test('config: archivo ilegible da un error de permisos, no de JSON', function () {
+    $d = T::tmpDir();
+    T::throws(LuxException::class, fn() => Config::load($d, "$d/no-existe.json"), 'No hay configuración');
+    mkdir("$d/dir.json");
+    T::throws(LuxException::class, fn() => Config::load($d, "$d/dir.json"), 'No hay configuración');
+});

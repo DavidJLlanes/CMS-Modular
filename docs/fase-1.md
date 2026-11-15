@@ -30,6 +30,10 @@ Flujo vertical: `examples/sitio-demo/content.json` → plantilla `components/lay
 | `tests/` | `run.php`, `*Test.php`, `nginx-smoke.sh` | Pruebas sin dependencias |
 | `examples/` | `sitio-demo/` | Contenido sintético |
 
+## 2b. Despliegue en el VPS
+
+`deploy/install-vps.sh` instala o actualiza en `/var/www/luxaeterna.es/` (ver `deploy/README.md`). Se probó aquí con Nginx, PHP-FPM y un certificado autofirmado: HTTP/2 correcto, panel ejecutándose como el usuario `luxaeterna`, `/var/`, `/config/` y archivos ocultos con 404, y segunda ejecución sin cambios ni errores. En la prueba se encontraron y corrigieron dos fallos: la repetición del script dejaba la configuración ilegible para el usuario de la aplicación, y un fallo de DNS cortaba el script sin mensaje. No se ha ejecutado todavía en el servidor real.
+
 ## 3. Decisiones
 
 - [ADR-0008](decisiones/0008-configuracion-y-rutas.md): configuración JSON, URL base explícita, rutas, id de versión, errores/logs.
