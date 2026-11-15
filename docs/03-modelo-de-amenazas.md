@@ -79,3 +79,16 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 - El aislamiento por usuario de sistema depende de una configuración correcta del VPS (Fase 1 y auditoría de Fase 14).
 
 - **Perfil B (hosting compartido):** todo el PHP corre bajo un único usuario, sin aislamiento entre panel, publicador y plugins; el instalador web es una superficie extra (token de un solo uso, autobloqueo, eliminación). La exposición de `var/` se comprueba automáticamente en el diagnóstico y en cada instalación (amenaza #10).
+
+## Controles añadidos en la Fase 3 (contenido y flujo editorial)
+
+| Amenaza | Control | Verificación |
+|---|---|---|
+| Filtración de borradores, papelera o previsualizaciones al sitio público | El generador solo lee `published_rev` y `status='published'`; la previsualización renderiza en memoria, con `noindex`, `no-store` y sin escribir en `publish/` | `SitePublishTest` (el texto de un borrador no aparece en ningún archivo generado) |
+| XSS almacenado en contenido | Bloques de texto plano escapado por contexto; sin HTML libre; CSP del sitio sin scripts; previsualización en `iframe sandbox` con CSP propia | `PanelContentTest` (escapado en listado, editor, revisiones y vista previa) |
+| Pérdida de trabajo por ediciones simultáneas | Bloqueo optimista (409) + historial + autoguardado | `ContentRepoTest`, `PanelContentTest` |
+| Escalada de privilegios entre roles | Permisos por acción en servidor (`content.*`, `site.*`, `users.manage`); la interfaz no enlaza lo que el rol no puede usar | `PanelContentTest` |
+| CSRF en mutaciones editoriales | Token ligado a la sesión + comprobación de origen en todas las rutas POST | `PanelContentTest` |
+| Redirecciones abiertas / enlaces peligrosos en menús | Solo rutas internas o `https://`; sin `javascript:`, `//host` ni caracteres de control | `ContentRepoTest` |
+| Referencias a imágenes manipuladas (traversal) | `ref` con formato estricto (identificador, nunca ruta) | `ContentRepoTest` |
+| Borrado accidental o malicioso | Papelera reversible; borrado definitivo solo para administradores y desde la papelera; auditoría de cada acción | `PanelContentTest` |

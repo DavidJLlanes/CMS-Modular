@@ -13,6 +13,7 @@ Se registra un ADR cuando una elección afecta al contrato del contenido, los m�
 | [0007](0007-compatibilidad-hosting-compartido.md) | Compatibilidad con hosting compartido barato | Aceptada |
 | [0008](0008-configuracion-y-rutas.md) | Formatos de configuración y convenciones de rutas | Aceptada |
 | [0009](0009-identidad-sesiones-y-mfa.md) | Identidad, sesiones y segundo factor | Aceptada |
+| [0010](0010-contenido-revisiones-y-previsualizacion.md) | Contenido, revisiones, URLs y previsualización | Aceptada |
 
 ## Plantilla
 
