@@ -9,7 +9,7 @@ use LuxAeterna\Publishing\Activator;
 final class Doctor
 {
     public const MIN_PHP = '8.1.0';
-    public const REQUIRED_EXT = ['pdo_sqlite', 'mbstring', 'json', 'ctype', 'fileinfo', 'hash'];
+    public const REQUIRED_EXT = ['pdo_sqlite', 'mbstring', 'json', 'ctype', 'fileinfo', 'hash', 'sodium'];
     public const DATA_SUBDIRS = ['db', 'originals', 'logs', 'tmp', 'jobs', 'secrets'];
 
     /** @var list<array{level:string,name:string,message:string}> */
@@ -79,7 +79,7 @@ final class Doctor
         }
         defined('PASSWORD_ARGON2ID')
             ? $this->add('ok', 'hash', 'Argon2id disponible para contraseñas')
-            : $this->add('warn', 'hash', 'Argon2id no disponible; se usará bcrypt (Fase 2).');
+            : $this->add('warn', 'hash', 'Argon2id no disponible; se usará bcrypt.');
     }
 
     private function ini(): void

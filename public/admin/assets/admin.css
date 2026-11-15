@@ -1,0 +1,23 @@
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:#1c1b22;background:#f6f5f9}
+header{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;align-items:center;padding:.75rem 1rem;background:#2b2250;color:#fff}
+header a,header .link{color:#fff}
+nav{display:flex;flex-wrap:wrap;gap:.25rem 1rem;align-items:center}
+main{max-width:34rem;margin:1.5rem auto;padding:0 1rem}
+h1{font-size:1.5rem;margin:.5rem 0 1rem}h2{font-size:1.15rem;margin:1.75rem 0 .5rem}
+label{display:block;margin:.9rem 0;font-weight:600}
+input{display:block;width:100%;margin-top:.3rem;padding:.7rem;font:inherit;border:1px solid #8a86a3;border-radius:.4rem;background:#fff}
+input[type=hidden]{display:none}
+button{margin-top:.5rem;padding:.7rem 1.1rem;font:inherit;font-weight:600;color:#fff;background:#4a3aa8;border:0;border-radius:.4rem;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+button.link{margin:0;padding:0;background:none;color:#4a3aa8;text-decoration:underline;font-weight:400}
+header button.link{color:#fff}
+form.inline{display:inline}
+.error{padding:.7rem 1rem;background:#fde8e8;border:1px solid #c53030;border-radius:.4rem;color:#7a1414}
+.flash{padding:.7rem 1rem;background:#e6f6ec;border:1px solid #2f855a;border-radius:.4rem}
+.secret code,.codes code{font-size:1.15rem;letter-spacing:.05em;word-break:break-all}
+.codes{columns:2;padding-left:1.2rem}
+.sessions{padding-left:1.2rem}.sessions li{margin:.4rem 0}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:.4rem .5rem;border-bottom:1px solid #d5d2e3;text-align:left;white-space:nowrap}
+a{color:#4a3aa8}

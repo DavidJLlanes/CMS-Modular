@@ -37,6 +37,9 @@ final class Installer
         $actions[] = 'Directorios privados listos: ' . $data;
         Fs::ensureDir($config->path('publish') . '/releases', 0755);
         $actions[] = 'Directorio de publicación listo: ' . $config->path('publish');
+        $sv = new \LuxAeterna\Admin\Services($config, true);
+        $sv->secrets->hmac('init', 'init'); // crea var/secrets/app.key si no existe
+        $actions[] = 'Base de datos migrada y clave de aplicación lista';
         return $actions;
     }
 }

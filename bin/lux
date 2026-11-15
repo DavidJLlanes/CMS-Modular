@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use LuxAeterna\Core\Autoloader;
+use LuxAeterna\Admin\Services;
 use LuxAeterna\Core\Config;
 use LuxAeterna\Core\Doctor;
 use LuxAeterna\Core\Installer;
@@ -34,6 +35,17 @@ Uso: bin/lux <comando> [opciones]
   publish [--content=ARCHIVO]    Genera y activa una versión (por defecto, el sitio de ejemplo)
   releases                       Lista las versiones y marca la activa
   rollback <id>                  Reactiva una versión anterior
+  migrate                        Aplica las migraciones de base de datos pendientes
+  admin:create <correo> [--role=admin|editor] [--name=Nombre]
+                                 Crea una cuenta e imprime el enlace de alta (60 min, un solo uso)
+  admin:list                     Lista las cuentas
+  admin:reset <correo>           Imprime un enlace de recuperación de contraseña (30 min, un solo uso)
+  admin:mfa-reset <correo>       Desactiva el segundo factor (se vuelve a configurar al entrar)
+  admin:revoke-sessions <correo>|--all
+                                 Cierra las sesiones abiertas
+  admin:disable <correo>         Desactiva la cuenta y cierra sus sesiones
+  admin:enable <correo>          Reactiva la cuenta
+  admin:role <correo> <rol>      Cambia el rol (admin|editor)
   version                        Muestra la versión
 
 TXT;
@@ -71,10 +83,48 @@ function store(Config $c): ReleaseStore
 [$pos, $opts] = parseArgs($argv);
 $cmd = $pos[0] ?? 'help';
 
+/** Evita crear archivos de root dentro de var/ (el pool de PHP-FPM, otro usuario, dejaría de poder escribirlos). */
+function guardUser(string $root, string $cmd): void
+{
+    if (in_array($cmd, ['doctor', 'version', 'help'], true) || !function_exists('posix_geteuid') || posix_geteuid() !== 0) {
+        return;
+    }
+    try {
+        $dataOwner = @fileowner(Config::load($root)->path('data'));
+    } catch (Throwable) {
+        return;
+    }
+    if (is_int($dataOwner) && $dataOwner !== 0) {
+        $name = (function_exists('posix_getpwuid') ? (posix_getpwuid($dataOwner)['name'] ?? '') : '') ?: 'el propietario de var/';
+        throw new LuxException("Ejecuta este comando como $name, no como root: runuser -u $name -- php bin/lux $cmd ...");
+    }
+}
+
+function services(string $root, bool $migrate = false): Services
+{
+    return new Services(Config::load($root), $migrate);
+}
+
+function userByEmail(Services $sv, string $email): array
+{
+    $u = $sv->users->byEmail($email);
+    if ($u === null) {
+        throw new LuxException('No existe ninguna cuenta con ese correo.');
+    }
+    return $u;
+}
+
+function enrollLink(Services $sv, array $u, string $purpose): string
+{
+    $path = $purpose === 'setup' ? '/admin/setup' : '/admin/reset';
+    return $sv->config->baseUrl() . $path . '?token=' . $sv->tokens->create((int)$u['id'], $purpose);
+}
+
 try {
+    guardUser($root, $cmd);
     switch ($cmd) {
         case 'version':
-            echo "LuxAeterna 0.1.0-fase1\n";
+            echo "LuxAeterna 0.2.0-fase2\n";
             break;
 
         case 'doctor':
@@ -135,6 +185,85 @@ try {
             (new Activator($store, (string)$config->get('publishing.activation', 'auto')))->activate($id);
             logger($root)->info('reversión', ['release' => $id]);
             echo "Versión $id activada.\n";
+            break;
+
+        case 'migrate':
+            $sv = services($root);
+            $done = (new \LuxAeterna\Core\Migrator($sv->db, $root . '/migrations'))->migrate();
+            echo $done === [] ? "Base de datos al día.\n" : 'Migraciones aplicadas: ' . implode(', ', $done) . "\n";
+            break;
+
+        case 'admin:create':
+            $sv = services($root, true);
+            $email = $pos[1] ?? '';
+            $role = is_string($opts['role'] ?? null) ? $opts['role'] : 'admin';
+            $id = $sv->users->create($email, $role, is_string($opts['name'] ?? null) ? $opts['name'] : '');
+            $sv->audit->log('user.create', null, 'cli', 'user:' . $id, ['role' => $role]);
+            echo "Cuenta creada ($role). Abre este enlace en el navegador para fijar la contraseña (caduca en 60 min, un solo uso):\n\n  "
+                . enrollLink($sv, $sv->users->byId($id), 'setup') . "\n\n";
+            break;
+
+        case 'admin:list':
+            $sv = services($root, true);
+            foreach ($sv->users->all() as $u) {
+                printf("%-4d %-32s %-7s %-9s MFA:%s último acceso: %s\n", $u['id'], $u['email'], $u['role'], $u['status'], $u['totp_enabled'] ? 'sí' : 'no', $u['last_login_at'] ? date('Y-m-d H:i', (int)$u['last_login_at']) : '-');
+            }
+            break;
+
+        case 'admin:reset':
+            $sv = services($root, true);
+            $u = userByEmail($sv, $pos[1] ?? '');
+            $purpose = $u['status'] === 'invited' ? 'setup' : 'reset';
+            $sv->audit->log('password.reset_issued', null, 'cli', 'user:' . $u['id'], ['purpose' => $purpose]);
+            echo "Enlace (" . ($purpose === 'setup' ? '60' : '30') . " min, un solo uso):\n\n  " . enrollLink($sv, $u, $purpose) . "\n\n";
+            break;
+
+        case 'admin:mfa-reset':
+            $sv = services($root, true);
+            $u = userByEmail($sv, $pos[1] ?? '');
+            $sv->users->disableTotp((int)$u['id']);
+            $sv->audit->log('mfa.reset', null, 'cli', 'user:' . $u['id']);
+            echo "Segundo factor desactivado y sesiones cerradas. Se pedirá configurarlo de nuevo en el próximo acceso.\n";
+            break;
+
+        case 'admin:revoke-sessions':
+            $sv = services($root, true);
+            if (isset($opts['all'])) {
+                foreach ($sv->users->all() as $u) {
+                    $sv->users->bumpEpoch((int)$u['id']);
+                }
+                $sv->db->run('DELETE FROM sessions');
+                $sv->audit->log('session.revoke_all', null, 'cli');
+                echo "Todas las sesiones cerradas.\n";
+            } else {
+                $u = userByEmail($sv, $pos[1] ?? '');
+                $sv->users->bumpEpoch((int)$u['id']);
+                $n = $sv->sessions->destroyAllForUser((int)$u['id']);
+                $sv->audit->log('session.revoke_all', null, 'cli', 'user:' . $u['id']);
+                echo "Sesiones cerradas: $n\n";
+            }
+            break;
+
+        case 'admin:disable':
+        case 'admin:enable':
+            $sv = services($root, true);
+            $u = userByEmail($sv, $pos[1] ?? '');
+            if ($cmd === 'admin:enable' && $u['status'] === 'invited') {
+                throw new LuxException('La cuenta aún no completó el alta; usa admin:reset para generar un enlace.');
+            }
+            $new = $cmd === 'admin:disable' ? 'disabled' : 'active';
+            $sv->users->setStatus((int)$u['id'], $new);
+            $sv->sessions->destroyAllForUser((int)$u['id']);
+            $sv->audit->log($cmd === 'admin:disable' ? 'user.disable' : 'user.enable', null, 'cli', 'user:' . $u['id']);
+            echo $new === 'disabled' ? "Cuenta desactivada.\n" : "Cuenta reactivada.\n";
+            break;
+
+        case 'admin:role':
+            $sv = services($root, true);
+            $u = userByEmail($sv, $pos[1] ?? '');
+            $sv->users->setRole((int)$u['id'], $pos[2] ?? '');
+            $sv->audit->log('user.role', null, 'cli', 'user:' . $u['id'], ['role' => $pos[2]]);
+            echo "Rol actualizado y sesiones cerradas.\n";
             break;
 
         default:
