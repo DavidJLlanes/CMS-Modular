@@ -110,11 +110,15 @@ final class Preview
     }
 
     /** @param array<string,mixed> $rev revisión decodificada (title, slug, summary, fields, blocks) */
-    public function html(string $type, array $rev, string $cssUrl = self::CSS_URL, string $uid = 'preview'): string
+    public function html(string $type, array $rev, string $cssUrl = self::CSS_URL, string $uid = 'preview', ?array $edit = null): string
     {
         $blocks = array_map(static fn(array $b): array => $b['type'] === 'gallery'
             ? ['type' => 'paragraph', 'text' => '[Aquí irá la galería «' . $b['ref'] . '» cuando exista el módulo de galerías (Fase 8)]']
             : $b, (array)$rev['blocks']);
+        $colors = \LuxAeterna\Content\Blocks::colors($blocks);
+        if ($edit !== null) { // edición visual: la plantilla real con el editor montado en lugar del contenido
+            $blocks = [['type' => 'mount']];
+        }
         $fields = [];
         foreach ($this->types->fields($type) as $name => $def) {
             $v = $rev['fields'][$name] ?? '';
@@ -125,11 +129,11 @@ final class Preview
         $page = new Page($uid, (string)$rev['slug'], (string)$rev['title'] !== '' ? (string)$rev['title'] : '(sin título)', (string)$rev['summary'], $blocks, false,
             $this->types->path($type, (string)$rev['slug']), $type, time(), $fields);
         $snap = new SiteSnapshot([$page], ['main' => $this->links('main'), 'footer' => $this->links('footer')]);
-        $colors = \LuxAeterna\Content\Blocks::colors($blocks);
         $r = $this->renderer($this->mediaFor($blocks));
         $site = $r->siteVars($snap, $cssUrl . (str_contains($cssUrl, '?') ? '&' : '?') . 'u=' . rawurlencode($uid) . '&t=' . rawurlencode($type)
-            . ($colors !== [] ? '&c=' . implode(',', array_map(static fn(string $c): string => substr($c, 1), $colors)) : ''), '<meta name="robots" content="noindex,nofollow">');
-        return $r->page($page, $site);
+            . ($colors !== [] ? '&c=' . implode(',', array_map(static fn(string $c): string => substr($c, 1), $colors)) : ''), '<meta name="robots" content="noindex,nofollow">' . ($edit['head'] ?? ''));
+        $html = $r->page($page, $site);
+        return $edit !== null ? str_replace('</body>', ($edit['tail'] ?? '') . '</body>', $html) : $html;
     }
 
     /** @return list<array{label:string,url:string}> enlaces del menú (incluye contenido aún no publicado: es una vista previa) */

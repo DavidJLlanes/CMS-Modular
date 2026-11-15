@@ -58,6 +58,8 @@ final class BlockRenderer
             case 'list':
                 $tag = !empty($b['ordered']) ? 'ol' : 'ul';
                 return "<$tag>\n" . implode('', array_map(static fn(mixed $i): string => '<li>' . (is_string($i) ? self::e($i) : Inline::html((array)$i['inlines'])) . "</li>\n", $b['items'])) . "</$tag>\n";
+            case 'mount': // solo la pantalla de edición visual: punto de montaje del editor dentro de la plantilla real
+                return "<div id=\"lux-editor-mount\"></div>\n";
             case 'links': // listados generados por el sistema (rutas internas ya validadas)
                 return "<ul class=\"listing\">\n" . implode('', array_map(static fn(array $i): string => '<li><a href="' . self::e($i['url']) . '">' . self::e($i['text']) . '</a>'
                     . ($i['note'] !== '' ? ' <small>' . self::e($i['note']) . '</small>' : '') . "</li>\n", $b['items'])) . "</ul>\n";

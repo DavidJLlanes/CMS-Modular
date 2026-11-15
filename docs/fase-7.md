@@ -1,7 +1,7 @@
 # Fase 7 · Editor completo y ligero
 
 ## Qué hay
-- **Editor de bloques propio** en la pantalla de edición (JavaScript sin dependencias, módulos en `public/admin/assets/editor/`). Barra fija con deshacer/rehacer, negrita, cursiva, subrayado, tachado, sub/superíndice, enlace, color y «quitar formato»; selector de bloque y botones táctiles de 44 px.
+- **Editor visual (WYSIWYG)**: se edita sobre la propia página. El panel muestra un marco con la **plantilla real** (cabecera, título, pie, tipos de letra, colores y espaciados de tu diseño) y cada bloque se dibuja con las mismas etiquetas y clases que el sitio publicado (`<p>`, `<h2>`, `<ul>`, `.lux-cols`, `.lux-table`, `.lux-btn`…). Los controles de bloque (tipo, subir, bajar, duplicar, borrar) aparecen solo al pasar el ratón o al seleccionar; las opciones (alt, enlace del botón, filas y columnas…) salen bajo el bloque seleccionado. JavaScript sin dependencias en `public/admin/assets/editor/`. Barra fija con deshacer/rehacer, negrita, cursiva, subrayado, tachado, sub/superíndice, enlace, color, «quitar formato», añadir bloque, estilo del bloque y avisos SEO; botones táctiles de 44 px.
 - **Bloques**: párrafo, títulos H1–H6, cita (con autor), listas (viñetas o numeradas), imagen, galería (reservada, Fase 8), botón, separador (línea, puntos, espacio), **columnas** (2, 3 y 4 con 6 distribuciones, separación y alineación vertical; en móvil se apilan en orden de lectura) y **tablas** (título, fila/columna de encabezados, alineación por columna, hasta 50×12, región desplazable con teclado) y un punto de extensión para mapas u otros.
 - **Tipografía y color**: alineación (izquierda, centro, derecha, justificado), tamaño, grosor, cursiva, interlineado, espaciado de letras, tipo de letra (heredada, texto, títulos), espacio entre párrafos y color (del tema o libre). Se guardan como valores admitidos y salen como clases; nunca hay `style=` ni CSS libre.
 - **Mover, duplicar, borrar**: botones, teclado (Alt+↑/↓, Alt+Mayús+D, Alt+Supr) y táctil. **Deshacer/rehacer** (Ctrl+Z / Ctrl+Y y gesto de iOS), **autoguardado** (el de la Fase 3) y **recuperación local** si se recarga o se cierra por error.
@@ -13,6 +13,7 @@
 ## Seguridad y rendimiento
 - Sin HTML en el modelo; validación doble (navegador y servidor); enlaces solo `/ruta`, `#ancla`, `http(s)`, `mailto`, `tel`; colores `#rrggbb` o roles; límites de tamaño y profundidad.
 - CSP del panel sin cambios (sin scripts ni estilos en línea) y comprobada en Chrome. El editor no aparece en el sitio público (hay pruebas).
+- El marco de edición (`/admin/content/<id>/editframe`) es del mismo origen, con CSP propia (`script-src 'self'`, sin `unsafe-*`, `form-action 'none'`), `noindex` y solo con sesión; los enlaces de la plantilla dentro del marco no navegan.
 - Peso del editor: unos 75 KB de JS y 6 KB de CSS sin comprimir, solo en la pantalla de edición. CSS de contenido del sitio: ~3,4 KB más sin comprimir, con las clases de color por uso real.
 
 ## Pruebas

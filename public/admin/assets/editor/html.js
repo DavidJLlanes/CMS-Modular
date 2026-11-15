@@ -237,7 +237,7 @@
     return M.runs(rs).map(function (r) {
       var h = esc(r.t).replace(/\n/g, '<br>');
       if (r.sub) { h = '<sub>' + h + '</sub>'; } else if (r.sup) { h = '<sup>' + h + '</sup>'; }
-      if (r.c) { h = r.c[0] === '#' ? '<font color="' + r.c + '">' + h + '</font>' : '<span data-c="' + r.c + '">' + h + '</span>'; }
+      if (r.c) { h = r.c[0] === '#' ? '<font color="' + r.c + '">' + h + '</font>' : '<span class="lux-c-' + r.c + '" data-c="' + r.c + '">' + h + '</span>'; }
       if (r.s) { h = '<s>' + h + '</s>'; }
       if (r.u) { h = '<u>' + h + '</u>'; }
       if (r.i) { h = '<i>' + h + '</i>'; }

@@ -1,13 +1,9 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'">
-<link rel="stylesheet" href="/public/admin/assets/editor/editor.css"></head>
+<html lang="es"><head><meta charset="utf-8"><title>harness</title></head>
 <body><form method="post" action="/x" id="f"><input type="hidden" name="csrf" value="tok">
 <div class="lux-editor-root" data-lux-editor data-media-list="/media/list.json" data-media-upload="/media/upload.json" data-media-thumb="/admin/media/" data-key="harness-key">
 <input type="hidden" data-body-json value='[{"type":"paragraph","text":"Hola"},{"type":"heading","level":2,"text":"Título"}]'>
-<label class="lux-fallback"><textarea name="body">Hola</textarea></label></div></form>
+<label class="lux-fallback"><textarea name="body">Hola</textarea></label>
+<iframe id="fr" class="lux-ed-frame" src="/tests/js/browser/frame.html" width="900" height="700" title="Editor"></iframe></div></form>
 <pre id="result">PENDING</pre>
-<script src="/public/admin/assets/editor/model.js"></script><script src="/public/admin/assets/editor/html.js"></script><script src="/public/admin/assets/editor/history.js"></script>
-<script src="/public/admin/assets/editor/lint.js"></script><script src="/public/admin/assets/editor/storage.js"></script><script src="/public/admin/assets/editor/blocks.js"></script>
-<script src="/public/admin/assets/editor/inspector.js"></script><script src="/public/admin/assets/editor/media-picker.js"></script><script src="/public/admin/assets/editor/main.js"></script>
-<script src="/tests/js/browser/run.js"></script></body></html>
+<script src="/tests/js/browser/outer.js"></script></body></html>

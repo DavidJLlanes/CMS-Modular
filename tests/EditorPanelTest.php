@@ -40,7 +40,18 @@ T::test('editor panel: contenido sencillo conserva el área de texto como altern
     $html = $a->get("/admin/content/$id/edit")->body;
     T::contains('<textarea name="body"', $html);
     T::ok(!preg_match('/data-body-json[^>]*name=/', $html), 'el JSON no se envía hasta que el editor arranca');
-    T::contains('/admin/assets/editor/main.js', $html);
+    T::contains('class="lux-ed-frame"', $html);
+    T::ok(!str_contains($html, '/assets/editor/main.js'), 'el panel no carga el editor: solo lo carga la página de edición visual');
+    $f = $a->get("/admin/content/$id/editframe");
+    T::eq(200, $f->status);
+    T::contains("id=\"lux-editor-mount\"", $f->body);
+    T::contains('/admin/assets/editor/main.js', $f->body);
+    T::contains('<h1>Sin título</h1>', $f->body, 'la plantilla real con el título de la página');
+    T::contains("script-src 'self'", $f->headers['Content-Security-Policy']);
+    T::ok(!str_contains($f->headers['Content-Security-Policy'], 'unsafe'), 'CSP sin unsafe-*');
+    T::contains('noindex', $f->headers['X-Robots-Tag']);
+    T::ok(!str_contains($f->body, 'Hola</p>') && !str_contains($f->body, '>Hola<'), 'el contenido lo monta el editor, no se repite en la plantilla');
+    T::eq(303, (new Client($sv, '203.0.113.71'))->get("/admin/content/$id/editframe")->status, 'sin sesión no se sirve');
 });
 
 T::test('editor panel: endpoints JSON de imágenes (permisos, CSRF, validación)', function () {

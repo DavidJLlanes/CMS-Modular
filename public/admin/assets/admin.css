@@ -43,3 +43,6 @@ body:has(iframe.pv-desktop) main{max-width:none}
 .media-grid strong{display:block;overflow-wrap:anywhere;font-size:.9rem}.media-grid small{display:block}
 button.danger{background:#a4262c}
 /* El editor de bloques (editor.css) se carga solo en la pantalla de edición. */
+.lux-ed-frame{display:none;width:100%;height:78vh;min-height:440px;border:1px solid #c9cdd4;border-radius:.5rem;background:#fff}
+.lux-editor-root.is-ready .lux-ed-frame{display:block}
+.lux-editor-root.is-ready .lux-fallback{display:none}

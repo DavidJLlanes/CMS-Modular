@@ -65,7 +65,7 @@ final class ContentController
             return new Response(404, View::page('No encontrado', '<h1>Contenido no encontrado</h1>', ($this->ctx)($user, null, null)));
         }
         $perm = match ($action) {
-            'edit', 'revisions', 'preview' => 'content.read',
+            'edit', 'revisions', 'preview', 'editframe' => 'content.read',
             'publish', 'unpublish' => 'content.publish',
             'delete' => 'users.manage',
             default => 'content.write',
@@ -73,7 +73,7 @@ final class ContentController
         if (($deny = $this->need($user, $perm)) !== null) {
             return $deny;
         }
-        if (!$post && !in_array($action, ['edit', 'revisions', 'preview'], true)) {
+        if (!$post && !in_array($action, ['edit', 'revisions', 'preview', 'editframe'], true)) {
             return Response::redirect($this->url("/content/$id/edit"));
         }
         return match ($action) {
@@ -83,6 +83,7 @@ final class ContentController
             'publish', 'unpublish', 'trash', 'restore', 'delete' => $this->transition($action, $c, $r, $user),
             'revisions' => ($m[3] ?? '') !== '' ? ($post && ($m[4] ?? '') === 'restore' ? $this->restoreRevision($c, (int)$m[3], $r, $user) : null) : $this->revisionsPage($c, $user, $sid),
             'preview' => $this->preview($c, $r, $user),
+            'editframe' => $this->editFrame($c, $r),
             default => null,
         };
     }
@@ -195,21 +196,12 @@ final class ContentController
         }
         $body = '<h1>' . View::h((string)$c['rev']['title'] ?: '(sin título)') . '</h1><p class="muted">' . View::h($this->sv->types->label((string)$c['type'])) . ' · ' . $stateLabel . '</p>' . $banner
             . '<p class="toolbar"><a class="btn" href="' . $this->url("/content/$id/preview") . '">Previsualizar</a> <a class="btn" href="' . $this->url("/content/$id/revisions") . '">Revisiones</a> ' . $actions . '</p>'
-            . $main . ($trashed ? '' : self::editorScripts($this->url('/assets/editor/'), $this->url('/assets/autosave.js')));
+            . $main . ($trashed ? '' : '<script src="' . View::h($this->url('/assets/autosave.js')) . '" defer></script>');
         return new Response($error !== null ? $status : 200, View::page('Editar', $body, ($this->ctx)($user, $error, null)));
     }
 
     /** Módulos del editor en orden de carga (cada uno cuelga de `LuxEditor`); solo se envían en la pantalla de edición. */
     public const EDITOR_JS = ['model', 'html', 'history', 'lint', 'storage', 'blocks', 'inspector', 'media-picker', 'main'];
-
-    private static function editorScripts(string $base, string $autosave): string
-    {
-        $s = '<link rel="stylesheet" href="' . View::h($base . 'editor.css') . '">';
-        foreach (self::EDITOR_JS as $m) {
-            $s .= '<script src="' . View::h($base . $m . '.js') . '" defer></script>';
-        }
-        return $s . '<script src="' . View::h($autosave) . '" defer></script>';
-    }
 
     /**
      * Zona del editor. El campo JSON no tiene `name` hasta que el editor arranca: si el JavaScript falla, el texto simple
@@ -223,9 +215,11 @@ final class ContentController
         $fallback = $plain
             ? '<label class="lux-fallback">Contenido <small>(bloques separados por línea en blanco: <code>## Título</code>, <code>- lista</code>, <code>&gt; cita</code>)</small><textarea name="body" rows="16" class="body">' . View::h(Blocks::toText($blocks)) . '</textarea></label>'
             : '<p class="lux-fallback error">Este contenido usa formato avanzado (columnas, tablas, estilos…) y necesita el editor completo, que requiere JavaScript. Tu contenido está a salvo: no se modificará si guardas sin él.</p>';
+        $src = $this->url('/content/' . (int)$c['id'] . '/editframe');
         return '<div class="lux-editor-root" data-lux-editor data-media-list="' . View::h($this->url('/media/list.json')) . '" data-media-upload="' . View::h($this->url('/media/upload.json'))
-            . '" data-media-thumb="' . View::h($this->url('/media/')) . '" data-key="' . View::h('lux-editor-' . (string)$c['uid']) . '" data-can-upload="1">'
-            . '<input type="hidden" data-body-json value="' . View::h($json) . '">' . $fallback . '</div>';
+            . '" data-media-thumb="' . View::h($this->url('/media/')) . '" data-key="' . View::h('lux-editor-' . (string)$c['uid']) . '">'
+            . '<input type="hidden" data-body-json value="' . View::h($json) . '">' . $fallback
+            . '<iframe class="lux-ed-frame" src="' . View::h($src) . '" title="Editor visual: así se verá la página"></iframe></div>';
     }
 
     /** @param array<string,mixed> $c @return array<string,mixed> */
@@ -369,6 +363,36 @@ final class ContentController
         } catch (LuxException $e) {
             return $this->editForm($this->sv->content->get($id) ?? $c, $user, '', $r, $e->getMessage(), null, $e instanceof ConflictException ? 409 : 422);
         }
+    }
+
+    /* ---------- editor visual ---------- */
+
+    /**
+     * Página de edición visual: la plantilla real (cabecera, título, pie, estilos y colores de la publicación) con el editor montado
+     * en el lugar del contenido. Mismo origen que el panel para hablar con el formulario; CSP propia: solo scripts del panel.
+     */
+    private function editFrame(array $c, Request $r): Response
+    {
+        if ($c['status'] === 'trashed') {
+            return new Response(404, 'En la papelera', ['Content-Type' => 'text/plain; charset=utf-8']);
+        }
+        $rev = $c['rev'];
+        $base = $this->url('/assets/editor/');
+        $tail = '';
+        foreach (self::EDITOR_JS as $m) {
+            $tail .= '<script src="' . View::h($base . $m . '.js') . '"></script>';
+        }
+        $html = $this->sv->preview->html((string)$c['type'], $rev, \LuxAeterna\Publishing\Preview::CSS_URL, (string)$c['uid'], [
+            'head' => '<link rel="stylesheet" href="' . View::h($base . 'editor.css') . '">',
+            'tail' => $tail,
+        ]);
+        return new Response(200, $html, [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Content-Security-Policy' => "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+            'Cache-Control' => 'no-store, private',
+        ]);
     }
 
     /* ---------- previsualización ---------- */

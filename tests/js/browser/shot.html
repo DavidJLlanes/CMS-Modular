@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>harness</title></head>
+<body><form method="post" action="/x" id="f"><input type="hidden" name="csrf" value="tok">
+<div class="lux-editor-root" data-lux-editor data-media-list="/media/list.json" data-media-upload="/media/upload.json" data-media-thumb="/admin/media/" data-key="harness-key">
+<input type="hidden" data-body-json value='[{"type":"paragraph","text":"Hola"},{"type":"heading","level":2,"text":"Título"}]'>
+<label class="lux-fallback"><textarea name="body">Hola</textarea></label>
+<iframe id="fr" class="lux-ed-frame" src="/tests/js/browser/frame.html" width="900" height="700" title="Editor"></iframe></div></form>
+<pre id="result">PENDING</pre>
+</body></html>
