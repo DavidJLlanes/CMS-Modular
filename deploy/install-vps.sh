@@ -238,7 +238,9 @@ done
 sed -i "s#^ExecStart=.*#ExecStart=/usr/bin/env LUX_DOMAIN=$DOMAIN /usr/local/sbin/lux-apply-rules $BASE#" "/etc/systemd/system/lux-rules-$DOMAIN.service"
 sed -i "s#^Unit=.*#Unit=lux-rules-$DOMAIN.service#" "/etc/systemd/system/lux-rules-$DOMAIN.path"
 svc daemon-reload
-svc enable --now "lux-rules-$DOMAIN.path"
+[ -f "$BASE/publish/rules/apply.request" ] || install -m 0644 -o "$APP_USER" -g "$APP_USER" /dev/null "$BASE/publish/rules/apply.request"
+  svc enable --now "lux-rules-$DOMAIN.path"
+  svc restart "lux-rules-$DOMAIN.path"
 fi
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" publish
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" doctor --http || true

@@ -46,7 +46,9 @@ final class RuleSync
         }
         Fs::atomicWrite($dst, $rules, 0644);
         $token = bin2hex(random_bytes(8));
-        Fs::atomicWrite($this->rulesDir() . '/apply.request', $token . ' ' . $releaseId . "\n", 0644);
+        // Escritura en el sitio (no renombrado): systemd vigila el inodo y un renombrado podría no avisar.
+        file_put_contents($this->rulesDir() . '/apply.request', $token . ' ' . $releaseId . "\n");
+        @chmod($this->rulesDir() . '/apply.request', 0644);
         $deadline = time() + $this->waitSeconds;
         do {
             $st = $this->lastStatus();
