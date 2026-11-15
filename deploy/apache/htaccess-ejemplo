@@ -21,6 +21,10 @@ ErrorDocument 404 /404.html
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+  # Recursos y derivados de imagen con huella en el nombre: inmutables.
+  <FilesMatch "\.(css|js|woff2|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
 </IfModule>
 
 <IfModule mod_mime.c>

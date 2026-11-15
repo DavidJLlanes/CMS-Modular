@@ -36,3 +36,9 @@ ul.menu{padding-left:1.2rem}ul.menu li{margin:.5rem 0}
 iframe.pv{display:block;border:1px solid #8a86a3;background:#fff;margin:.5rem auto;height:70vh}
 iframe.pv-mobile{width:390px;max-width:100%}iframe.pv-desktop{width:100%;min-width:900px}
 body:has(iframe.pv-desktop) main{max-width:none}
+
+.media-grid{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));gap:.8rem}
+.media-grid li{border:1px solid #c9c6dc;border-radius:.5rem;padding:.5rem;background:#fff;overflow:hidden}
+.media-grid a{text-decoration:none;color:inherit;display:block}.media-grid img{display:block;width:100%;height:auto;border-radius:.3rem;margin-bottom:.3rem;background:#eee}
+.media-grid strong{display:block;overflow-wrap:anywhere;font-size:.9rem}.media-grid small{display:block}
+button.danger{background:#a4262c}

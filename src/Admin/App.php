@@ -123,6 +123,8 @@ final class App
         $ctx = fn(?array $u, ?string $e, ?string $f): array => $this->ctx($u, $e, $f);
         if (preg_match('#^/(content|preview)(/|$)#', $p)) {
             $res = (new ContentController($this->sv, $this->prefix, $ctx, $ip))->handle($r, $user, $p, $this->sid());
+        } elseif (str_starts_with($p, '/media')) {
+            $res = (new MediaController($this->sv, $this->prefix, $ctx, $ip))->handle($r, $user, $p);
         } elseif (str_starts_with($p, '/design')) {
             $res = (new DesignController($this->sv, $this->prefix, $ctx, $ip))->handle($r, $user, $p);
         } else {
@@ -290,6 +292,7 @@ final class App
         $body = '<h1>Hola' . ($user['name'] !== '' ? ', ' . View::h((string)$user['name']) : '') . '</h1>'
             . '<p>Has entrado como <strong>' . View::h((string)$user['email']) . '</strong> (' . View::h((string)$user['role']) . ').</p>'
             . '<ul class="menu"><li><a href="' . $this->prefix . '/content">Contenido (páginas y entradas)</a></li>'
+            . (Authorizer::can($user, 'media.read') ? '<li><a href="' . $this->prefix . '/media">Biblioteca multimedia (imágenes)</a></li>' : '')
             . '<li><a href="' . $this->prefix . '/terms">Categorías y etiquetas</a></li>'
             . (Authorizer::can($user, 'site.publish') ? '<li><a href="' . $this->prefix . '/publish">Publicaciones, versiones y reversión</a></li>' : '')
             . (Authorizer::can($user, 'site.manage') ? '<li><a href="' . $this->prefix . '/menus">Menús</a></li><li><a href="' . $this->prefix . '/design">Diseño (cabecera, colores, tipografía, logo)</a></li><li><a href="' . $this->prefix . '/settings">Ajustes y generación del sitio</a></li>' : '')

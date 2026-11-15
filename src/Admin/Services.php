@@ -99,6 +99,23 @@ final class Services
         return $this->mediaStore ??= new MediaStore($this->db, $this->config->path('data') . '/media', fn(): MediaSettings => $this->mediaSettings());
     }
 
+    /** Claves de derivados que usan las versiones retenidas (no se limpian aunque lleven tiempo sin pedirse). @return list<string> */
+    public function mediaKeepKeys(): array
+    {
+        $keys = [];
+        $st = $this->releaseStore();
+        foreach ($st->all() as $id) {
+            $dir = is_dir($st->releasePath($id)) ? $st->releasePath($id) : ($id === $st->currentId() ? $st->currentPath() : '');
+            $j = $dir !== '' ? json_decode((string)@file_get_contents($dir . '/' . \LuxAeterna\Publishing\ReleaseStore::MEDIA), true) : null;
+            foreach ((array)$j as $list) {
+                foreach ((array)$list as $k) {
+                    $keys[(string)$k] = true;
+                }
+            }
+        }
+        return array_keys($keys);
+    }
+
     public function mfaRequired(): bool
     {
         return (string)$this->config->get('security.mfa', 'required') !== 'optional';

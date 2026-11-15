@@ -75,8 +75,11 @@ final class Doctor
         if (extension_loaded('gd') && function_exists('imagewebp')) {
             $this->add('ok', 'imagen', 'GD con soporte WebP' . (extension_loaded('imagick') ? ' (Imagick también disponible)' : ''));
         } else {
-            $this->add('warn', 'imagen', 'GD con WebP no disponible: será necesario en la Fase 6 (biblioteca multimedia).');
+            $this->add('warn', 'imagen', 'GD con WebP no disponible: sin él no se pueden subir ni publicar imágenes (biblioteca multimedia). Instala php-gd con soporte WebP.');
         }
+        extension_loaded('exif')
+            ? $this->add('ok', 'exif', 'EXIF disponible: se corrige la orientación de las fotos')
+            : $this->add('warn', 'exif', 'Falta la extensión exif: las fotos con orientación guardada en metadatos podrían verse giradas.');
         defined('PASSWORD_ARGON2ID')
             ? $this->add('ok', 'hash', 'Argon2id disponible para contraseñas')
             : $this->add('warn', 'hash', 'Argon2id no disponible; se usará bcrypt.');

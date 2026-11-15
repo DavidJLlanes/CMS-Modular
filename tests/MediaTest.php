@@ -178,3 +178,15 @@ T::test('media: límites de memoria y calidad', function () {
     T::eq([400, 800, 1000], Recipe::widths(1000, 1600, 736));
     T::eq([300], Recipe::widths(300, 1600, 736), 'una foto pequeña no se amplía');
 });
+T::test('media: verificación de originales (restauración) y claves en uso por versiones retenidas', function () {
+    [$sv, $store, $d] = lux_media();
+    $a = $store->add(lux_img("$d/a.jpg", 200, 100), 'a.jpg');
+    $b = $store->add(lux_img("$d/b2.png", 210, 100, 'png'), 'b.png');
+    T::eq(0, count($sv->media()->verify()['missing']));
+    unlink($store->originalPath($a));
+    file_put_contents($store->originalPath($b), 'otra cosa');
+    file_put_contents(dirname($store->originalPath($b)) . '/huerfano.jpg', 'x');
+    $v = $store->verify();
+    T::eq([[$a['uid']], [$b['uid']], 1], [$v['missing'], $v['corrupt'], count($v['orphans'])]);
+    T::eq([], $sv->mediaKeepKeys(), 'sin versiones, nada que conservar');
+});

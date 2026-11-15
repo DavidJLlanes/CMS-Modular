@@ -40,6 +40,10 @@ Uso: bin/lux <comando> [opciones]
   fonts[:check] | fonts:add <Familia> --license=OFL-1.1 [--weights=400,700] [--category=sans-serif]
   design:show | design:set ARCHIVO.json   Ver o sustituir los ajustes de diseño (incluye niveles por página)
   resources [--path=/ruta/]      Inventario de recursos de la versión activa
+  media [--q=texto]              Biblioteca multimedia: imágenes, tamaños y espacio
+  media:add <archivo>...         Sube imágenes (validación completa); informa de tiempo y memoria por lote
+  media:check                    Verifica los originales (faltan, alterados, huérfanos); útil tras una restauración
+  media:gc [--days=7] [--dry]    Limpia derivados sin uso (conserva los de las versiones retenidas)
   jobs                           Últimos trabajos de publicación
   jobs:run                       Ejecuta los trabajos pendientes (para cron)
   rollback <id>                  Reactiva una versión anterior
@@ -300,6 +304,58 @@ try {
                 break;
             }
             echo count($inv['pages']) . " páginas; módulos: " . implode(', ', array_keys($inv['modules'])) . "\nCompartidos por todas: " . implode(', ', $inv['shared']) . "\n";
+            break;
+
+        case 'media':
+            $sv = services($root, true);
+            $res = $sv->media()->search((string)($opts['q'] ?? ''), 100);
+            foreach ($res['items'] as $m) {
+                printf("%s  %5d×%-5d %-10s %8s  %s%s\n", $m['uid'], $m['width'], $m['height'], $m['mime'], round($m['bytes'] / 1024) . ' KB', $m['title'], $m['alt'] === '' ? '  [sin alt]' : '');
+            }
+            $st = $sv->media()->stats();
+            echo "{$res['total']} imágenes · originales " . round($st['original_bytes'] / 1048576, 1) . " MB · derivados {$st['derived_count']} (" . round($st['derived_bytes'] / 1048576, 1) . " MB)\n";
+            break;
+
+        case 'media:add':
+            $files = array_slice($pos, 1);
+            if ($files === []) {
+                fwrite(STDERR, "Uso: bin/lux media:add ARCHIVO...\n");
+                exit(1);
+            }
+            $sv = services($root, true);
+            $t0 = microtime(true);
+            $bad = 0;
+            foreach ($files as $f) {
+                $t = microtime(true);
+                try {
+                    $m = $sv->media()->add($f, basename($f));
+                    printf("%s  %s  %s  %.2f s\n", $m['duplicate'] ? 'YA EXISTE' : 'OK       ', $m['uid'], basename($f), microtime(true) - $t);
+                    if ($m['notes'] !== '') {
+                        echo "          aviso: {$m['notes']}\n";
+                    }
+                } catch (LuxException $e) {
+                    $bad++;
+                    fwrite(STDERR, "RECHAZADA  " . basename($f) . ': ' . $e->getMessage() . "\n");
+                }
+            }
+            printf("Lote: %d archivo(s), %.2f s, pico de memoria %.1f MB\n", count($files), microtime(true) - $t0, memory_get_peak_usage(true) / 1048576);
+            exit($bad > 0 ? 1 : 0);
+
+        case 'media:check':
+            $sv = services($root, true);
+            $v = $sv->media()->verify();
+            echo "{$v['checked']} originales comprobados.\n";
+            foreach (['missing' => 'FALTA', 'corrupt' => 'ALTERADO', 'orphans' => 'HUÉRFANO'] as $k => $label) {
+                foreach ($v[$k] as $x) {
+                    echo "$label  $x\n";
+                }
+            }
+            exit($v['missing'] === [] && $v['corrupt'] === [] ? 0 : 1);
+
+        case 'media:gc':
+            $sv = services($root, true);
+            $r = $sv->media()->gc($sv->mediaKeepKeys(), max(0, (int)($opts['days'] ?? 7)), isset($opts['dry']));
+            echo (isset($opts['dry']) ? 'Se borrarían ' : 'Borrados ') . "{$r['removed']} derivados (" . round($r['bytes'] / 1048576, 1) . " MB).\n";
             break;
 
         case 'design:show':

@@ -20,14 +20,14 @@ final class Client
     {
     }
 
-    public function req(string $method, string $path, array $post = [], array $headers = [], array $query = []): Response
+    public function req(string $method, string $path, array $post = [], array $headers = [], array $query = [], array $files = []): Response
     {
         $post = self::wire($post);
         $h = ['user-agent' => 'Mozilla/5.0 (iPhone) Safari'] + $headers;
         if ($method === 'POST' && !isset($h['origin'])) {
             $h['origin'] = 'https://luxaeterna.es';
         }
-        $res = (new App($this->sv))->handle(new Request($method, $path, $query, $post, $this->cookies, $h, $this->ip));
+        $res = (new App($this->sv))->handle(new Request($method, $path, $query, $post, $this->cookies, $h, $this->ip, $files));
         if ($res->status === 500) { // un 500 inesperado en pruebas: mostrar el detalle del log privado
             $log = (string)shell_exec('tail -n 3 ' . escapeshellarg($this->sv->config->path('data') . '/logs') . '/*.log 2>/dev/null');
             throw new \RuntimeException("HTTP 500 en $method $path: $log");
@@ -67,6 +67,19 @@ final class Client
             $post['csrf'] = $this->csrfFrom($this->get($csrfFromPath ?? $path));
         }
         return $this->req('POST', $path, $post);
+    }
+
+    /** Subida multipart simulada: $files = campo => [[nombre, ruta temporal], ...] */
+    public function upload(string $path, array $files, string $csrfFromPath, array $post = []): Response
+    {
+        $f = [];
+        foreach ($files as $field => $list) {
+            foreach ($list as [$name, $tmp]) {
+                $f[$field][] = ['name' => $name, 'tmp_name' => $tmp, 'size' => (int)@filesize($tmp), 'error' => 0];
+            }
+        }
+        $post['csrf'] ??= $this->csrfFrom($this->get($csrfFromPath));
+        return $this->req('POST', $path, $post, [], [], $f);
     }
 
     public function login(string $email, string $pw): Response

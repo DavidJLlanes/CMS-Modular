@@ -298,6 +298,35 @@ final class MediaStore
         return ['removed' => $n, 'bytes' => $bytes];
     }
 
+    /**
+     * Comprueba la integridad de los originales (backup/restauración): faltan, están alterados o sobran archivos.
+     * @return array{checked:int,missing:list<string>,corrupt:list<string>,orphans:list<string>}
+     */
+    public function verify(): array
+    {
+        $out = ['checked' => 0, 'missing' => [], 'corrupt' => [], 'orphans' => []];
+        $known = [];
+        foreach ($this->db->all('SELECT * FROM media ORDER BY id') as $m) {
+            $out['checked']++;
+            $f = $this->originalPath($m);
+            $known[$f] = true;
+            if (!is_file($f)) {
+                $out['missing'][] = (string)$m['uid'];
+            } elseif (hash_file('sha256', $f) !== $m['sha256']) {
+                $out['corrupt'][] = (string)$m['uid'];
+            }
+        }
+        $dir = $this->base . '/originals';
+        if (is_dir($dir)) {
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)) as $f) {
+                if (!isset($known[$f->getPathname()])) {
+                    $out['orphans'][] = substr($f->getPathname(), strlen($this->base) + 1);
+                }
+            }
+        }
+        return $out;
+    }
+
     /** @return array{count:int,original_bytes:int,derived_count:int,derived_bytes:int} */
     public function stats(): array
     {
