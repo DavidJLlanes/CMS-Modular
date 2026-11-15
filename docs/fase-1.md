@@ -34,6 +34,20 @@ Flujo vertical: `examples/sitio-demo/content.json` → plantilla `components/lay
 
 `deploy/install-vps.sh` instala o actualiza en `/var/www/luxaeterna.es/` (ver `deploy/README.md`). Se probó aquí con Nginx, PHP-FPM y un certificado autofirmado: HTTP/2 correcto, panel ejecutándose como el usuario `luxaeterna`, `/var/`, `/config/` y archivos ocultos con 404, y segunda ejecución sin cambios ni errores. En la prueba se encontraron y corrigieron dos fallos: la repetición del script dejaba la configuración ilegible para el usuario de la aplicación, y un fallo de DNS cortaba el script sin mensaje. No se ha ejecutado todavía en el servidor real.
 
+### Verificación en el VPS real (`vps-real`, IONOS, servidor de Nginx y correo)
+
+Ejecución del 2026-11-15 de `deploy/install-vps.sh --replace-vhost` (se sustituyó un vhost provisional de certbot, con copia de seguridad; se reutilizó su certificado):
+
+| Comprobación | Resultado |
+|---|---|
+| Entorno | PHP 8.3.6, GD con WebP, Argon2id, ~100 GB libres, activación por enlace simbólico |
+| `bin/lux doctor --http` | 11 comprobaciones correctas, incluida la de exposición de `var/` por HTTP (canario no servido) |
+| `https://luxaeterna.es/`, `/sobre-nosotros/`, `/admin/` | 200, 200, 200 |
+| `/var/`, `/.lux-release.json` | 404, 404 |
+| `tests/nginx-smoke.sh` | Pendiente de repetir con el sitio ya publicado. La primera ejecución fue antes de publicar y solo fueron concluyentes las comprobaciones del panel (todas correctas) |
+
+Hallazgo: el vhost provisional anterior tenía como raíz la misma carpeta donde se instala la aplicación, lo que exponía `app/` por HTTP hasta que se sustituyó. El script detecta ahora ese caso (otro `server_name` igual) y se detiene salvo que se use `--replace-vhost`.
+
 ## 3. Decisiones
 
 - [ADR-0008](decisiones/0008-configuracion-y-rutas.md): configuración JSON, URL base explícita, rutas, id de versión, errores/logs.
@@ -70,7 +84,7 @@ Resultado de la última ejecución: `php tests/run.php` → 24 correctas, 0 con 
 1. **Hosting compartido (perfil B):** el modo `rename` está implementado y probado, pero falta decidir cómo mapear el docroot del proveedor cuando no se puede apuntar a `publish/current` ni servir `/admin` desde otra raíz. Opciones a evaluar en la Fase 4: (a) `current` como docroot real con el panel en un subdirectorio copiado en cada publicación; (b) docroot fijo con `rename` de un subdirectorio y reglas `.htaccess`. Hasta entonces `deploy/apache/` es solo una plantilla.
 2. **Instalador web de un solo uso** (ADR-0007): no implementado; depende de la autenticación y del token de instalación de la Fase 2.
 3. **Cabeceras:** CSP y HSTS del sitio público se activan en la Fase 2; el panel ya envía CSP restrictiva.
-4. **Pruebas en el VPS real:** `bin/lux doctor` y `nginx-smoke.sh` deben ejecutarse en el IONOS (Nginx y correo). Pendiente de acceso (D11 parcialmente resuelta).
+4. **Pruebas en el VPS real:** `doctor --http` y las comprobaciones externas ya pasan (ver arriba); falta repetir `nginx-smoke.sh` con el sitio publicado.
 5. **Medición:** no se han tomado todavía cifras de rendimiento (protocolo de la Fase 0); el primer informe va en la Fase 4 con el generador completo.
 
 ## 7. Dependencia de la fase siguiente

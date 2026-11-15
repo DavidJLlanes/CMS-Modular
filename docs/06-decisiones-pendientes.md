@@ -14,5 +14,5 @@ Mientras no se resuelvan, se avanza con el valor provisional indicado y en tarea
 | D8 | Destino de copias fuera del VPS | Por definir | Fase 13 | Fase 13 |
 | D9 | MFA obligatorio en producción (TOTP) | Sí, TOTP | Fase 2 | Fase 2 |
 | D10 | Licencia del proyecto | Sin licencia (todos los derechos reservados) | Repositorio | Primera versión |
-| D11 | Servidor IONOS donde se instalará (Nginx/correo o Virtualmin/Apache) y sus vCPU, RAM y disco | Nginx dedicado, entorno de referencia | ADR-0006, Fase 1 | Fase 1 |
+| D11 | ✅ **Resuelta (2026-11-15): servidor IONOS de Nginx y correo, PHP 8.3.6, ~100 GB libres, instalado en `/var/www/luxaeterna.es`** | — | — | — |
 | D12 | ¿Hosting compartido concreto para pruebas reales (proveedor, plan, PHP, SSH/cron)? | Simulado con `sintético-b` | Fase 14 | Fase 14 |
