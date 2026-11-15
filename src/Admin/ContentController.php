@@ -35,6 +35,14 @@ final class ContentController
             return $a === null ? new Response(404, 'No encontrado', ['Content-Type' => 'text/plain; charset=utf-8'])
                 : new Response(200, $a[1], ['Content-Type' => $a[0], 'Access-Control-Allow-Origin' => '*', 'Cache-Control' => 'private, max-age=60', 'X-Content-Type-Options' => 'nosniff']);
         }
+        if (preg_match('#^/preview/media/([a-z0-9._-]{10,80})$#', $p, $m)) {
+            $a = $this->need($user, 'content.read') ?? $this->sv->preview->image($m[1]);
+            if ($a instanceof Response) {
+                return $a;
+            }
+            return $a === null ? new Response(404, 'No encontrado', ['Content-Type' => 'text/plain; charset=utf-8'])
+                : new Response(200, $a[1], ['Content-Type' => $a[0], 'Cache-Control' => 'private, max-age=300', 'X-Content-Type-Options' => 'nosniff']);
+        }
         if ($p === '/content') {
             return $this->need($user, 'content.read') ?? $this->listing($r, $user, $sid);
         }

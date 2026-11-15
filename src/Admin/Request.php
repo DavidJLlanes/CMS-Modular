@@ -10,6 +10,7 @@ final class Request
      * @param array<string,mixed>  $post
      * @param array<string,string> $cookies
      * @param array<string,string> $headers cabeceras en minúsculas
+     * @param array<string,list<array{name:string,tmp_name:string,size:int,error:int}>> $files archivos subidos por campo
      */
     public function __construct(
         public readonly string $method,
@@ -19,6 +20,7 @@ final class Request
         public readonly array $cookies = [],
         public readonly array $headers = [],
         public readonly string $remoteAddr = '0.0.0.0',
+        public readonly array $files = [],
     ) {
     }
 
@@ -41,8 +43,28 @@ final class Request
             $_POST,
             array_filter($_COOKIE, 'is_string'),
             $headers,
-            (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0')
+            (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'),
+            self::uploads()
         );
+    }
+
+    /** Solo archivos realmente subidos por HTTP (is_uploaded_file), normalizados a una lista por campo. @return array<string,list<array{name:string,tmp_name:string,size:int,error:int}>> */
+    private static function uploads(): array
+    {
+        $out = [];
+        foreach ($_FILES as $field => $f) {
+            if (!is_array($f) || !isset($f['tmp_name'])) {
+                continue;
+            }
+            foreach ((array)$f['tmp_name'] as $i => $tmp) {
+                $err = (int)(is_array($f['error']) ? $f['error'][$i] : $f['error']);
+                if (!is_string($tmp) || ($err === UPLOAD_ERR_OK && !is_uploaded_file($tmp))) {
+                    continue;
+                }
+                $out[(string)$field][] = ['name' => (string)(is_array($f['name']) ? $f['name'][$i] : $f['name']), 'tmp_name' => $tmp, 'size' => (int)(is_array($f['size']) ? $f['size'][$i] : $f['size']), 'error' => $err];
+            }
+        }
+        return $out;
     }
 
     public function header(string $name): string

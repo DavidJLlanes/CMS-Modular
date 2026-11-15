@@ -13,6 +13,8 @@ use LuxAeterna\Core\Config;
 use LuxAeterna\Core\Database;
 use LuxAeterna\Core\Migrator;
 use LuxAeterna\Core\Logger;
+use LuxAeterna\Media\MediaSettings;
+use LuxAeterna\Media\MediaStore;
 use LuxAeterna\Publishing\JobStore;
 use LuxAeterna\Publishing\Preview;
 use LuxAeterna\Publishing\PublishService;
@@ -47,6 +49,7 @@ final class Services
     public readonly Preview $preview;
     private ?PublishService $publishing = null;
     private ?JobStore $jobStore = null;
+    private ?MediaStore $mediaStore = null;
 
     public function __construct(public readonly Config $config, bool $migrate = false)
     {
@@ -72,8 +75,8 @@ final class Services
         $this->content = new ContentRepository($this->db, $this->types, $this->taxonomy);
         $this->menus = new Menus($this->db);
         $this->settings = new Settings($this->db);
-        $this->site = new SiteBuilder($this->db, $this->types, $this->menus, $this->settings);
-        $this->preview = new Preview($config, $this->types, $this->menus, $this->db, $config->root . '/components/layouts/base', fn(): array => $this->designSettings());
+        $this->site = new SiteBuilder($this->db, $this->types, $this->menus, $this->settings, fn(): array => $this->mediaSettings()->toArray());
+        $this->preview = new Preview($config, $this->types, $this->menus, $this->db, $config->root . '/components/layouts/base', fn(): array => $this->designSettings(), fn(): MediaStore => $this->media());
     }
 
     /** @return array<string,mixed> ajustes de diseño guardados */
@@ -81,6 +84,19 @@ final class Services
     {
         $d = json_decode((string)$this->settings->get('design', '{}'), true);
         return is_array($d) ? $d : [];
+    }
+
+    /** Ajustes de imagen vigentes (los guardados en el panel sobre los valores de la configuración). */
+    public function mediaSettings(): MediaSettings
+    {
+        $d = json_decode((string)$this->settings->get('media', '{}'), true);
+        return new MediaSettings($this->config, is_array($d) ? $d : []);
+    }
+
+    /** Biblioteca multimedia: originales privados en var/media y derivados WebP con huella. */
+    public function media(): MediaStore
+    {
+        return $this->mediaStore ??= new MediaStore($this->db, $this->config->path('data') . '/media', fn(): MediaSettings => $this->mediaSettings());
     }
 
     public function mfaRequired(): bool
@@ -116,7 +132,7 @@ final class Services
     {
         if ($this->publishing === null) {
             $logger = new Logger($this->config->path('data') . '/logs');
-            $publisher = new Publisher($this->config, $this->releaseStore(), $logger, $this->config->root . '/components/layouts/base');
+            $publisher = new Publisher($this->config, $this->releaseStore(), $logger, $this->config->root . '/components/layouts/base', $this->media());
             $this->publishing = new PublishService($this->config, $this->jobs(), $this->releaseStore(), $publisher, fn() => $this->site->build(), $logger, $this->ruleSync());
         }
         return $this->publishing;

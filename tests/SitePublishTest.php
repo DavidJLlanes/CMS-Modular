@@ -179,12 +179,12 @@ T::test('redirecciones: apuntar a algo no publicado se ignora con aviso y no rom
     T::eq(null, ($s->read)('/vieja/index.html'));
     T::ok((bool)array_filter($res['warnings'], fn($w) => str_contains($w, '/vieja/')));
 });
-T::test('imágenes y galerías: se guardan por identificador pero no se publican hasta la Fase 6 (error claro)', function () {
+T::test('galerías: se guardan por identificador pero no se publican hasta la Fase 8 (error claro)', function () {
     $s = lux_site();
     $home = ($s->page)('Inicio', 'Hola');
     $s->settings->set('home_uid', $s->repo->get($home)['uid']);
     ($s->page)('Galería', "Texto\n\n[galeria:viaje-2026]");
-    T::throws(LuxException::class, fn() => ($s->publishSite)(), 'biblioteca multimedia');
+    T::throws(LuxException::class, fn() => ($s->publishSite)(), 'Fase 8');
     T::ok($s->store->currentId() === null, 'no se activó nada');
 });
 T::test('previsualización: mismas plantillas, noindex, sin escribir en la versión pública', function () {

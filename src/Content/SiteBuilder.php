@@ -17,6 +17,8 @@ final class SiteBuilder
         private readonly TypeRegistry $types,
         private readonly Menus $menus,
         private readonly Settings $settings,
+        /** @var ?\Closure():array{quality:int,max_width:int} ajustes de procesado de imágenes */
+        private readonly ?\Closure $mediaSettings = null,
     ) {
     }
 
@@ -41,6 +43,8 @@ final class SiteBuilder
         }
         $termsByContent = $this->termsByContent();
         $pages = [];
+        $uses = [];
+        $noAlt = [];
         $paths = [];
         $uidPath = [];
         $redirects = [];
@@ -56,8 +60,16 @@ final class SiteBuilder
                 $redirects[] = ['from' => $this->types->path('page', (string)$r['slug']), 'to' => '/'];
             }
             $blocks = Blocks::validate(json_decode((string)$r['blocks'], true) ?: []);
-            if (Blocks::mediaRefs($blocks) !== []) {
-                throw new LuxException("«{$r['title']}» incluye imágenes o galerías, que necesitan la biblioteca multimedia (Fase 6). Quita esos bloques o espera a esa fase.");
+            foreach ($blocks as $b) {
+                if ($b['type'] === 'gallery') {
+                    throw new LuxException("«{$r['title']}» incluye una galería, que se publica a partir de la Fase 8. Quita ese bloque o espera a esa fase.");
+                }
+                if ($b['type'] === 'image') {
+                    $uses[(string)$b['ref']][] = (string)$r['title'];
+                    if (trim((string)$b['alt']) === '') {
+                        $noAlt[(string)$b['ref']][] = (string)$r['title'];
+                    }
+                }
             }
             $pages[] = new Page(
                 (string)$r['uid'], $isHome ? '' : (string)$r['slug'], (string)$r['title'], (string)$r['summary'], $blocks, false,
@@ -86,7 +98,36 @@ final class SiteBuilder
             $final[$rd['from']] = $rd;
         }
         $design = json_decode((string)$this->settings->get('design', '{}'), true);
-        return new SiteSnapshot($pages, $menus, array_values($final), $warnings, is_array($design) ? $design : []);
+        $media = $this->mediaFor($uses, $noAlt, $warnings);
+        return new SiteSnapshot($pages, $menus, array_values($final), $warnings, is_array($design) ? $design : [], $media);
+    }
+
+    /**
+     * Imágenes usadas por las páginas publicadas, congeladas con el resto del snapshot. Una referencia rota bloquea.
+     * @param array<string,list<string>> $uses ref → títulos @param array<string,list<string>> $noAlt @param list<string> $warnings
+     * @return array{items:array<string,array<string,mixed>>,quality:int,max_width:int}
+     */
+    private function mediaFor(array $uses, array $noAlt, array &$warnings): array
+    {
+        $items = [];
+        if ($uses !== []) {
+            $marks = implode(',', array_fill(0, count($uses), '?'));
+            foreach ($this->db->all("SELECT * FROM media WHERE uid IN ($marks)", array_keys($uses)) as $m) {
+                $items[(string)$m['uid']] = $m;
+            }
+        }
+        foreach ($uses as $ref => $titles) {
+            if (!isset($items[$ref])) {
+                throw new LuxException('«' . $titles[0] . '» usa una imagen que ya no existe en la biblioteca (' . $ref . '). Sustitúyela o quítala.');
+            }
+        }
+        foreach ($noAlt as $ref => $titles) {
+            if (trim((string)$items[$ref]['alt']) === '') {
+                $warnings[] = 'Imagen sin texto alternativo en «' . $titles[0] . '»' . (count($titles) > 1 ? ' y ' . (count($titles) - 1) . ' más' : '') . ' (' . $ref . ').';
+            }
+        }
+        $s = $this->mediaSettings === null ? ['quality' => 82, 'max_width' => 1600] : ($this->mediaSettings)();
+        return ['items' => $items, 'quality' => (int)$s['quality'], 'max_width' => (int)$s['max_width']];
     }
 
     /** @param list<Page> $pages */

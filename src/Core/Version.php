@@ -6,6 +6,6 @@ namespace LuxAeterna\Core;
 /** Versión del producto (la comparan los manifiestos de diseños y plugins en `requires.lux`). */
 final class Version
 {
-    public const CURRENT = '0.4.0';
-    public const LABEL = '0.4.0-fase5';
+    public const CURRENT = '0.5.0';
+    public const LABEL = '0.5.0-fase6';
 }

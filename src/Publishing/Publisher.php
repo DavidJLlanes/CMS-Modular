@@ -10,6 +10,7 @@ use LuxAeterna\Core\Fs;
 use LuxAeterna\Core\Logger;
 use LuxAeterna\Core\LuxException;
 use LuxAeterna\Core\TransientException;
+use LuxAeterna\Media\MediaStore;
 
 /**
  * Flujo vertical mínimo: contenido → plantilla → versión en un directorio temporal →
@@ -22,6 +23,7 @@ final class Publisher
         private readonly ReleaseStore $store,
         private readonly Logger $logger,
         private readonly string $layoutDir,
+        private readonly ?MediaStore $media = null,
     ) {
     }
 
@@ -115,7 +117,7 @@ final class Publisher
     /** @return array<string,mixed> metadatos (sin escribir) */
     private function render(SiteSnapshot $snap, string $out, string $id): array
     {
-        $r = new SiteRenderer($this->config, $this->layoutDir, $snap->design);
+        $r = new SiteRenderer($this->config, $this->layoutDir, $snap->design, false, $snap->media, $this->media);
         Fs::ensureDir($out . '/assets', 0755);
         $site = $r->siteVars($snap);
         foreach ($snap->pages as $p) {
@@ -129,7 +131,7 @@ final class Publisher
         foreach ($r->assets() as $url => $a) {
             Fs::ensureDir(dirname($out . $url), 0755);
             if (isset($a['file'])) {
-                if (!@copy($a['file'], $out . $url)) {
+                if (!@link($a['file'], $out . $url) && !@copy($a['file'], $out . $url)) {
                     throw new LuxException('No se pudo copiar un recurso de diseño.', "copy {$a['file']}");
                 }
                 @chmod($out . $url, 0644);
@@ -139,6 +141,7 @@ final class Publisher
             $own[] = $url;
         }
         sort($own);
+        Fs::atomicWrite($out . '/' . ReleaseStore::MEDIA, (string)json_encode($r->images->keys(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), 0644);
         Fs::atomicWrite($out . '/' . ReleaseStore::INVENTORY, (string)json_encode($r->design->inventory(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), 0644);
         $rules = RuleBuilder::clean($snap->redirects);
         Fs::atomicWrite($out . '/.lux-redirects.nginx.conf', RuleBuilder::nginx($rules), 0644);
@@ -184,7 +187,7 @@ final class Publisher
             $base = $pid === $this->store->currentId() && !is_dir($this->store->releasePath($pid)) ? $this->store->currentPath() : $this->store->releasePath($pid);
             foreach ((array)($m['assets_own'] ?? []) as $a) {
                 $a = (string)$a;
-                if (!preg_match('#^/assets/(?:[a-z]+/)?[A-Za-z0-9._-]+$#', $a) || in_array($a, $own, true) || in_array($a, $kept, true) || !is_file($base . $a)) {
+                if (!preg_match('#^/(?:assets/(?:[a-z]+/)?|media/)[A-Za-z0-9._-]+$#', $a) || in_array($a, $own, true) || in_array($a, $kept, true) || !is_file($base . $a)) {
                     continue;
                 }
                 Fs::ensureDir(dirname($out . $a), 0755);

@@ -12,7 +12,7 @@ final class Preflight
     /** Extensiones que nunca deben acabar en una versión pública. */
     private const FORBIDDEN = ['php', 'phtml', 'phar', 'sqlite', 'sqlite3', 'db', 'sql', 'env', 'log', 'bak', 'key', 'pem'];
     /** Archivos ocultos permitidos en la raíz de una versión. */
-    private const ALLOWED_DOT = ['.lux-release.json', '.htaccess', '.lux-redirects.nginx.conf', '.lux-inventory.json'];
+    private const ALLOWED_DOT = ['.lux-release.json', '.htaccess', '.lux-redirects.nginx.conf', '.lux-inventory.json', '.lux-media.json'];
     private const LIMITS = ['max_page_bytes' => 4194304, 'warn_page_bytes' => 1048576, 'max_files' => 50000, 'base_url' => ''];
 
     /** @return list<string> errores bloqueantes (compatibilidad con la Fase 1) */
@@ -67,6 +67,9 @@ final class Preflight
                 if (preg_match('/@import\b|url\(\s*[\'"]?\s*(?:https?:)?\/\//i', $css)) {
                     $errors[] = "Dependencia remota en el CSS: $rel";
                 }
+            }
+            if (str_starts_with($rel, 'media/') && !self::isWebp($file->getPathname())) {
+                $errors[] = "Archivo de imagen no válido (no es WebP): $rel";
             }
             if (strtolower($file->getExtension()) === 'html') {
                 $this->html($dir, $rel, (string)file_get_contents($file->getPathname()), (int)$file->getSize(), $lim, $errors, $warnings, $titles, $stubTargets);
@@ -143,6 +146,20 @@ final class Preflight
                 $errors[] = 'Dependencia remota (' . strtolower($t[1]) . ' → ' . substr($u[1], 0, 60) . ") en $rel";
             }
         }
+        if (preg_match_all('/<img\b[^>]*>/i', $html, $imgs)) {
+            foreach ($imgs[0] as $img) {
+                if (!preg_match('/\salt\s*=/i', $img)) {
+                    $warnings[] = "Imagen sin atributo alt: $rel";
+                }
+            }
+        }
+        if (preg_match_all('/\ssrcset=(["\'])([^"\']*)\1/i', $html, $sets)) {
+            foreach ($sets[2] as $set) {
+                foreach (explode(',', html_entity_decode($set, ENT_QUOTES)) as $cand) {
+                    $this->link($dir, $rel, trim((string)strtok(trim($cand), ' ')), $errors, $warnings);
+                }
+            }
+        }
         if (preg_match_all('/\b(?:href|src|action)=(["\'])([^"\']*)\1/i', $html, $links)) {
             foreach (array_unique($links[2]) as $raw) {
                 $this->link($dir, $rel, html_entity_decode($raw, ENT_QUOTES), $errors, $warnings);
@@ -186,6 +203,12 @@ final class Preflight
         if (!$ok) {
             $errors[] = "Enlace interno roto $url en $rel";
         }
+    }
+
+    private static function isWebp(string $file): bool
+    {
+        $h = (string)@file_get_contents($file, false, null, 0, 12);
+        return strlen($h) === 12 && str_starts_with($h, 'RIFF') && substr($h, 8, 4) === 'WEBP';
     }
 
     private function normalize(string $path): ?string

@@ -8,25 +8,38 @@ use LuxAeterna\Content\SiteSnapshot;
 use LuxAeterna\Core\Config;
 use LuxAeterna\Core\LuxException;
 use LuxAeterna\Design\DesignAssembler;
+use LuxAeterna\Media\ImageRenderer;
+use LuxAeterna\Media\MediaStore;
 
 /** Renderiza páginas con la plantilla del diseño. Lo usan por igual la publicación y la previsualización. */
 final class SiteRenderer
 {
     private string $template;
     public readonly DesignAssembler $design;
+    public readonly ImageRenderer $images;
     private bool $planned = false;
 
-    /** @param array<string,mixed> $designSettings ajustes de diseño del snapshot @param bool $preview URL privadas del panel en lugar de recursos públicos */
-    public function __construct(private readonly Config $config, string $layoutDir, array $designSettings = [], bool $preview = false)
+    /**
+     * @param array<string,mixed> $designSettings ajustes de diseño del snapshot
+     * @param bool $preview URL privadas del panel en lugar de recursos públicos
+     * @param array<string,mixed> $media imágenes y ajustes del snapshot (SiteSnapshot::$media)
+     */
+    public function __construct(private readonly Config $config, string $layoutDir, array $designSettings = [], bool $preview = false, array $media = [], ?MediaStore $store = null)
     {
         $this->template = self::read($layoutDir . '/template.html');
         $this->design = new DesignAssembler($config, dirname($layoutDir, 2), $designSettings, $preview);
+        $width = (int)round((float)($this->design->theme()['width'] ?? 46) * 16);
+        $this->images = new ImageRenderer((array)($media['items'] ?? []), (int)($media['quality'] ?? 82), (int)($media['max_width'] ?? 1600), $width, $store, $preview);
     }
 
     /** Recursos que hay que escribir junto a las páginas (ruta pública → contenido o archivo). @return array<string,array{content?:string,file?:string}> */
     public function assets(): array
     {
-        return $this->design->assets();
+        $a = $this->design->assets();
+        foreach ($this->images->files() as $url => $file) {
+            $a[$url] = ['file' => $file];
+        }
+        return $a;
     }
 
     /** @param list<array{label:string,url:string}> $links */
@@ -58,7 +71,7 @@ final class SiteRenderer
             'heading' => $p->title,
             'description' => $p->description,
             'canonical' => $this->config->baseUrl() . $p->path(),
-            'content' => BlockRenderer::render($p),
+            'content' => BlockRenderer::render($p, $this->images),
         ] + $this->design->pageVars($p));
     }
 

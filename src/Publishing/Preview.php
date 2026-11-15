@@ -9,6 +9,9 @@ use LuxAeterna\Content\SiteSnapshot;
 use LuxAeterna\Content\TypeRegistry;
 use LuxAeterna\Core\Config;
 use LuxAeterna\Core\Database;
+use LuxAeterna\Media\ImageRenderer;
+use LuxAeterna\Media\MediaStore;
+use LuxAeterna\Media\Recipe;
 
 /**
  * Previsualización con las MISMAS plantillas y el mismo renderizador que la publicación. Devuelve HTML en memoria:
@@ -18,7 +21,7 @@ final class Preview
 {
     public const CSS_URL = '/admin/preview/style.css';
 
-    public function __construct(private readonly Config $config, private readonly TypeRegistry $types, private readonly Menus $menus, private readonly Database $db, private readonly string $layoutDir, private readonly ?\Closure $design = null)
+    public function __construct(private readonly Config $config, private readonly TypeRegistry $types, private readonly Menus $menus, private readonly Database $db, private readonly string $layoutDir, private readonly ?\Closure $design = null, private readonly ?\Closure $media = null)
     {
     }
 
@@ -28,9 +31,54 @@ final class Preview
         return $this->design === null ? [] : ($this->design)();
     }
 
-    private function renderer(): SiteRenderer
+    private function renderer(array $media = []): SiteRenderer
     {
-        return new SiteRenderer($this->config, $this->layoutDir, $this->designSettings(), true);
+        return new SiteRenderer($this->config, $this->layoutDir, $this->designSettings(), true, $media);
+    }
+
+    private function store(): ?MediaStore
+    {
+        return $this->media === null ? null : ($this->media)();
+    }
+
+    /** @param list<array<string,mixed>> $blocks @return array{items:array<string,array<string,mixed>>,quality:int,max_width:int} imágenes del contenido en edición */
+    private function mediaFor(array $blocks): array
+    {
+        $store = $this->store();
+        $s = $store?->settings();
+        $items = [];
+        foreach ($blocks as $b) {
+            if ($store !== null && $b['type'] === 'image' && ($m = $store->get((string)$b['ref'])) !== null) {
+                $items[(string)$m['uid']] = $m;
+            }
+        }
+        return ['items' => $items, 'quality' => $s?->quality() ?? 82, 'max_width' => $s?->maxWidth() ?? 1600];
+    }
+
+    /**
+     * Sirve un derivado de imagen a la previsualización: se valida que nombre y clave correspondan a la receta vigente
+     * y se construye a demanda. @return array{0:string,1:string}|null [mime, bytes]
+     */
+    public function image(string $name): ?array
+    {
+        $store = $this->store();
+        if ($store === null || !preg_match('/^(img-[0-9a-f]{12})-(\d{2,5})\.([0-9a-f]{16})\.webp$/', $name, $m)) {
+            return null;
+        }
+        $rec = $store->get($m[1]);
+        if ($rec === null) {
+            return null;
+        }
+        $s = $store->settings();
+        $r = Recipe::make((int)$m[2], 0, 'inside', 50, 50, $s->quality());
+        if (Recipe::key((string)$rec['sha256'], $r) !== $m[3]) {
+            $r = $store->thumbRecipe(); // miniatura de la biblioteca
+            if ((int)$m[2] !== MediaStore::THUMB || Recipe::key((string)$rec['sha256'], $r) !== $m[3]) {
+                return null;
+            }
+        }
+        $d = $store->ensure($rec, [$r])[$m[3]] ?? null;
+        return $d === null ? null : ['image/webp', (string)file_get_contents($d['file'])];
     }
 
     /** CSS de previsualización para un contenido concreto (mismas clases de instancia que la publicación). */
@@ -62,8 +110,8 @@ final class Preview
     /** @param array<string,mixed> $rev revisión decodificada (title, slug, summary, fields, blocks) */
     public function html(string $type, array $rev, string $cssUrl = self::CSS_URL, string $uid = 'preview'): string
     {
-        $blocks = array_map(static fn(array $b): array => in_array($b['type'], ['image', 'gallery'], true)
-            ? ['type' => 'paragraph', 'text' => '[Aquí irá ' . ($b['type'] === 'image' ? 'la imagen' : 'la galería') . ' «' . $b['ref'] . '» cuando exista la biblioteca multimedia]']
+        $blocks = array_map(static fn(array $b): array => $b['type'] === 'gallery'
+            ? ['type' => 'paragraph', 'text' => '[Aquí irá la galería «' . $b['ref'] . '» cuando exista el módulo de galerías (Fase 8)]']
             : $b, (array)$rev['blocks']);
         $fields = [];
         foreach ($this->types->fields($type) as $name => $def) {
@@ -75,7 +123,7 @@ final class Preview
         $page = new Page($uid, (string)$rev['slug'], (string)$rev['title'] !== '' ? (string)$rev['title'] : '(sin título)', (string)$rev['summary'], $blocks, false,
             $this->types->path($type, (string)$rev['slug']), $type, time(), $fields);
         $snap = new SiteSnapshot([$page], ['main' => $this->links('main'), 'footer' => $this->links('footer')]);
-        $r = $this->renderer();
+        $r = $this->renderer($this->mediaFor($blocks));
         $site = $r->siteVars($snap, $cssUrl . (str_contains($cssUrl, '?') ? '&' : '?') . 'u=' . rawurlencode($uid) . '&t=' . rawurlencode($type), '<meta name="robots" content="noindex,nofollow">');
         return $r->page($page, $site);
     }
