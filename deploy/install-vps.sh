@@ -5,6 +5,7 @@
 # Uso (como root):
 #   bash install-vps.sh --domain=luxaeterna.es [--base=/var/www/luxaeterna.es] [--email=tu@correo]
 #                       [--repo=https://github.com/DavidJLlanes/LuxAeterna.git] [--branch=main] [--skip-ssl] [--no-ipv6]
+#                       [--cert-dir=/etc/letsencrypt/live/NOMBRE]   (certificado existente; si no, se detecta con certbot)
 #
 # Variables solo para pruebas: LUX_NO_SERVICES=1 (no recarga servicios), LUX_SKIP_DNS=1.
 set -euo pipefail
@@ -14,6 +15,7 @@ BASE="/var/www/luxaeterna.es"
 REPO="https://github.com/DavidJLlanes/LuxAeterna.git"
 BRANCH="main"
 EMAIL=""
+CERT_DIR_OPT=""
 SKIP_SSL=0
 NO_IPV6=0
 for a in "$@"; do
@@ -23,6 +25,7 @@ for a in "$@"; do
     --repo=*) REPO="${a#*=}" ;;
     --branch=*) BRANCH="${a#*=}" ;;
     --email=*) EMAIL="${a#*=}" ;;
+    --cert-dir=*) CERT_DIR_OPT="${a#*=}" ;;
     --skip-ssl) SKIP_SSL=1 ;;
     --no-ipv6) NO_IPV6=1 ;;
     *) echo "Opción desconocida: $a"; exit 1 ;;
@@ -47,13 +50,28 @@ IP="$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}' || true)"
 [ -n "$IP" ] || [ "${LUX_SKIP_DNS:-0}" = 1 ] || die "$DOMAIN no resuelve. Crea el registro A hacia la IP de este VPS y repite."
 echo "$DOMAIN → $IP (comprueba que es la IP de este servidor)"
 
-say "2/9 Paquetes (PHP-FPM, extensiones, git, certbot)"
+say "2/9 Paquetes (solo se instala lo que falta; no se actualiza nada ya instalado)"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-PKGS="git curl php-fpm php-cli php-sqlite3 php-mbstring php-gd php-xml"
-[ "$SKIP_SSL" = 1 ] || PKGS="$PKGS certbot"
-# shellcheck disable=SC2086
-apt-get install -y -qq $PKGS >/dev/null
+if command -v php >/dev/null 2>&1; then
+  PHPV="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
+  PHPPKG="php$PHPV"        # PHP ya presente: se usa su versión, sin cambiar de rama
+else
+  PHPPKG="php"             # sin PHP: metapaquete de la distribución
+fi
+WANT="git curl ${PHPPKG}-fpm ${PHPPKG}-cli ${PHPPKG}-sqlite3 ${PHPPKG}-mbstring ${PHPPKG}-gd ${PHPPKG}-xml"
+[ "$SKIP_SSL" = 1 ] || WANT="$WANT certbot"
+MISSING=""
+for p in $WANT; do
+  dpkg -s "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"
+done
+if [ -n "$MISSING" ]; then
+  echo "Se instalará:$MISSING"
+  apt-get update -qq
+  # shellcheck disable=SC2086
+  apt-get install -y -qq --no-upgrade $MISSING >/dev/null
+else
+  echo "Todo está ya instalado; no se cambia ningún paquete."
+fi
 PHPV="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
 php -r 'exit(version_compare(PHP_VERSION,"8.1.0",">=")?0:1);' || die "Se requiere PHP 8.1 o superior (hay $PHPV)."
 POOLDIR="/etc/php/$PHPV/fpm/pool.d"
@@ -63,7 +81,9 @@ echo "PHP $PHPV"
 
 say "3/9 Usuario y directorios"
 id "$APP_USER" >/dev/null 2>&1 || useradd --system --home-dir "$BASE" --no-create-home --shell /usr/sbin/nologin "$APP_USER"
-install -d -m 0755 -o root -g root "$BASE" "$BASE/acme"
+[ -d "$BASE" ] || install -d -m 0755 -o root -g root "$BASE"   # si ya existe, no se cambian su dueño ni sus permisos
+chmod o+x "$BASE"                                                # Nginx debe poder atravesarlo
+install -d -m 0755 -o root -g root "$BASE/acme"
 install -d -m 0750 -o "$APP_USER" -g "$APP_USER" "$BASE/var"
 install -d -m 0755 -o "$APP_USER" -g "$APP_USER" "$BASE/publish"
 
@@ -113,6 +133,11 @@ if [ -d /etc/nginx/sites-available ]; then
 else
   VHOST="/etc/nginx/conf.d/$DOMAIN.conf"; LINK=""
 fi
+# Un server_name igual en otro archivo haría que Nginx ignore el nuestro en silencio.
+DOMRE="${DOMAIN//./\\.}"
+CLASH="$(grep -RlsE "^[[:space:]]*server_name[^;]*[[:space:]]${DOMRE}([[:space:]]|;)" /etc/nginx/nginx.conf /etc/nginx/conf.d /etc/nginx/sites-enabled 2>/dev/null \
+  | grep -v -F -e "$VHOST" -e "${LINK:-/sin-enlace}" -e '.bak-' || true)"
+[ -z "$CLASH" ] || die "Ya hay otra configuración de Nginx con server_name $DOMAIN: $CLASH. Revísala o elimínala y repite."
 [ -f "$VHOST" ] && cp -a "$VHOST" "$VHOST.bak-$(date +%Y%m%d%H%M%S)"
 enable() { [ -z "$LINK" ] || ln -sfn "$VHOST" "$LINK"; }
 reload_nginx() {
@@ -121,9 +146,27 @@ reload_nginx() {
 }
 render_final() {
   sed -e "s#/var/www/luxaeterna.es#$BASE#g" -e "s#luxaeterna\.es#$DOMAIN#g" "$BASE/app/deploy/nginx/luxaeterna.conf" > "$VHOST"
+  sed -i "s#/etc/letsencrypt/live/$DOMAIN/#$CERT_DIR/#g" "$VHOST"
   [ "$NO_IPV6" = 0 ] || sed -i '/listen \[::\]/d' "$VHOST"
 }
-CERT="/etc/letsencrypt/live/$DOMAIN/fullchain.pem"
+# Certificado existente: se reutiliza el de certbot que cubra el dominio, aunque no se llame igual (p. ej. luxaeterna.es-0001).
+find_cert_dir() {
+  command -v certbot >/dev/null 2>&1 || return 0
+  certbot certificates 2>/dev/null | awk -v d="$DOMAIN" '
+    /Certificate Name:/ { ok = 0; bad = 0 }
+    /Domains:/ { for (i = 2; i <= NF; i++) { if ($i == d) ok = 1; if (substr($i,1,2) == "*." && d ~ ("^[^.]+\\." substr($i,3) "$")) ok = 1 } }
+    /INVALID/ { bad = 1 }
+    /Certificate Path:/ { if (ok && !bad) { sub(/\/fullchain\.pem$/, "", $3); print $3; exit } }'
+}
+CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
+if [ -n "$CERT_DIR_OPT" ]; then
+  CERT_DIR="${CERT_DIR_OPT%/}"
+elif [ ! -f "$CERT_DIR/fullchain.pem" ]; then
+  FOUND="$(find_cert_dir)"
+  [ -z "$FOUND" ] || CERT_DIR="$FOUND"
+fi
+CERT="$CERT_DIR/fullchain.pem"
+[ ! -f "$CERT" ] || echo "Certificado existente reutilizado: $CERT_DIR"
 if [ "$SKIP_SSL" = 0 ] && [ ! -f "$CERT" ]; then
   cat > "$VHOST" <<NGX
 server {

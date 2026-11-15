@@ -26,6 +26,15 @@ less /root/install-luxaeterna.sh          # revísalo antes de ejecutarlo
 bash /root/install-luxaeterna.sh --domain=luxaeterna.es --base=/var/www/luxaeterna.es --email=tu@correo
 ```
 
+**Si ya hay cosas instaladas:** el script solo instala los paquetes que faltan y nunca actualiza los existentes; si ya tienes PHP,
+usa su misma versión (≥ 8.1) sin cambiar de rama. **Si el dominio ya tiene certificado de certbot**, lo reutiliza: lo busca con
+`certbot certificates` (aunque se llame `luxaeterna.es-0001`) o puedes indicarlo con `--cert-dir=/etc/letsencrypt/live/NOMBRE`; no pide
+otro. El puerto 80 sirve `/.well-known/acme-challenge/` desde `/var/www/luxaeterna.es/acme` para que la renovación automática siga
+funcionando sea cual sea el método con el que se emitió. Si `/var/www/luxaeterna.es` ya existe, conserva su dueño y permisos (solo
+asegura que Nginx pueda atravesarlo). Se niega a continuar, sin cambiar nada, si `app/` existe y no es un clon de Git, o si otra
+configuración de Nginx ya declara `server_name luxaeterna.es`. Antes de reescribir su propio `luxaeterna.es.conf` guarda una copia
+`.bak-<fecha>`.
+
 El script es idempotente: repetirlo actualiza el código (`git merge --ff-only`) y reaplica la configuración. No modifica otros
 sitios de Nginx: escribe solo `luxaeterna.es.conf`, valida con `nginx -t` antes de recargar y, si falla, retira su configuración.
 Opciones: `--no-ipv6`, `--skip-ssl` (si ya tienes certificado), `--repo=`, `--branch=`.
