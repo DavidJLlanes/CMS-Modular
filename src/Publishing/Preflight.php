@@ -12,7 +12,7 @@ final class Preflight
     /** Extensiones que nunca deben acabar en una versión pública. */
     private const FORBIDDEN = ['php', 'phtml', 'phar', 'sqlite', 'sqlite3', 'db', 'sql', 'env', 'log', 'bak', 'key', 'pem'];
     /** Archivos ocultos permitidos en la raíz de una versión. */
-    private const ALLOWED_DOT = ['.lux-release.json', '.htaccess', '.lux-redirects.nginx.conf'];
+    private const ALLOWED_DOT = ['.lux-release.json', '.htaccess', '.lux-redirects.nginx.conf', '.lux-inventory.json'];
     private const LIMITS = ['max_page_bytes' => 4194304, 'warn_page_bytes' => 1048576, 'max_files' => 50000, 'base_url' => ''];
 
     /** @return list<string> errores bloqueantes (compatibilidad con la Fase 1) */
@@ -61,6 +61,12 @@ final class Preflight
             }
             if (in_array(strtolower($file->getExtension()), self::FORBIDDEN, true)) {
                 $errors[] = "Archivo privado o ejecutable en la versión: $rel";
+            }
+            if (strtolower($file->getExtension()) === 'css') {
+                $css = (string)file_get_contents($file->getPathname());
+                if (preg_match('/@import\b|url\(\s*[\'"]?\s*(?:https?:)?\/\//i', $css)) {
+                    $errors[] = "Dependencia remota en el CSS: $rel";
+                }
             }
             if (strtolower($file->getExtension()) === 'html') {
                 $this->html($dir, $rel, (string)file_get_contents($file->getPathname()), (int)$file->getSize(), $lim, $errors, $warnings, $titles, $stubTargets);
@@ -124,6 +130,17 @@ final class Preflight
                 if ($rel !== '404.html') {
                     $titles[$title][] = '/' . preg_replace('#index\.html$#', '', $rel);
                 }
+            }
+        }
+        if (preg_match_all('/<(link|script|img|iframe|source|video|audio|embed|object|input)\b[^>]*>/i', $html, $tags, PREG_SET_ORDER)) {
+            foreach ($tags as $t) {
+                if (!preg_match('/\s(?:src|href|data|poster|srcset)\s*=\s*["\']?\s*(?:https?:)?\/\/([^"\' >]+)/i', $t[0], $u)) {
+                    continue;
+                }
+                if (strtolower($t[1]) === 'link' && preg_match('/\srel\s*=\s*["\']?(?:canonical|alternate|author|license|me|next|prev|help)\b/i', $t[0])) {
+                    continue;
+                }
+                $errors[] = 'Dependencia remota (' . strtolower($t[1]) . ' → ' . substr($u[1], 0, 60) . ") en $rel";
             }
         }
         if (preg_match_all('/\b(?:href|src|action)=(["\'])([^"\']*)\1/i', $html, $links)) {

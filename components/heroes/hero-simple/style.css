@@ -1,0 +1,7 @@
+.lux-hero{background:var(--lux-hero-bg,var(--lux-primary));color:var(--lux-hero-text,var(--lux-primary-text));display:flex;align-items:center}
+.lux-hero__in{max-width:var(--lux-width);margin:0 auto;padding:2rem 1rem;width:100%}
+.lux-hero h1{margin:0;font-family:var(--lux-font-heading)}
+.lux-hero__sub{margin:.5rem 0 0;font-size:1.15rem}
+.lux-hero__sub:empty{display:none}
+.lux-hero--centro{text-align:center}
+.lux-hero--compacta{min-height:6rem}.lux-hero--media{min-height:12rem}.lux-hero--alta{min-height:20rem}

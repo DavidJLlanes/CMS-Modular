@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "id": "barra-aviso",
+  "type": "topbar",
+  "name": "Barra de aviso",
+  "version": "1.0.0",
+  "description": "Franja superior con un texto corto.",
+  "requires": { "lux": "0.4.0" },
+  "template": "template.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "texto": { "type": "text", "label": "Texto", "max": 140, "default": "Bienvenido" },
+    "estilo": { "type": "select", "label": "Estilo", "options": ["destacado", "suave"], "default": "destacado" }
+  },
+  "resources": { "fonts": [], "images": [] }
+}

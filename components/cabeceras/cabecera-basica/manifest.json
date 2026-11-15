@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "cabecera-basica",
+  "type": "header",
+  "name": "Cabecera básica",
+  "version": "1.0.0",
+  "description": "Logo a la izquierda y menú a la derecha.",
+  "requires": { "lux": "0.4.0" },
+  "template": "template.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "posicion": { "type": "select", "label": "Posición", "options": ["normal", "fija"], "default": "normal" }
+  },
+  "resources": { "fonts": [], "images": [] }
+}

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "footer-basico",
+  "type": "footer",
+  "name": "Pie básico",
+  "version": "1.0.0",
+  "description": "Nombre del sitio, texto opcional y menú del pie.",
+  "requires": { "lux": "0.4.0" },
+  "template": "template.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "texto": { "type": "text", "label": "Texto del pie", "max": 200, "default": "" }
+  },
+  "resources": { "fonts": [], "images": [] }
+}

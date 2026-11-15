@@ -63,7 +63,7 @@ final class Publisher
                 if ($pf['errors'] !== []) {
                     throw new LuxException('La comprobación previa ha fallado: ' . $pf['errors'][0] . (count($pf['errors']) > 1 ? ' (+' . (count($pf['errors']) - 1) . ' más)' : ''), implode("\n", $pf['errors']));
                 }
-                $warnings = array_values(array_unique(array_merge($snapshot->warnings, $pf['warnings'])));
+                $warnings = array_values(array_unique(array_merge($snapshot->warnings, $meta['design_warnings'] ?? [], $pf['warnings'])));
                 $cur = $this->store->currentId();
                 if (empty($opts['force']) && $cur !== null && ($this->store->meta($cur)['hash'] ?? null) === $meta['hash']) {
                     Fs::removeTree($tmp, $this->store->releasesDir());
@@ -115,11 +115,9 @@ final class Publisher
     /** @return array<string,mixed> metadatos (sin escribir) */
     private function render(SiteSnapshot $snap, string $out, string $id): array
     {
-        $r = new SiteRenderer($this->config, $this->layoutDir);
-        $cssPath = $r->publicStylesheet();
+        $r = new SiteRenderer($this->config, $this->layoutDir, $snap->design);
         Fs::ensureDir($out . '/assets', 0755);
-        Fs::atomicWrite($out . $cssPath, $r->css, 0644);
-        $site = $r->siteVars($snap, $cssPath);
+        $site = $r->siteVars($snap);
         foreach ($snap->pages as $p) {
             $this->write($out, $p->path(), $r->page($p, $site));
         }
@@ -127,13 +125,27 @@ final class Publisher
             $this->write($out, $rd['from'], $r->redirectStub($rd['to']));
         }
         Fs::atomicWrite($out . '/404.html', $r->notFound($site), 0644);
+        $own = [];
+        foreach ($r->assets() as $url => $a) {
+            Fs::ensureDir(dirname($out . $url), 0755);
+            if (isset($a['file'])) {
+                if (!@copy($a['file'], $out . $url)) {
+                    throw new LuxException('No se pudo copiar un recurso de diseño.', "copy {$a['file']}");
+                }
+                @chmod($out . $url, 0644);
+            } else {
+                Fs::atomicWrite($out . $url, (string)$a['content'], 0644);
+            }
+            $own[] = $url;
+        }
+        sort($own);
+        Fs::atomicWrite($out . '/' . ReleaseStore::INVENTORY, (string)json_encode($r->design->inventory(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), 0644);
         $rules = RuleBuilder::clean($snap->redirects);
         Fs::atomicWrite($out . '/.lux-redirects.nginx.conf', RuleBuilder::nginx($rules), 0644);
         Fs::atomicWrite($out . '/.htaccess', RuleBuilder::apache($rules, "Options -Indexes\nErrorDocument 404 /404.html"), 0644);
-        $own = [$cssPath];
-        $kept = $this->carryAssets($out, $own);
         $hash = $this->treeHash($out);
-        return ['id' => $id, 'created' => gmdate('c'), 'pages' => count($snap->pages), 'hash' => $hash, 'assets_own' => $own, 'assets' => array_merge($own, $kept), 'redirects' => count($rules)];
+        $kept = $this->carryAssets($out, $own);
+        return ['id' => $id, 'created' => gmdate('c'), 'pages' => count($snap->pages), 'hash' => $hash, 'assets_own' => $own, 'assets' => array_merge($own, $kept), 'redirects' => count($rules), 'design_warnings' => array_slice($r->design->warnings(), 0, 30)];
     }
 
     /** Hash determinista del contenido generado (contenido + configuración + plantilla). */
@@ -172,9 +184,10 @@ final class Publisher
             $base = $pid === $this->store->currentId() && !is_dir($this->store->releasePath($pid)) ? $this->store->currentPath() : $this->store->releasePath($pid);
             foreach ((array)($m['assets_own'] ?? []) as $a) {
                 $a = (string)$a;
-                if (!preg_match('#^/assets/[A-Za-z0-9._-]+$#', $a) || in_array($a, $own, true) || in_array($a, $kept, true) || !is_file($base . $a)) {
+                if (!preg_match('#^/assets/(?:[a-z]+/)?[A-Za-z0-9._-]+$#', $a) || in_array($a, $own, true) || in_array($a, $kept, true) || !is_file($base . $a)) {
                     continue;
                 }
+                Fs::ensureDir(dirname($out . $a), 0755);
                 if (!@link($base . $a, $out . $a) && !@copy($base . $a, $out . $a)) {
                     continue;
                 }

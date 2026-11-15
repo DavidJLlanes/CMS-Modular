@@ -23,7 +23,17 @@ final class ContentController
     {
         $post = $r->method === 'POST';
         if ($p === '/preview/style.css') {
-            return $this->need($user, 'content.read') ?? new Response(200, $this->sv->preview->css(), ['Content-Type' => 'text/css; charset=utf-8']);
+            $uid = preg_match('/^c_[A-Za-z0-9]{4,40}$/', $r->query['u'] ?? '') ? (string)$r->query['u'] : 'preview';
+            $type = preg_match('/^[a-z][a-z0-9_-]{0,30}$/', $r->query['t'] ?? '') ? (string)$r->query['t'] : 'page';
+            return $this->need($user, 'content.read') ?? new Response(200, $this->sv->preview->css($uid, $type), ['Content-Type' => 'text/css; charset=utf-8', 'Cache-Control' => 'no-store, private']);
+        }
+        if (preg_match('#^/preview/(font)/([a-z0-9-]{1,40})/([a-z0-9-]+\.woff2)$#', $p, $m) || preg_match('#^/preview/(logo)/([A-Za-z0-9][A-Za-z0-9_.-]{0,60})$#', $p, $m)) {
+            $a = $this->need($user, 'content.read') ?? $this->sv->preview->asset($m[1], $m[2], $m[3] ?? '');
+            if ($a instanceof Response) {
+                return $a;
+            }
+            return $a === null ? new Response(404, 'No encontrado', ['Content-Type' => 'text/plain; charset=utf-8'])
+                : new Response(200, $a[1], ['Content-Type' => $a[0], 'Access-Control-Allow-Origin' => '*', 'Cache-Control' => 'private, max-age=60', 'X-Content-Type-Options' => 'nosniff']);
         }
         if ($p === '/content') {
             return $this->need($user, 'content.read') ?? $this->listing($r, $user, $sid);
@@ -303,9 +313,9 @@ final class ContentController
             if ($rev === null) {
                 return new Response(404, 'Revisión no encontrada', ['Content-Type' => 'text/plain; charset=utf-8']);
             }
-            return new Response(200, $this->sv->preview->html((string)$c['type'], $rev), [
+            return new Response(200, $this->sv->preview->html((string)$c['type'], $rev, \LuxAeterna\Publishing\Preview::CSS_URL, (string)$c['uid']), [
                 'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Security-Policy' => "default-src 'none'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
+                'Content-Security-Policy' => "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
                 'X-Frame-Options' => 'SAMEORIGIN',
                 'X-Robots-Tag' => 'noindex, nofollow, noarchive',
                 'Cache-Control' => 'no-store, private',

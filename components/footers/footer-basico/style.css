@@ -1,0 +1,5 @@
+.lux-footer{border-top:1px solid var(--lux-border);background:var(--lux-footer-bg,var(--lux-surface));color:var(--lux-footer-text,var(--lux-muted))}
+.lux-footer__in{max-width:var(--lux-width);margin:0 auto;padding:1rem}
+.lux-footer p{margin:.25rem 0}
+.lux-footer__txt:empty{display:none}
+.lux-footer a{margin-right:1rem;color:var(--lux-footer-link,var(--lux-link))}

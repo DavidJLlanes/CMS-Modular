@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "footer-centrado",
+  "type": "footer",
+  "name": "Pie centrado",
+  "version": "1.0.0",
+  "description": "Todo centrado: logo, texto y menú en columnas.",
+  "requires": { "lux": "0.4.0" },
+  "template": "template.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "texto": { "type": "text", "label": "Texto del pie", "max": 200, "default": "Hecho con LuxAeterna" }
+  },
+  "resources": { "fonts": [], "images": [] }
+}

@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "id": "cabeceraguay2",
+  "type": "header",
+  "name": "Cabecera guay 2",
+  "version": "1.0.0",
+  "description": "Logo centrado con eslogan y el menú debajo.",
+  "requires": { "lux": "0.4.0" },
+  "template": "template.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "eslogan": { "type": "text", "label": "Eslogan", "max": 80, "default": "" },
+    "fondo": { "type": "color", "label": "Color de fondo", "default": "#f4efe6" }
+  },
+  "resources": { "fonts": [], "images": [] }
+}

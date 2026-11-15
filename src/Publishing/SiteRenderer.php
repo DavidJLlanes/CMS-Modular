@@ -7,24 +7,26 @@ use LuxAeterna\Content\Page;
 use LuxAeterna\Content\SiteSnapshot;
 use LuxAeterna\Core\Config;
 use LuxAeterna\Core\LuxException;
+use LuxAeterna\Design\DesignAssembler;
 
 /** Renderiza páginas con la plantilla del diseño. Lo usan por igual la publicación y la previsualización. */
 final class SiteRenderer
 {
     private string $template;
-    public readonly string $css;
-    public readonly string $cssHash;
+    public readonly DesignAssembler $design;
+    private bool $planned = false;
 
-    public function __construct(private readonly Config $config, string $layoutDir)
+    /** @param array<string,mixed> $designSettings ajustes de diseño del snapshot @param bool $preview URL privadas del panel en lugar de recursos públicos */
+    public function __construct(private readonly Config $config, string $layoutDir, array $designSettings = [], bool $preview = false)
     {
         $this->template = self::read($layoutDir . '/template.html');
-        $this->css = self::read($layoutDir . '/style.css');
-        $this->cssHash = substr(hash('sha256', $this->css), 0, 10);
+        $this->design = new DesignAssembler($config, dirname($layoutDir, 2), $designSettings, $preview);
     }
 
-    public function publicStylesheet(): string
+    /** Recursos que hay que escribir junto a las páginas (ruta pública → contenido o archivo). @return array<string,array{content?:string,file?:string}> */
+    public function assets(): array
     {
-        return '/assets/style.' . $this->cssHash . '.css';
+        return $this->design->assets();
     }
 
     /** @param list<array{label:string,url:string}> $links */
@@ -34,16 +36,18 @@ final class SiteRenderer
     }
 
     /** @return array<string,string> variables comunes a todas las páginas */
-    public function siteVars(SiteSnapshot $s, string $stylesheet, string $headExtra = ''): array
+    public function siteVars(SiteSnapshot $s, string $previewCssUrl = '', string $headExtra = ''): array
     {
-        return [
+        $site = [
             'lang' => (string)$this->config->get('site.lang', 'es'),
             'site_name' => (string)$this->config->get('site.name', 'LuxAeterna'),
             'nav' => self::navHtml($s->menus['main'] ?? []),
             'footer_nav' => self::navHtml($s->menus['footer'] ?? []),
-            'stylesheet' => $stylesheet,
             'head_extra' => $headExtra,
         ];
+        $this->design->plan($s->pages, $site, $previewCssUrl);
+        $this->planned = true;
+        return $site;
     }
 
     /** @param array<string,string> $site */
@@ -55,19 +59,21 @@ final class SiteRenderer
             'description' => $p->description,
             'canonical' => $this->config->baseUrl() . $p->path(),
             'content' => BlockRenderer::render($p),
-        ]);
+        ] + $this->design->pageVars($p));
     }
 
     /** @param array<string,string> $site */
     public function notFound(array $site): string
     {
+        $p = new Page('404', '404', 'Página no encontrada', '', [], false, '/404.html', 'page');
+        $this->design->planExtra($p, $site);
         return Template::render($this->template, $site + [
             'title' => 'Página no encontrada',
             'heading' => 'Página no encontrada',
             'description' => '',
             'canonical' => $this->config->baseUrl() . '/',
             'content' => "<p>La página que buscas no existe. <a href=\"/\">Volver al inicio</a>.</p>\n",
-        ]);
+        ] + $this->design->pageVars($p));
     }
 
     /** Página mínima de redirección para servidores estáticos sin reglas HTTP (la Fase 4 añade 301 reales). */

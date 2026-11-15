@@ -1,0 +1,5 @@
+.lux-header{background:var(--lux-header-bg,var(--lux-surface));color:var(--lux-header-text,var(--lux-text));border-bottom:1px solid var(--lux-border)}
+.lux-header--fija{position:sticky;top:0;z-index:10}
+.lux-header__in{max-width:var(--lux-width);margin:0 auto;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.lux-brand{font-weight:700;font-family:var(--lux-font-heading);color:var(--lux-header-text,var(--lux-text));text-decoration:none;display:inline-flex;align-items:center}
+.lux-nav a{margin-left:1rem;color:var(--lux-header-link,var(--lux-link))}

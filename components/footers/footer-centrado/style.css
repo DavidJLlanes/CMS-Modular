@@ -1,0 +1,4 @@
+.lux-footer2{text-align:center;padding:1.5rem 1rem;background:var(--lux-footer-bg,var(--lux-surface));color:var(--lux-footer-text,var(--lux-muted));border-top:1px solid var(--lux-border)}
+.lux-footer2 .lux-brand{font-family:var(--lux-font-heading);color:var(--lux-text);text-decoration:none}
+.lux-footer2 nav a{margin:0 .6rem;color:var(--lux-footer-link,var(--lux-link))}
+.lux-footer2 p:empty{display:none}

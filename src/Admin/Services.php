@@ -73,7 +73,14 @@ final class Services
         $this->menus = new Menus($this->db);
         $this->settings = new Settings($this->db);
         $this->site = new SiteBuilder($this->db, $this->types, $this->menus, $this->settings);
-        $this->preview = new Preview($config, $this->types, $this->menus, $this->db, $config->root . '/components/layouts/base');
+        $this->preview = new Preview($config, $this->types, $this->menus, $this->db, $config->root . '/components/layouts/base', fn(): array => $this->designSettings());
+    }
+
+    /** @return array<string,mixed> ajustes de diseño guardados */
+    public function designSettings(): array
+    {
+        $d = json_decode((string)$this->settings->get('design', '{}'), true);
+        return is_array($d) ? $d : [];
     }
 
     public function mfaRequired(): bool

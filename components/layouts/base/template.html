@@ -7,15 +7,11 @@
 <meta name="description" content="{{ description }}">
 <link rel="canonical" href="{{ canonical }}">
 {{{ head_extra }}}
-<link rel="stylesheet" href="{{ stylesheet }}">
+{{{ head_assets }}}
 </head>
 <body>
-<header class="site-header"><a class="brand" href="/">{{ site_name }}</a>
-<nav aria-label="Principal">{{{ nav }}}</nav></header>
-<main>
-<h1>{{ heading }}</h1>
-{{{ content }}}</main>
-<footer class="site-footer"><p>{{ site_name }}</p>
-<nav aria-label="Pie">{{{ footer_nav }}}</nav></footer>
-</body>
+{{{ topbar }}}{{{ header }}}<main>
+{{{ hero }}}<div class="lux-content">
+{{{ page_heading }}}{{{ content }}}</div></main>
+{{{ footer }}}</body>
 </html>

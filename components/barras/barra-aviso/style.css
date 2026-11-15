@@ -1,0 +1,4 @@
+.lux-topbar{text-align:center;padding:.4rem 1rem;font-size:.9rem}
+.lux-topbar p{margin:0}
+.lux-topbar--destacado{background:var(--lux-topbar-bg,var(--lux-primary));color:var(--lux-topbar-text,var(--lux-primary-text))}
+.lux-topbar--suave{background:var(--lux-topbar-bg,var(--lux-surface));color:var(--lux-topbar-text,var(--lux-text));border-bottom:1px solid var(--lux-border)}

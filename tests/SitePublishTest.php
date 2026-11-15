@@ -197,10 +197,10 @@ T::test('previsualización: mismas plantillas, noindex, sin escribir en la versi
     $html = $s->preview->html('post', $s->repo->get($id)['rev']);
     T::contains('PREVIEW-SECRETA', $html);
     T::contains('<meta name="robots" content="noindex,nofollow">', $html);
-    T::contains('href="/admin/preview/style.css"', $html);
+    T::contains('href="/admin/preview/style.css?u=', $html);
     T::contains('Borrador &lt;b&gt;', $html);
     T::contains('foto-uno', $html);
-    T::contains('<header class="site-header">', $html, 'misma plantilla');
+    T::contains('<header class="lux-header', $html, 'misma plantilla');
     T::eq($before, lux_all_output($s), 'la previsualización no escribe en lo publicado');
     ($s->publishSite)();
     T::ok(!str_contains(lux_all_output($s), 'PREVIEW-SECRETA'));

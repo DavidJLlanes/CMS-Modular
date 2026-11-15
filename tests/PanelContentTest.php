@@ -196,7 +196,7 @@ T::test('panel editorial: previsualización privada con las plantillas reales, n
     $frame = $a->get("/admin/content/$id/preview", ['frame' => '1']);
     T::eq(200, $frame->status);
     T::contains('TEXTO-PRIVADO', $frame->body);
-    T::contains('<header class="site-header">', $frame->body);
+    T::contains('<header class="lux-header', $frame->body);
     T::contains('Borrador &lt;i&gt;secreto&lt;/i&gt;', $frame->body);
     T::contains('noindex', $frame->headers['X-Robots-Tag']);
     T::contains('no-store', $frame->headers['Cache-Control']);

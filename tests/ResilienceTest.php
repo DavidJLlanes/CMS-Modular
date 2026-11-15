@@ -8,8 +8,9 @@ use LuxAeterna\Core\Fs;
 /** Copia la plantilla base y sustituye style.css por una tubería: el proceso que la lea se bloquea ahí (con el bloqueo de publicación tomado). */
 function lux_blocking_layout(string $d): string
 {
-    $dst = "$d/layout";
+    $dst = "$d/comp/layouts/base";
     mkdir($dst, 0755, true);
+    exec('cp -a ' . escapeshellarg(dirname(__DIR__) . '/components/cabeceras') . ' ' . escapeshellarg(dirname(__DIR__) . '/components/footers') . ' ' . escapeshellarg(dirname(__DIR__) . '/components/barras') . ' ' . escapeshellarg(dirname(__DIR__) . '/components/heroes') . ' ' . escapeshellarg(dirname(__DIR__) . '/components/fonts') . ' ' . escapeshellarg("$d/comp"));
     copy(dirname(__DIR__) . '/components/layouts/base/template.html', "$dst/template.html");
     posix_mkfifo("$dst/style.css", 0644);
     return $dst;

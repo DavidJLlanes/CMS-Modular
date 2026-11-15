@@ -85,7 +85,8 @@ final class SiteBuilder
             }
             $final[$rd['from']] = $rd;
         }
-        return new SiteSnapshot($pages, $menus, array_values($final), $warnings);
+        $design = json_decode((string)$this->settings->get('design', '{}'), true);
+        return new SiteSnapshot($pages, $menus, array_values($final), $warnings, is_array($design) ? $design : []);
     }
 
     /** @param list<Page> $pages */

@@ -14,6 +14,7 @@ use LuxAeterna\Core\LuxException;
 final class ReleaseStore
 {
     public const META = '.lux-release.json';
+    public const INVENTORY = '.lux-inventory.json';
     /** AAAAMMDDHHMMSSuuuuuu-xxxx: ordenable cronológicamente (microsegundos) con sufijo aleatorio. */
     public const ID_PATTERN = '/^\d{20}-[0-9a-f]{4}$/';
 

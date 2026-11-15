@@ -36,6 +36,9 @@ Uso: bin/lux <comando> [opciones]
                                  Genera y activa una versión con el contenido publicado en el panel
                                  (si no hay ninguno, el sitio de demostración)
   releases                       Lista las versiones y marca la activa
+  designs[:refresh]              Diseños detectados en components/ (y errores de contrato)
+  fonts[:check] | fonts:add <Familia> --license=OFL-1.1 [--weights=400,700] [--category=sans-serif]
+  resources [--path=/ruta/]      Inventario de recursos de la versión activa
   jobs                           Últimos trabajos de publicación
   jobs:run                       Ejecuta los trabajos pendientes (para cron)
   rollback <id>                  Reactiva una versión anterior
@@ -128,7 +131,7 @@ try {
     guardUser($root, $cmd);
     switch ($cmd) {
         case 'version':
-            echo "LuxAeterna 0.3.0-fase4\n";
+            echo "LuxAeterna " . \LuxAeterna\Core\Version::LABEL . "\n";
             break;
 
         case 'doctor':
@@ -247,6 +250,55 @@ try {
             }
             $sv->audit->log('site.rollback', null, 'cli', null, ['release' => $id]);
             echo "Versión $id activada.\n";
+            break;
+
+        case 'designs':
+        case 'designs:refresh':
+            $config = Config::load($root);
+            $reg = new \LuxAeterna\Design\DesignRegistry($root . '/components', $config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT);
+            $idx = $cmd === 'designs:refresh' ? $reg->refresh() : $reg->index();
+            foreach ($idx['designs'] as $d) {
+                printf("%-18s %-8s v%-7s %s  (%s)\n", $d['id'], $d['type'], $d['version'], $d['name'], $d['dir']);
+            }
+            foreach ($idx['errors'] as $e) {
+                fwrite(STDERR, "  ! {$e['dir']}: {$e['message']}\n");
+            }
+            echo count($idx['designs']) . ' diseños válidos, ' . count($idx['errors']) . " con errores.\n";
+            exit($idx['errors'] === [] ? 0 : 1);
+
+        case 'fonts':
+        case 'fonts:check':
+            $cat = new \LuxAeterna\Design\FontCatalog($root . '/components/fonts');
+            foreach ($cat->all() as $f) {
+                printf("%-18s %-11s %-9s %d variantes  faltan: %s\n", $f['slug'], $f['category'], $f['license'], count($f['variants']), implode('', $cat->missingChars($f['slug'], ['es'])) ?: 'ninguno');
+            }
+            $bad = $cat->problems();
+            foreach ($bad as $b) {
+                fwrite(STDERR, "  ! $b\n");
+            }
+            exit($bad === [] ? 0 : 1);
+
+        case 'fonts:add':
+            $fam = $pos[1] ?? '';
+            $w = array_values(array_filter(array_map('intval', explode(',', (string)($opts['weights'] ?? '400,700')))));
+            $slug = (new \LuxAeterna\Design\FontCatalog($root . '/components/fonts'))->importFromGoogle($fam, $w, (string)($opts['license'] ?? ''), (string)($opts['category'] ?? 'sans-serif'));
+            echo "Fuente añadida al catálogo local: $slug. Revisa la licencia en components/fonts/$slug/.\n";
+            break;
+
+        case 'resources':
+            $config = Config::load($root);
+            $f = store($config)->currentPath() . '/' . ReleaseStore::INVENTORY;
+            $inv = is_file($f) ? json_decode((string)file_get_contents($f), true) : null;
+            if (!is_array($inv)) {
+                fwrite(STDERR, "No hay inventario: publica primero.\n");
+                exit(1);
+            }
+            if (isset($opts['path'])) {
+                $pg = $inv['pages'][(string)$opts['path']] ?? null;
+                echo $pg === null ? "Página desconocida.\n" : implode("\n", $pg['resources']) . "\n";
+                break;
+            }
+            echo count($inv['pages']) . " páginas; módulos: " . implode(', ', array_keys($inv['modules'])) . "\nCompartidos por todas: " . implode(', ', $inv['shared']) . "\n";
             break;
 
         case 'migrate':
