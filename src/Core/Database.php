@@ -7,6 +7,7 @@ namespace LuxAeterna\Core;
 final class Database
 {
     private \PDO $pdo;
+    private bool $inTx = false;
 
     public function __construct(string $file)
     {
@@ -79,16 +80,24 @@ final class Database
     /** @template T @param callable():T $fn @return T */
     public function transaction(callable $fn): mixed
     {
+        if ($this->inTx) {
+            return $fn(); // anidada: participa en la transacción exterior
+        }
         $this->pdo->exec('BEGIN IMMEDIATE');
+        $this->inTx = true; // PDO::inTransaction() no siempre detecta un BEGIN ejecutado con exec()
         try {
             $r = $fn();
             $this->pdo->exec('COMMIT');
             return $r;
         } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) {
+            try {
                 $this->pdo->exec('ROLLBACK');
+            } catch (\Throwable) {
+                // ya estaba cerrada por SQLite
             }
             throw $e;
+        } finally {
+            $this->inTx = false;
         }
     }
 }
