@@ -1,0 +1,37 @@
+/* Editor de bloques del panel (no se publica en el sitio). Objetivos táctiles de 44 px, foco visible y sin estilos en línea. */
+.lux-editor-root{margin:1rem 0}
+.lux-ed-toolbar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;background:#fff;border:1px solid #c9cdd4;border-radius:.5rem;padding:.4rem;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.lux-ed-btn{min-width:44px;min-height:44px;padding:.3rem .7rem;border:1px solid #9aa1ad;border-radius:.4rem;background:#f4f5f7;color:#111;font:inherit;cursor:pointer}
+.lux-ed-btn.b{font-weight:700}.lux-ed-btn.i{font-style:italic}.lux-ed-btn.u{text-decoration:underline}.lux-ed-btn.s{text-decoration:line-through}
+.lux-ed-btn.is-on{background:#1f3a8a;color:#fff;border-color:#1f3a8a}.lux-ed-btn.is-off{opacity:.45}.lux-ed-btn.danger{color:#9b1c1c;border-color:#d99}
+.lux-ed-btn:focus-visible,.lux-ed-text:focus-visible,.lux-blk:focus-visible,.lux-ed-tablewrap:focus-visible,.lux-editor-root select:focus-visible,.lux-editor-root input:focus-visible{outline:3px solid #1f3a8a;outline-offset:2px}
+.lux-editor-root select,.lux-editor-root input[type=text],.lux-editor-root input[type=search]{min-height:44px;font:inherit;max-width:100%}
+.lux-ed-row{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.4rem 0}
+.lux-ed-linkbox{background:#eef2ff;border:1px solid #c7d2fe;border-radius:.4rem;padding:.4rem}.lux-ed-linkbox input[type=text]{flex:1 1 14rem}
+.lux-ed-banner{background:#fff7e0;border:1px solid #e6c875;border-radius:.4rem;padding:.5rem;margin-bottom:.5rem}
+.lux-ed-blocks{margin:.75rem 0;display:flex;flex-direction:column;gap:.6rem}
+.lux-blk{border:1px solid #d0d4db;border-radius:.5rem;background:#fff;padding:.4rem .6rem .6rem}.lux-blk.is-sel{border-color:#1f3a8a;box-shadow:0 0 0 2px rgba(31,58,138,.2)}.lux-blk.is-nested{background:#fafbfc}
+.lux-ed-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.4rem;margin-bottom:.3rem}.lux-ed-type{font-size:.85rem;color:#444;text-transform:uppercase;letter-spacing:.05em}.lux-ed-ops{display:flex;gap:.3rem}
+.lux-ed-text{min-height:2.4rem;padding:.4rem .5rem;border:1px dashed #c3c8d1;border-radius:.3rem;background:#fff;color:#111;white-space:pre-wrap;overflow-wrap:anywhere}
+.lux-ed-text:empty::before{content:attr(data-ph);color:#777}
+.lux-ed-h1{font-size:2rem;font-weight:700}.lux-ed-h2{font-size:1.6rem;font-weight:700}.lux-ed-h3{font-size:1.35rem;font-weight:700}.lux-ed-h4,.lux-ed-h5,.lux-ed-h6{font-size:1.15rem;font-weight:700}
+.lux-ed-q{border-left:4px solid #9aa1ad;font-style:italic}.lux-ed-cite{width:100%;margin-top:.3rem}
+.lux-ed-text span[data-c=primary]{color:#0a58ca}.lux-ed-text span[data-c=muted]{color:#666}.lux-ed-text span[data-c=link]{color:#0645ad}.lux-ed-text a{color:#0645ad;text-decoration:underline}
+.lux-ed-list{margin:.2rem 0;padding-left:1.6rem}.lux-ed-list li{margin:.2rem 0}
+.lux-ed-field{display:flex;flex-direction:column;gap:.2rem;margin:.4rem 0}.lux-ed-field span{font-size:.85rem;color:#444}
+.lux-ed-check{display:inline-flex;align-items:center;gap:.4rem;min-height:44px}.lux-ed-check input{width:1.3rem;height:1.3rem}
+.lux-ed-img{max-width:100%;height:auto;border-radius:.3rem}.lux-ed-empty,.muted.lux-ed-help{color:#666}.lux-ed-warn{color:#8a4b00;font-weight:600}
+.lux-ed-sep{height:0;margin:.8rem 0;border-top:2px solid #9aa1ad}.lux-ed-sep--dots{border-top-style:dotted;width:6rem;margin-left:auto;margin-right:auto}.lux-ed-sep--space{border-top:0;height:2rem;background:repeating-linear-gradient(45deg,#eee,#eee 6px,#fff 6px,#fff 12px)}
+.lux-ed-btnprev{display:inline-block;padding:.5rem 1rem;border-radius:.4rem;font-weight:700;border:2px solid #1f3a8a;background:#1f3a8a;color:#fff}.lux-ed-btnprev--secondary{background:#eef0f4;color:#222;border-color:#c9cdd4}.lux-ed-btnprev--outline{background:transparent;color:#1f3a8a}
+.lux-ed-cols{display:grid;gap:.6rem;grid-template-columns:minmax(0,1fr)}
+@media (min-width:48rem){.lux-ed-cols--1-1{grid-template-columns:repeat(2,minmax(0,1fr))}.lux-ed-cols--1-2{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}.lux-ed-cols--2-1{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.lux-ed-cols--1-1-1{grid-template-columns:repeat(3,minmax(0,1fr))}.lux-ed-cols--1-2-1{grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr)}.lux-ed-cols--1-1-1-1{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.lux-ed-col{border:1px dashed #b8bec9;border-radius:.4rem;padding:.4rem;display:flex;flex-direction:column;gap:.5rem;min-width:0}
+.lux-ed-tablewrap{overflow-x:auto;max-width:100%}.lux-ed-table{border-collapse:collapse;min-width:100%}.lux-ed-table th,.lux-ed-table td{border:1px solid #9aa1ad;padding:0;min-width:7rem;vertical-align:top}.lux-ed-table th{background:#eef0f4}.lux-ed-table .lux-ed-cell{border:0;min-height:44px}.lux-ed-table caption{text-align:left;font-weight:700}
+.lux-a-center{text-align:center}.lux-a-right{text-align:right}
+.lux-ed-inspector,.lux-ed-lint{margin-top:.8rem;border:1px solid #d0d4db;border-radius:.5rem;padding:.4rem .7rem;background:#fafbfc}.lux-ed-inspector summary,.lux-ed-lint summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600}
+.lux-ed-lint ul{list-style:none;margin:0;padding:0}.lux-ed-lint li.is-warn::before{content:"⚠ "}.lux-ed-lint li.is-info::before{content:"ℹ "}.lux-ed-link{background:none;border:0;padding:.4rem 0;text-align:left;font:inherit;color:#0645ad;text-decoration:underline;cursor:pointer;min-height:44px}
+.lux-ed-live{position:absolute;left:-9999px}
+.lux-mp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:1rem;overflow:auto}
+.lux-mp{background:#fff;border-radius:.6rem;padding:1rem;width:min(52rem,100%);max-height:100%;overflow:auto}
+.lux-mp-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(8rem,1fr));gap:.5rem}.lux-mp-item{width:100%;min-height:44px;display:flex;flex-direction:column;gap:.2rem;align-items:center;padding:.3rem;border:1px solid #c9cdd4;border-radius:.4rem;background:#fff;font:inherit;cursor:pointer}.lux-mp-item img{max-width:100%;height:auto}
+@media (prefers-reduced-motion:no-preference){.lux-blk{transition:border-color .15s,box-shadow .15s}}

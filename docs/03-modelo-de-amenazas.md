@@ -132,3 +132,16 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 | Borrar una imagen en uso y dejar páginas rotas | Borrado denegado si una revisión en edición o publicada la usa; publicación bloqueada con mensaje si una referencia no existe | `MediaPanelTest` |
 | Limpieza que borra lo que sirve una versión retenida o la reversión | La limpieza conserva claves de las versiones retenidas y aplica periodo de gracia | `MediaPanelTest` |
 
+## Controles añadidos en la Fase 7 (editor de bloques)
+
+| Amenaza | Control | Verificación |
+|---|---|---|
+| XSS almacenado por HTML pegado o escrito (scripts, `onerror`, `javascript:`, `<iframe>`, SVG) | El modelo no contiene HTML: solo texto y marcas de una lista blanca. El navegador lee el campo con un tokenizador propio (no `innerHTML` hacia el modelo) y **el servidor valida otra vez**; todo texto se escapa al generar | `EditorModelTest`, `EditorPanelTest`, `model-html.test.mjs`, `browser/run.js` |
+| Enlaces peligrosos (`javascript:`, `data:`, `//host`, espacios o comillas que rompan el atributo) | `Inline::link` / `safeHref` solo admiten `/ruta`, `#ancla`, `http(s)://`, `mailto:` y `tel:`; los externos llevan `rel="noopener noreferrer"` | `EditorModelTest`, `model-html.test.mjs` |
+| Inyección de CSS por colores o tipografía | Solo roles del tema o `#rrggbb`; el valor llega a la hoja de estilos como clase generada (`lux-c-<hex>`) y la tipografía como clases de valores admitidos; ningún `style=` | `EditorModelTest`, `EditorPanelTest` (sitio sin `style=`) |
+| Estilos en línea que obligarían a debilitar la CSP | El editor y el sitio usan hojas y clases; la CSP del panel no cambia (`script-src 'self'; style-src 'self'`) | `browser/run.js` (sin violaciones de CSP), `nginx-smoke.sh` |
+| Pegado contaminado de Word/Google Docs/correo (estilos `mso`, comentarios condicionales, fuentes, imágenes enlazadas) | Pegado siempre interceptado: solo se conserva el formato permitido; imágenes y estilos externos se descartan; listas y tablas se reconstruyen | `model-html.test.mjs`, `browser/run.js` |
+| Denegación de servicio con documentos enormes o anidados | Límites: 500 bloques, 50 por columna, 200 en columnas en total, una sola profundidad, 400 tramos por texto, 50×12 en tablas, JSON ≤ 2 MB | `EditorModelTest` |
+| Pérdida de contenido al guardar sin JavaScript | El campo JSON no tiene `name` hasta que el editor arranca; sin cuerpo enviado se conserva el actual; el texto simple solo se ofrece si el contenido es 100 % simple | `EditorPanelTest` |
+| Código del editor expuesto a visitantes | El editor vive en `/admin/assets/editor/` y solo se enlaza en la pantalla de edición; la salida publicada no lo referencia | `EditorPanelTest`, `nginx-smoke.sh` |
+| Subida desde el editor que salte las comprobaciones de la biblioteca | `POST /admin/media/upload.json` usa el mismo `MediaStore::add` con permiso `media.write` y CSRF | `EditorPanelTest` |

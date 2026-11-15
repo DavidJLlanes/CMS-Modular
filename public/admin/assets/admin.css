@@ -42,3 +42,4 @@ body:has(iframe.pv-desktop) main{max-width:none}
 .media-grid a{text-decoration:none;color:inherit;display:block}.media-grid img{display:block;width:100%;height:auto;border-radius:.3rem;margin-bottom:.3rem;background:#eee}
 .media-grid strong{display:block;overflow-wrap:anywhere;font-size:.9rem}.media-grid small{display:block}
 button.danger{background:#a4262c}
+/* El editor de bloques (editor.css) se carga solo en la pantalla de edición. */
