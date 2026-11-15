@@ -44,6 +44,21 @@ final class ReleaseStore
         }
     }
 
+    /** true si ningún proceso mantiene el bloqueo de publicación. */
+    public function lockFree(): bool
+    {
+        $f = @fopen($this->base . '/.publish.lock', 'c');
+        if ($f === false) {
+            return false;
+        }
+        $ok = flock($f, LOCK_EX | LOCK_NB);
+        if ($ok) {
+            flock($f, LOCK_UN);
+        }
+        fclose($f);
+        return $ok;
+    }
+
     public function init(): void
     {
         Fs::ensureDir($this->releasesDir(), 0755);

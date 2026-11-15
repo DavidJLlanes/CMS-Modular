@@ -30,7 +30,7 @@ T::test('migraciones: se aplican una vez y quedan registradas', function () {
     $db = new Database("$d/x.sqlite");
     $m = new Migrator($db, dirname(__DIR__) . '/migrations');
     T::ok(!$m->isCurrent());
-    T::eq(['001_security', '002_content'], $m->migrate());
+    T::eq(['001_security', '002_content', '003_publishing'], $m->migrate());
     T::eq([], $m->migrate());
     T::ok($m->isCurrent());
     T::eq('0640', substr(sprintf('%o', fileperms("$d/x.sqlite")), -4));
