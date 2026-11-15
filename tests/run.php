@@ -26,6 +26,11 @@ final class T
         }
     }
 
+    public static function contains(string $needle, string $haystack, string $msg = ''): void
+    {
+        self::ok(str_contains($haystack, $needle), $msg !== '' ? $msg : "no contiene «{$needle}»");
+    }
+
     public static function eq(mixed $expected, mixed $actual, string $msg = ''): void
     {
         if ($expected !== $actual) {

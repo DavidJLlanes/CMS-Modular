@@ -15,7 +15,7 @@ trap cleanup EXIT
 awk '/^server \{/{n++} n>=2' "$ROOT/deploy/nginx/luxaeterna.conf" \
  | sed -e "s#listen 443 ssl http2;#listen 127.0.0.1:$PORT;#" -e '/listen \[::\]:443/d' -e '/ssl_certificate/d' \
        -e "s#/var/www/luxaeterna.es/publish/current#$PUBLISH/current#" -e "s#/var/www/luxaeterna.es/app/public#$ROOT/public#" \
-       -e "s#unix:/run/php/luxaeterna-panel.sock#unix:$T/fpm.sock#" > "$T/server.conf"
+       -e "s#/var/www/luxaeterna.es/app/deploy#$ROOT/deploy#" -e "s#unix:/run/php/luxaeterna-panel.sock#unix:$T/fpm.sock#" > "$T/server.conf"
 cp /etc/nginx/fastcgi_params "$T/fastcgi_params"
 cat > "$T/nginx.conf" <<EOF
 pid $T/nginx.pid; error_log $T/error.log; daemon on;
@@ -69,12 +69,20 @@ done
 
 # 3) Con PHP-FPM activo, el panel responde y es el único PHP ejecutable.
 rm -f "$T/fpm.sock"; $FPM -R -y "$T/fpm.conf" 2>"$T/fpm2.err" || $FPM -y "$T/fpm.conf"; sleep 0.8
-check "panel con PHP-FPM" 200 "$(code $B/admin/)"
+check "panel sin sesión redirige al login" 303 "$(code $B/admin/)"
+check "login del panel" 200 "$(code $B/admin/login)"
+check "css del panel (estático)" 200 "$(code $B/admin/assets/admin.css)"
+check "panel: CSP de la aplicación" 1 "$(curl -sI $B/admin/login | grep -ci "content-security-policy: default-src 'none'; style-src 'self'")"
+check "panel: sin cabeceras duplicadas de nosniff" 1 "$(curl -sI $B/admin/login | grep -ci 'x-content-type-options')"
+check "público: CSP" 1 "$(curl -sI $B/ | grep -ci 'content-security-policy')"
+check "público: HSTS" 1 "$(curl -sI $B/ | grep -ci 'strict-transport-security')"
+check "público: nosniff en estáticos" 1 "$(curl -sI $B$CSS | grep -ci 'x-content-type-options: nosniff')"
+check "panel: cuerpo grande rechazado" 413 "$(head -c 2000000 /dev/zero | curl -s -o /dev/null -w '%{http_code}' -X POST --data-binary @- $B/admin/login)"
 check "redirección /admin → /admin/" 301 "$(code $B/admin)"
-check "panel noindex" 1 "$(curl -sI $B/admin/ | grep -ci 'x-robots-tag: noindex')"
-check "panel no-store" 1 "$(curl -sI $B/admin/ | grep -ci 'cache-control: no-store')"
+check "panel noindex" 1 "$(curl -sI $B/admin/login | grep -ci 'x-robots-tag: noindex')"
+check "panel no-store" 1 "$(curl -sI $B/admin/login | grep -ci 'cache-control: no-store')"
 check "otro php no ejecutable" 404 "$(code $B/admin/otro.php)"
-check "sin fuga de rutas en el panel" 0 "$(curl -s $B/admin/ | grep -c "$ROOT")"
+check "sin fuga de rutas en el panel" 0 "$(curl -s $B/admin/login | grep -c "$ROOT")"
 
 # 4) Un php dentro de la versión pública se sirve como texto o se bloquea, nunca se ejecuta.
 echo '<?php echo "EJECUTADO";' > "$PUBLISH/current/prueba.php"

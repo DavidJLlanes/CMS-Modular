@@ -230,6 +230,6 @@ echo "Comprobaciones externas:"
 for u in "/" "/sobre-nosotros/" "/admin/" "/var/" "/.lux-release.json"; do
   printf '  %-22s %s\n' "$u" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://$DOMAIN$u" || true)"
 done
-echo "Esperado: 200, 200, 200, 404, 404."
+echo "Esperado: 200, 200, 303, 404, 404 (/admin/ redirige al login)."
 echo
 echo "Listo. Para actualizar: repite este mismo comando. Para volver a una versión: runuser -u $APP_USER -- php $BASE/app/bin/lux releases | rollback <id>"
