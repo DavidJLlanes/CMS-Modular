@@ -2,7 +2,7 @@
 
 ## Qué hay
 - **Diseños por carpeta** (`components/<familia>/<diseño>/`): cabecera, barra superior, hero y pie, con contrato validado y caché invalidada por huella.
-- **Ejemplos**: `cabecera-basica` (por defecto), `cabeceraguay2`, `barra-aviso`, `hero-simple`, `footer-basico` (por defecto) y `footer-centrado`.
+- **Ejemplos**: `cabecera-basica` (por defecto), `cabecera-corporativa`, `barra-aviso`, `hero-simple`, `footer-basico` (por defecto) y `footer-centrado`.
 - **Panel «Diseño»** (administradores): elegir diseño por ranura, valores de sus campos, diseño por tipo de contenido, paletas, colores por rol y componente con auditoría de contraste, tipografía, logo, catálogo de fuentes, inventario de recursos y botón «Detectar diseños de nuevo».
 - **Precedencia** global → tipo → página → instancia. Los niveles página e instancia se editan con `bin/lux design:set` (el panel visual de página llega con el editor, Fase 7).
 - **Fuentes locales** (Inter, Lora, Source Serif 4; OFL-1.1): se publican solo las variantes usadas, desde tu dominio.
@@ -12,9 +12,9 @@
 ```json
 {
   "schema": 1,
-  "id": "cabeceraguay2",
+  "id": "cabecera-corporativa",
   "type": "header",
-  "name": "Cabecera guay 2",
+  "name": "Cabecera corporativa",
   "version": "1.0.0",
   "description": "Logo centrado con eslogan.",
   "requires": { "lux": "0.4.0" },
@@ -38,7 +38,7 @@
 
 ## Crear un diseño (ejemplo mínimo)
 ```
-cp -r components/cabeceras/cabeceraguay2 components/cabeceras/mi-cabecera   # en el servidor, como root
+cp -r components/cabeceras/cabecera-corporativa components/cabeceras/mi-cabecera   # en el servidor, como root
 # edita manifest.json (id nuevo), template.html y style.css
 runuser -u luxaeterna -- php /var/www/luxaeterna.es/app/bin/lux designs:refresh
 ```
@@ -56,7 +56,7 @@ Aparece en el panel > Diseño. Si algo no cumple el contrato, `designs` lo lista
 Ejemplo de `design:set` con ajustes por página e instancia:
 ```json
 {
-  "global": { "header": { "id": "cabeceraguay2", "values": { "eslogan": "Mi lema" } } },
+  "global": { "header": { "id": "cabecera-corporativa", "values": { "eslogan": "Mi lema" } } },
   "types": { "post": { "hero": { "id": "hero-simple" } } },
   "pages": { "c_abc123": { "hero": { "off": true } } },
   "instances": { "c_abc123": { "header": { "values": { "fondo": "#112233" } } } },

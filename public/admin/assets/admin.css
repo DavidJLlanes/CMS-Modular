@@ -8,6 +8,7 @@ h1{font-size:1.5rem;margin:.5rem 0 1rem}h2{font-size:1.15rem;margin:1.75rem 0 .5
 label{display:block;margin:.9rem 0;font-weight:600}
 input{display:block;width:100%;margin-top:.3rem;padding:.7rem;font:inherit;border:1px solid #8a86a3;border-radius:.4rem;background:#fff}
 input[type=hidden]{display:none}
+input[type=color]{height:2.8rem;padding:.2rem;cursor:pointer}
 button{margin-top:.5rem;padding:.7rem 1.1rem;font:inherit;font-weight:600;color:#fff;background:#4a3aa8;border:0;border-radius:.4rem;cursor:pointer}
 button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
 button.link{margin:0;padding:0;background:none;color:#4a3aa8;text-decoration:underline;font-weight:400}

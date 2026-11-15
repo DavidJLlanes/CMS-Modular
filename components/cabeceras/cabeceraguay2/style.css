@@ -1,5 +1,0 @@
-.lux-guay2{text-align:center;padding:1.25rem 1rem;background:var(--lux-f-fondo,var(--lux-header-bg,var(--lux-surface)));color:var(--lux-header-text,var(--lux-text));border-bottom:1px solid var(--lux-border)}
-.lux-guay2 .lux-brand{font-family:var(--lux-font-heading);font-size:1.6rem;font-weight:700;color:var(--lux-text);text-decoration:none}
-.lux-guay2__tag{margin:.25rem 0 .75rem;color:var(--lux-muted)}
-.lux-guay2__tag:empty{display:none}
-.lux-guay2 .lux-nav a{margin:0 .6rem;color:var(--lux-link)}

@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "id": "cabeceraguay2",
+  "id": "cabecera-corporativa",
   "type": "header",
-  "name": "Cabecera guay 2",
+  "name": "Cabecera corporativa",
   "version": "1.0.0",
   "description": "Logo centrado con eslogan y el menú debajo.",
   "requires": { "lux": "0.4.0" },

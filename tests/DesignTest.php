@@ -48,7 +48,7 @@ function lux_registry(string $comp): DesignRegistry
 
 T::test('diseños: se detectan los de ejemplo y todos son válidos', function () {
     $i = lux_registry(lux_components())->index();
-    T::eq(['barra-aviso', 'cabecera-basica', 'cabeceraguay2', 'footer-basico', 'footer-centrado', 'hero-simple'], array_keys($i['designs']));
+    T::eq(['barra-aviso', 'cabecera-basica', 'cabecera-corporativa', 'footer-basico', 'footer-centrado', 'hero-simple'], array_keys($i['designs']));
     T::eq([], $i['errors']);
     foreach ($i['designs'] as $d) {
         T::ok(is_file(dirname(__DIR__) . '/components/' . $d['dir'] . '/preview.webp'), 'vista previa WebP de ' . $d['id']);
@@ -57,12 +57,12 @@ T::test('diseños: se detectan los de ejemplo y todos son válidos', function ()
 T::test('diseños: copiar una carpeta con contrato válido la hace aparecer sin tocar código y se invalida la caché', function () {
     $comp = lux_components();
     $reg = lux_registry($comp);
-    T::ok($reg->get('cabeceraguay3') === null);
-    lux_clone_design($comp, 'cabeceraguay2', 'cabeceraguay3');
-    T::ok(lux_registry($comp)->get('cabeceraguay3') !== null, 'nueva instancia: caché invalidada por huella');
-    T::ok($reg->refresh()['designs']['cabeceraguay3'] !== null, 'refresh explícito');
-    file_put_contents("$comp/cabeceras/cabeceraguay3/style.css", ".lux-guay2{color:red}\n");
-    T::ok(lux_registry($comp)->get('cabeceraguay3')['hash'] !== $reg->get('cabeceraguay2')['hash'], 'cambio de archivo cambia la huella');
+    T::ok($reg->get('cabecera-corporativa3') === null);
+    lux_clone_design($comp, 'cabecera-corporativa', 'cabecera-corporativa3');
+    T::ok(lux_registry($comp)->get('cabecera-corporativa3') !== null, 'nueva instancia: caché invalidada por huella');
+    T::ok($reg->refresh()['designs']['cabecera-corporativa3'] !== null, 'refresh explícito');
+    file_put_contents("$comp/cabeceras/cabecera-corporativa3/style.css", ".lux-corp{color:red}\n");
+    T::ok(lux_registry($comp)->get('cabecera-corporativa3')['hash'] !== $reg->get('cabecera-corporativa')['hash'], 'cambio de archivo cambia la huella');
 });
 T::test('diseños: el contrato rechaza manifiestos, rutas, enlaces y contenido peligrosos', function () {
     $comp = lux_components();
@@ -150,13 +150,13 @@ T::test('campos: coerción y validación estricta', function () {
 T::test('ajustes: precedencia global → tipo → página → instancia, apagado y reinicio al cambiar de diseño', function () {
     $reg = lux_registry(lux_components());
     $s = new DesignSettings([
-        'global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['eslogan' => 'Global']], 'hero' => ['id' => 'hero-simple', 'values' => ['altura' => 'alta']]],
+        'global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['eslogan' => 'Global']], 'hero' => ['id' => 'hero-simple', 'values' => ['altura' => 'alta']]],
         'types' => ['post' => ['header' => ['values' => ['eslogan' => 'Tipo']], 'hero' => ['off' => true]]],
         'pages' => ['c_pagina1' => ['header' => ['values' => ['eslogan' => 'Página']], 'footer' => ['id' => 'footer-centrado']]],
         'instances' => ['c_pagina1' => ['header' => ['values' => ['fondo' => '#112233']]]],
     ], $reg);
     $h = $s->resolve('header', 'page', 'c_otra');
-    T::eq(['cabeceraguay2', 'Global'], [$h['id'], $h['values']['eslogan']]);
+    T::eq(['cabecera-corporativa', 'Global'], [$h['id'], $h['values']['eslogan']]);
     T::eq('Tipo', $s->resolve('header', 'post', 'c_x')['values']['eslogan']);
     $p = $s->resolve('header', 'post', 'c_pagina1');
     T::eq(['Página', '#112233'], [$p['values']['eslogan'], $p['values']['fondo']]);
@@ -177,13 +177,13 @@ T::test('ajustes: la validación del panel rechaza ranuras, diseños y valores n
     $comp = lux_components();
     $reg = lux_registry($comp);
     $f = new FontCatalog("$comp/fonts");
-    $ok = DesignSettings::validate(['global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['eslogan' => 'Hola', 'fondo' => '#ABCDEF']]], 'types' => ['post' => ['hero' => ['id' => 'hero-simple']]]], $reg, $f);
+    $ok = DesignSettings::validate(['global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['eslogan' => 'Hola', 'fondo' => '#ABCDEF']]], 'types' => ['post' => ['hero' => ['id' => 'hero-simple']]]], $reg, $f);
     T::eq('#abcdef', $ok['global']['header']['values']['fondo']);
     foreach ([
         ['global' => ['pie' => ['id' => 'footer-basico']]],
         ['global' => ['header' => ['id' => 'footer-basico']]],
-        ['global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['fondo' => 'rojo']]]],
-        ['global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['inventado' => 'x']]]],
+        ['global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['fondo' => 'rojo']]]],
+        ['global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['inventado' => 'x']]]],
         ['pages' => ['../x' => ['header' => ['off' => true]]]],
         ['theme' => ['colors' => ['bg' => 'blanco']]],
         ['theme' => ['typography' => ['body' => ['family' => 'no-existe']]]],
@@ -273,13 +273,13 @@ function lux_publish_design(array $design, ?callable $prepare = null): array
 
 T::test('publicación con diseños: ranuras, hero, instancias y recursos con huella por página', function () {
     [$d, , $res] = lux_publish_design([
-        'global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['eslogan' => 'Tu <web>', 'fondo' => '#e9dfc9']], 'topbar' => ['id' => 'barra-aviso', 'values' => ['texto' => 'Oferta']], 'footer' => ['id' => 'footer-centrado']],
+        'global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['eslogan' => 'Tu <web>', 'fondo' => '#e9dfc9']], 'topbar' => ['id' => 'barra-aviso', 'values' => ['texto' => 'Oferta']], 'footer' => ['id' => 'footer-centrado']],
         'pages' => ['sobre-nosotros' => ['hero' => ['id' => 'hero-simple', 'values' => ['subtitulo' => 'Quiénes somos']]]],
     ]);
     $cur = "$d/pub/current";
     $home = file_get_contents("$cur/index.html");
     $about = file_get_contents("$cur/sobre-nosotros/index.html");
-    T::contains('class="lux-guay2"', $home);
+    T::contains('class="lux-corp"', $home);
     T::contains('Tu &lt;web&gt;', $home);
     T::contains('lux-topbar', $home);
     T::contains('lux-footer2', $home);
@@ -306,7 +306,7 @@ T::test('publicación con diseños: ranuras, hero, instancias y recursos con hue
     foreach (['index.html', 'sobre-nosotros/index.html', '404.html'] as $f) {
         T::eq([], array_filter((new Preflight())->check($cur), fn($e) => str_contains($e, 'remota')));
     }
-    T::ok(is_file("$cur/404.html") && str_contains(file_get_contents("$cur/404.html"), 'lux-guay2'));
+    T::ok(is_file("$cur/404.html") && str_contains(file_get_contents("$cur/404.html"), 'lux-corp'));
 });
 function glob_core(string $cur): string
 {

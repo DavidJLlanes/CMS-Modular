@@ -11,7 +11,7 @@ T::test('panel diseño: solo administradores, rutas protegidas y CSRF', function
     $a = lux_logged($sv, 'a@b.es');
     $page = $a->get('/admin/design');
     T::eq(200, $page->status);
-    T::contains('Cabecera guay 2', $page->body);
+    T::contains('Cabecera corporativa', $page->body);
     T::contains('Pie centrado', $page->body);
     T::contains('Catálogo de fuentes', $page->body);
     $bad = $a->req('POST', '/admin/design/save', ['preset' => 'oscuro']);
@@ -27,7 +27,7 @@ T::test('panel diseño: guardar ranuras, valores, paleta, tipografía y logo; se
     $uid = (string)$sv->db->val("SELECT uid FROM contents WHERE id = $home");
     $a->post('/admin/settings', ['home' => $uid, 'blog_title' => 'Blog'], '/admin/settings');
     $r = $a->post('/admin/design/save', [
-        'g' => ['global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['eslogan' => 'Mi lema', 'fondo' => '#e9dfc9']], 'topbar' => ['id' => 'barra-aviso', 'values' => ['texto' => 'Aviso', 'estilo' => 'suave']], 'hero' => ['id' => '_off'], 'footer' => ['id' => 'footer-centrado', 'values' => ['texto' => 'Pie']]]],
+        'g' => ['global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['eslogan' => 'Mi lema', 'fondo' => '#e9dfc9']], 'topbar' => ['id' => 'barra-aviso', 'values' => ['texto' => 'Aviso', 'estilo' => 'suave']], 'hero' => ['id' => '_off'], 'footer' => ['id' => 'footer-centrado', 'values' => ['texto' => 'Pie']]]],
         't' => ['post' => ['hero' => ['id' => 'hero-simple']]],
         'preset' => 'oceano',
         'theme' => ['colors' => ['primary' => '#0b5a80'], 'components' => ['footer' => ['bg' => '#eeeeee', 'text' => '#222222']], 'typography' => ['body' => ['family' => 'inter', 'size' => '18', 'line' => '1.7', 'align' => 'left'], 'heading' => ['family' => 'lora', 'weight' => '700'], 'spacing' => 'normal', 'width' => '50']],
@@ -36,7 +36,7 @@ T::test('panel diseño: guardar ranuras, valores, paleta, tipografía y logo; se
     T::eq(200, $r->status, $r->body);
     T::contains('Diseño guardado', $r->body);
     $saved = json_decode((string)$sv->settings->get('design'), true);
-    T::eq('cabeceraguay2', $saved['global']['header']['id']);
+    T::eq('cabecera-corporativa', $saved['global']['header']['id']);
     T::eq('#e9dfc9', $saved['global']['header']['values']['fondo']);
     T::eq('hero-simple', $saved['types']['post']['hero']['id']);
     T::eq('#0b5a80', $saved['theme']['colors']['primary']);
@@ -62,7 +62,7 @@ T::test('panel diseño: valores no válidos se rechazan con mensaje y no se guar
         ['theme' => ['typography' => ['body' => ['size' => '99']]]],
         ['theme' => ['typography' => ['body' => ['family' => 'inventada']]]],
         ['g' => ['global' => ['header' => ['id' => 'footer-basico']]]],
-        ['g' => ['global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['fondo' => 'rojo']]]]],
+        ['g' => ['global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['fondo' => 'rojo']]]]],
         ['logo' => ['mode' => 'image']],
         ['logo' => ['sizes' => ['header' => ['100', '400']]]],
         ['preset' => 'no-existe'],
@@ -100,7 +100,7 @@ T::test('panel diseño: vista previa WebP, redetección y errores de contrato vi
 T::test('panel diseño: la previsualización usa los mismos diseños, fuentes y tema (privado y sin escribir en publish)', function () {
     [$sv, $dir] = lux_app();
     $a = lux_logged($sv, 'a@b.es');
-    $a->post('/admin/design/save', ['g' => ['global' => ['header' => ['id' => 'cabeceraguay2', 'values' => ['eslogan' => 'Lema preview', 'fondo' => '#112233']]]], 'theme' => ['typography' => ['body' => ['family' => 'inter', 'size' => '17', 'line' => '1.6', 'align' => 'left'], 'heading' => ['family' => 'lora', 'weight' => '700'], 'spacing' => 'normal', 'width' => '46']]], '/admin/design');
+    $a->post('/admin/design/save', ['g' => ['global' => ['header' => ['id' => 'cabecera-corporativa', 'values' => ['eslogan' => 'Lema preview', 'fondo' => '#112233']]]], 'theme' => ['typography' => ['body' => ['family' => 'inter', 'size' => '17', 'line' => '1.6', 'align' => 'left'], 'heading' => ['family' => 'lora', 'weight' => '700'], 'spacing' => 'normal', 'width' => '46']]], '/admin/design');
     $id = lux_new($a, 'Vista');
     lux_save($a, $id, ['title' => 'Vista', 'body' => 'Texto']);
     $uid = (string)$sv->db->val("SELECT uid FROM contents WHERE id = $id");

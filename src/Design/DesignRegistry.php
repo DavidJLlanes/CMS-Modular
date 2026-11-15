@@ -23,6 +23,9 @@ final class DesignRegistry
     private const MAX_FILE = 262144;
     private const SKIP = ['layouts', 'logos', 'fonts'];
 
+    /** Ids antiguos que siguen resolviéndose tras un cambio de nombre. */
+    private const RENAMED = ['cabeceraguay2' => 'cabecera-corporativa'];
+
     /** @var array{designs:array<string,array<string,mixed>>,errors:list<array{dir:string,message:string}>}|null */
     private ?array $mem = null;
 
@@ -56,6 +59,7 @@ final class DesignRegistry
     /** @return array<string,mixed>|null */
     public function get(string $id): ?array
     {
+        $id = self::RENAMED[$id] ?? $id;
         return $this->index()['designs'][$id] ?? null;
     }
 

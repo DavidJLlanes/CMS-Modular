@@ -13,7 +13,7 @@ Las carpetas se crean cuando exista una responsabilidad real. Esta es la estruct
 | `src/Seo/` | Metadatos, canonicals, indexación, sitemaps, validaciones | 9 |
 | `src/Extensions/` | Descubrimiento, validación, registro, ciclo de vida | 11 |
 | `assets/admin/` | CSS y JS del panel, un módulo por función | 2 |
-| `components/` | Un directorio por tipo y diseño (`components/cabeceras/cabeceraguay2/`) | 5 |
+| `components/` | Un directorio por tipo y diseño (`components/cabeceras/cabecera-corporativa/`) | 5 |
 | `plugins/` | Un directorio por plugin: manifiesto, ajustes, código, recursos | 11 |
 | `public/admin/` | Entrada pública mínima del panel (puede tener host propio) | 1 |
 | `var/` | SQLite, originales, secretos por referencia, logs, trabajos, temporales. **Fuera de la raíz web y de Git** | 1 |
