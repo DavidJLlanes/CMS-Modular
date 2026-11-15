@@ -289,6 +289,7 @@ final class App
             . '<p>Has entrado como <strong>' . View::h((string)$user['email']) . '</strong> (' . View::h((string)$user['role']) . ').</p>'
             . '<ul class="menu"><li><a href="' . $this->prefix . '/content">Contenido (páginas y entradas)</a></li>'
             . '<li><a href="' . $this->prefix . '/terms">Categorías y etiquetas</a></li>'
+            . (Authorizer::can($user, 'site.publish') ? '<li><a href="' . $this->prefix . '/publish">Publicaciones, versiones y reversión</a></li>' : '')
             . (Authorizer::can($user, 'site.manage') ? '<li><a href="' . $this->prefix . '/menus">Menús</a></li><li><a href="' . $this->prefix . '/settings">Ajustes y generación del sitio</a></li>' : '')
             . '</ul>';
         return new Response(200, View::page('Inicio', $body, $this->ctx($user)));

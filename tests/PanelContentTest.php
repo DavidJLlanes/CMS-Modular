@@ -235,7 +235,9 @@ T::test('panel editorial: categorías, etiquetas y menús por HTTP, y generació
     lux_act($a, $home, 'publish');
     // sin portada elegida, generar falla con mensaje claro
     $r = $a->post('/admin/site/publish', [], '/admin/settings');
-    T::contains('Falta la portada', $r->body);
+    T::eq(303, $r->status);
+    T::contains('Falta la portada', $a->get($r->headers['Location'])->body);
+    T::contains('Fallido', $a->get($r->headers['Location'])->body);
     $uid = (string)$sv->db->val("SELECT uid FROM contents WHERE id = $home");
     T::contains('Ajustes guardados', $a->post('/admin/settings', ['home' => $uid, 'blog_title' => 'Noticias'], '/admin/settings')->body);
     // la portada no se puede retirar ni mandar a la papelera
@@ -254,7 +256,7 @@ T::test('panel editorial: categorías, etiquetas y menús por HTTP, y generació
     T::eq(422, $bad->status);
     T::eq(2, (int)$sv->db->val("SELECT COUNT(*) FROM menu_items"));
     $r = $a->post('/admin/site/publish', [], '/admin/settings');
-    T::contains('Sitio publicado', $r->body);
+    T::contains('generada y activada', $a->get($r->headers['Location'])->body);
     $cur = "$dir/publish/current";
     T::contains('Bienvenidos', file_get_contents("$cur/index.html"));
     T::contains('<a href="/blog/">Noticias</a>', file_get_contents("$cur/index.html"));
@@ -263,12 +265,29 @@ T::test('panel editorial: categorías, etiquetas y menús por HTTP, y generació
     T::contains('Primera noticia', file_get_contents("$cur/categoria/novedades/index.html"));
     T::contains('Cuerpo de la noticia', file_get_contents("$cur/blog/primera-noticia/index.html"));
     T::ok(is_file("$cur/etiqueta/nginx/index.html"));
-    T::eq(1, (int)$sv->db->val("SELECT COUNT(*) FROM audit WHERE event = 'site.publish'"));
+    T::eq(2, (int)$sv->db->val("SELECT COUNT(*) FROM audit WHERE event = 'site.publish'"));
+    // página de publicaciones, reversión desde el panel
+    $page = $a->get('/admin/publish')->body;
+    T::contains('Publicaciones y versiones', $page);
+    T::contains('(activa)', $page);
+    $first = $sv->releaseStore()->currentId();
     // borrador posterior no sale
     $draft = lux_new($a, 'Aún no', 'post');
     lux_save($a, $draft, ['title' => 'Aún no', 'body' => 'BORRADOR-NO-SALE']);
     $a->post('/admin/site/publish', [], '/admin/settings');
     T::ok(!is_dir("$cur/blog/aun-no"));
+    T::ok($sv->releaseStore()->currentId() === $first, 'sin cambios publicados no se genera otra versión');
+    $a->post('/admin/publish/run', ['force' => '1'], '/admin/publish');
+    $second = $sv->releaseStore()->currentId();
+    T::ok($second !== $first);
+    $rb = $a->post("/admin/publish/rollback/$first", [], '/admin/publish');
+    T::eq(303, $rb->status);
+    T::contains('Completado', $a->get($rb->headers['Location'])->body);
+    T::eq($first, $sv->releaseStore()->currentId());
+    $rb = $a->post('/admin/publish/rollback/20200101000000000000-abcd', [], '/admin/publish');
+    T::contains('Fallido', $a->get($rb->headers['Location'])->body);
+    T::eq($first, $sv->releaseStore()->currentId());
+    T::eq(403, lux_logged($sv, 'ed@b.es', 'editor', '198.51.100.20')->get('/admin/publish')->status);
     $all = shell_exec('grep -rl BORRADOR-NO-SALE ' . escapeshellarg("$dir/publish") . ' 2>/dev/null');
     T::eq('', trim((string)$all));
 });

@@ -1,0 +1,9 @@
+[Unit]
+Description=LuxAeterna · vigilar propuestas de reglas HTTP (@BASE@)
+
+[Path]
+PathChanged=@BASE@/publish/rules/apply.request
+Unit=lux-rules.service
+
+[Install]
+WantedBy=multi-user.target

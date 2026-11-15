@@ -1,0 +1,10 @@
+[Unit]
+Description=LuxAeterna · aplicar reglas HTTP validadas (@BASE@)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/lux-apply-rules @BASE@
+# Solo necesita leer el directorio de publicación y escribir la configuración de Nginx y su estado.
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true

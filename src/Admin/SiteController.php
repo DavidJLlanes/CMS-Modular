@@ -5,10 +5,7 @@ namespace LuxAeterna\Admin;
 
 use LuxAeterna\Content\Menus;
 use LuxAeterna\Content\Taxonomy;
-use LuxAeterna\Core\Logger;
 use LuxAeterna\Core\LuxException;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
 use LuxAeterna\Security\Authorizer;
 
 /** Categorías y etiquetas, menús, ajustes del sitio y generación manual del sitio. */
@@ -33,7 +30,10 @@ final class SiteController
             return $this->need($user, 'site.manage') ?? ($post ? $this->saveSettings($r, $user) : $this->settings($user));
         }
         if ($p === '/site/publish' && $post) {
-            return $this->need($user, 'site.publish') ?? $this->publishSite($user);
+            return $this->need($user, 'site.publish') ?? $this->runJob($user, false);
+        }
+        if (str_starts_with($p, '/publish')) {
+            return $this->need($user, 'site.publish') ?? $this->publications($r, $user, $p, $post);
         }
         return null;
     }
@@ -125,7 +125,7 @@ final class SiteController
             '<label>Portada <small>(página publicada que se sirve en «/»)</small><select name="home">' . $opts . '</select></label>'
             . '<label>Título del listado del blog<input name="blog_title" maxlength="80" value="' . View::h($this->sv->settings->get('blog_title', 'Blog')) . '"></label>' . Ui::button('Guardar ajustes'))
             . '<h2>Generar el sitio</h2><p>Genera los archivos estáticos con lo publicado y los activa. Los borradores y cambios sin publicar no se incluyen.</p>'
-            . Ui::form($this->url('/site/publish'), $csrf, Ui::button('Generar y activar ahora'));
+            . Ui::form($this->url('/publish/run'), $csrf, Ui::button('Generar y activar ahora')) . '<p><a href="' . $this->url('/publish') . '">Versiones, reversión y registro de publicaciones</a></p>';
         return new Response($error !== null ? 422 : 200, View::page('Ajustes', $body, ($this->ctx)($user, $error, $flash)));
     }
 
@@ -148,18 +148,94 @@ final class SiteController
         return $this->settings($user, null, 'Ajustes guardados.');
     }
 
-    private function publishSite(array $user): Response
+    /* ---------- publicación, versiones y reversión ---------- */
+
+    private function publications(Request $r, array $user, string $p, bool $post): Response
     {
-        try {
-            $config = $this->sv->config;
-            $publisher = new Publisher($config, new ReleaseStore($config->path('publish')), new Logger($config->path('data') . '/logs'), $config->root . '/components/layouts/base');
-            $res = $publisher->publishSnapshot($this->sv->site->build());
-            $this->audit('site.publish', $user, null, ['release' => $res['id']]);
-            $msg = "Sitio publicado: versión {$res['id']} ({$res['pages']} páginas)." . ($res['warnings'] !== [] ? ' Avisos: ' . implode(' · ', $res['warnings']) : '');
-            return $this->settings($user, null, $msg);
-        } catch (LuxException $e) {
-            return $this->settings($user, $e->getMessage());
+        if ($post && $p === '/publish/run') {
+            return $this->runJob($user, $r->input('force') === '1');
         }
+        if ($post && preg_match('#^/publish/rollback/([0-9a-f-]+)$#', $p, $m)) {
+            try {
+                $svc = $this->sv->publishing();
+                $id = $svc->enqueueRollback($m[1], 'panel', (int)$user['id'], 'Reversión desde el panel');
+                $job = $svc->runNext($id);
+                $this->audit('site.rollback', $user, null, ['release' => $m[1], 'job' => $id, 'status' => $job['status'] ?? '?']);
+                return Response::redirect($this->url('/publish/jobs/' . $id));
+            } catch (LuxException $e) {
+                return $this->publicationsPage($user, $e->getMessage());
+            }
+        }
+        if (preg_match('#^/publish/jobs/(\d+)$#', $p, $m)) {
+            return $this->jobPage($user, (int)$m[1]);
+        }
+        if ($p === '/publish') {
+            return $this->publicationsPage($user);
+        }
+        return new Response(404, View::page('No encontrado', '<h1>No encontrado</h1>', ($this->ctx)($user, null, null)));
+    }
+
+    private function runJob(array $user, bool $force): Response
+    {
+        $svc = $this->sv->publishing();
+        $id = $svc->enqueuePublish('panel', (int)$user['id'], 'Publicación desde el panel', $force);
+        $job = $svc->runNext($id);
+        $this->audit('site.publish', $user, null, ['job' => $id, 'status' => $job['status'] ?? 'queued', 'release' => $job['release_id'] ?? null]);
+        return Response::redirect($this->url('/publish/jobs/' . $id));
+    }
+
+    private static function statusLabel(string $s): string
+    {
+        return ['queued' => 'En cola', 'running' => 'En curso', 'succeeded' => 'Completado', 'failed' => 'Fallido', 'cancelled' => 'Cancelado'][$s] ?? $s;
+    }
+
+    private function jobPage(array $user, int $id): Response
+    {
+        $job = $this->sv->jobs()->get($id);
+        if ($job === null) {
+            return new Response(404, View::page('No encontrado', '<h1>Trabajo no encontrado</h1>', ($this->ctx)($user, null, null)));
+        }
+        $logs = '';
+        foreach ($this->sv->jobs()->logs($id) as $l) {
+            $logs .= '<li class="log-' . View::h((string)$l['level']) . '"><small>' . Ui::date((int)$l['ts']) . '</small> ' . View::h((string)$l['message']) . '</li>';
+        }
+        $csrf = $this->csrf($user);
+        $retry = $job['status'] === 'failed' || $job['status'] === 'queued' ? Ui::form($this->url('/publish/run'), $csrf, Ui::button('Volver a intentar')) : '';
+        $body = '<h1>' . ($job['kind'] === 'rollback' ? 'Reversión' : 'Publicación') . ' #' . $id . '</h1>'
+            . '<p><strong>' . View::h(self::statusLabel((string)$job['status'])) . '</strong>'
+            . ($job['release_id'] ? ' · versión ' . View::h((string)$job['release_id']) : '')
+            . ((int)$job['skipped'] === 1 ? ' · sin cambios (no se generó otra versión)' : '') . '</p>'
+            . ($job['error'] ? '<p class="error">' . View::h((string)$job['error']) . '</p>' : '')
+            . '<ul class="log">' . ($logs ?: '<li class="muted">Sin registro.</li>') . '</ul>' . $retry
+            . '<p><a href="' . $this->url('/publish') . '">← Publicaciones y versiones</a></p>';
+        return new Response(200, View::page('Trabajo #' . $id, $body, ($this->ctx)($user, null, null)));
+    }
+
+    private function publicationsPage(array $user, ?string $error = null): Response
+    {
+        $csrf = $this->csrf($user);
+        $store = $this->sv->releaseStore();
+        $cur = $store->currentId();
+        $rules = $this->sv->ruleSync()->lastStatus();
+        $body = '<h1>Publicaciones y versiones</h1>'
+            . '<p>Versión activa: <strong>' . View::h($cur ?? 'ninguna') . '</strong></p>'
+            . Ui::form($this->url('/publish/run'), $csrf, Ui::button('Generar y activar ahora'))
+            . Ui::form($this->url('/publish/run'), $csrf, Ui::hidden('force', 1) . Ui::button('Regenerar aunque no haya cambios', 'link'))
+            . '<p class="muted">Reglas de redirección del servidor: ' . ($rules['ok'] === null ? 'sin servicio (se usan las páginas-puente y el .htaccess de la versión)' : ($rules['ok'] ? 'aplicadas' : '<strong>rechazadas</strong>: ' . View::h($rules['message'])) . ' · ' . ($rules['time'] > 0 ? Ui::date($rules['time']) : '')) . '</p>'
+            . '<h2>Versiones</h2><ul>';
+        foreach (array_reverse($store->all()) as $id) {
+            $m = $store->meta($id) ?? [];
+            $info = ($m['pages'] ?? '?') . ' páginas' . (isset($m['created']) ? ' · ' . View::h((string)$m['created']) : '') . (!empty($m['warnings']) ? ' · ' . count($m['warnings']) . ' avisos' : '');
+            $body .= '<li><strong>' . View::h($id) . '</strong>' . ($id === $cur ? ' <em>(activa)</em>' : '') . ' <small>' . $info . '</small> '
+                . ($id === $cur ? '' : Ui::form($this->url('/publish/rollback/' . $id), $csrf, Ui::button('Reactivar esta versión', 'link'), ['class' => 'inline'])) . '</li>';
+        }
+        $body .= ($store->all() === [] ? '<li class="muted">Aún no hay versiones.</li>' : '') . '</ul><h2>Últimos trabajos</h2><ul>';
+        foreach ($this->sv->jobs()->recent(10) as $j) {
+            $body .= '<li><a href="' . $this->url('/publish/jobs/' . (int)$j['id']) . '">#' . (int)$j['id'] . '</a> '
+                . ($j['kind'] === 'rollback' ? 'reversión' : 'publicación') . ' · ' . View::h(self::statusLabel((string)$j['status'])) . ' · <small>' . Ui::date((int)$j['created_at']) . '</small></li>';
+        }
+        $body .= '</ul>';
+        return new Response($error !== null ? 422 : 200, View::page('Publicaciones', $body, ($this->ctx)($user, $error, null)));
     }
 
     /* ---------- utilidades ---------- */

@@ -88,6 +88,11 @@ chmod o+x "$BASE"                                                # Nginx debe po
 install -d -m 0755 -o root -g root "$BASE/acme"
 install -d -m 0750 -o "$APP_USER" -g "$APP_USER" "$BASE/var"
 install -d -m 0755 -o "$APP_USER" -g "$APP_USER" "$BASE/publish"
+install -d -m 0755 -o "$APP_USER" -g "$APP_USER" "$BASE/publish/rules"
+# Reglas HTTP (301): la app solo propone; un servicio root las valida y las instala aquí (ver deploy/lux-apply-rules.sh).
+RULES_DIR="${LUX_RULES_DIR:-/etc/nginx/lux-rules}"; RULES_STATE="${LUX_RULES_STATE:-/var/lib/lux-rules/$DOMAIN.status.json}"
+install -d -m 0755 -o root -g root "$RULES_DIR" "$(dirname "$RULES_STATE")"
+[ -f "$RULES_DIR/$DOMAIN.conf" ] || { : > "$RULES_DIR/$DOMAIN.conf"; chmod 0644 "$RULES_DIR/$DOMAIN.conf"; }
 
 say "4/9 Código ($REPO @ $BRANCH)"
 if [ -d "$BASE/app/.git" ]; then
@@ -121,6 +126,8 @@ else
 fi
 # El código es de root; solo la configuración es legible por el usuario de la aplicación.
 chown root:"$APP_USER" "$CFG"; chmod 0640 "$CFG"
+# Añade la ruta del estado de reglas a una configuración existente (no toca nada más).
+php -r '$f=$argv[1];$c=json_decode(file_get_contents($f),true);if(!is_array($c)){exit(1);}if(empty($c["publishing"]["rules_status"])){$c["publishing"]["rules_status"]=$argv[2];file_put_contents($f,json_encode($c,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)."\n");}' "$CFG" "$RULES_STATE" || die "No se pudo actualizar la configuración."
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" install --url="https://$DOMAIN"
 
 say "6/9 Pool de PHP-FPM (usuario $APP_USER, solo el panel)"
@@ -222,7 +229,17 @@ if ! reload_nginx; then
 fi
 [ -z "$BK" ] || echo "Configuración anterior de Nginx guardada en $BK (para volver atrás: copia de vuelta y recarga Nginx)."
 
-say "9/9 Publicación y verificación"
+say "9/9 Servicio de reglas, publicación y verificación"
+if [ "$NOSVC" = 1 ]; then echo "(omitido en pruebas) servicio de reglas"; else
+install -m 0755 -o root -g root "$BASE/app/deploy/lux-apply-rules.sh" /usr/local/sbin/lux-apply-rules
+for u in service path; do
+  sed -e "s#@BASE@#$BASE#g" "$BASE/app/deploy/systemd/lux-rules.$u" > "/etc/systemd/system/lux-rules-$DOMAIN.$u"
+done
+sed -i "s#^ExecStart=.*#ExecStart=/usr/bin/env LUX_DOMAIN=$DOMAIN /usr/local/sbin/lux-apply-rules $BASE#" "/etc/systemd/system/lux-rules-$DOMAIN.service"
+sed -i "s#^Unit=.*#Unit=lux-rules-$DOMAIN.service#" "/etc/systemd/system/lux-rules-$DOMAIN.path"
+svc daemon-reload
+svc enable --now "lux-rules-$DOMAIN.path"
+fi
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" publish
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" doctor --http || true
 echo

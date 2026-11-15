@@ -32,10 +32,12 @@ Uso: bin/lux <comando> [opciones]
 
   doctor [--json] [--http]       Diagnóstico del entorno (--http comprueba que var/ no se sirve)
   install --url=https://dominio  Crea configuración y directorios (--force regenera la configuración)
-  publish [--content=ARCHIVO|--demo]
+  publish [--force] [--queue] [--content=ARCHIVO|--demo]
                                  Genera y activa una versión con el contenido publicado en el panel
                                  (si no hay ninguno, el sitio de demostración)
   releases                       Lista las versiones y marca la activa
+  jobs                           Últimos trabajos de publicación
+  jobs:run                       Ejecuta los trabajos pendientes (para cron)
   rollback <id>                  Reactiva una versión anterior
   migrate                        Aplica las migraciones de base de datos pendientes
   admin:create <correo> [--role=admin|editor] [--name=Nombre]
@@ -163,17 +165,37 @@ try {
             $config = Config::load($root);
             $layout = $root . '/components/layouts/base';
             $publisher = new Publisher($config, store($config), logger($root), $layout);
+            $force = isset($opts['force']);
             if (is_string($opts['content'] ?? null) || isset($opts['demo'])) {
                 $content = is_string($opts['content'] ?? null) ? $opts['content'] : $root . '/examples/sitio-demo/content.json';
-                $res = $publisher->publish($content);
+                $res = $publisher->publish($content, $force);
             } else {
                 $sv = new Services($config, true);
-                if ($sv->site->hasPublished()) {
-                    $res = $publisher->publishSnapshot($sv->site->build());
-                    $sv->audit->log('site.publish', null, 'cli', null, ['release' => $res['id']]);
-                } else {
+                if (!$sv->site->hasPublished()) {
                     echo "No hay contenido publicado en el panel: se publica el sitio de demostración.\n";
-                    $res = $publisher->publish($root . '/examples/sitio-demo/content.json');
+                    $res = $publisher->publish($root . '/examples/sitio-demo/content.json', $force);
+                } else {
+                    $svc = $sv->publishing();
+                    $jid = $svc->enqueuePublish('cli', null, 'bin/lux publish', $force);
+                    if (isset($opts['queue'])) {
+                        echo "Trabajo #$jid en cola (se ejecuta con: bin/lux jobs:run).\n";
+                        break;
+                    }
+                    $job = $svc->runNext($jid) ?? $sv->jobs()->get($jid);
+                    foreach ($sv->jobs()->logs($jid) as $l) {
+                        echo '  [' . $l['level'] . '] ' . $l['message'] . "\n";
+                    }
+                    if ($job['status'] === 'queued') {
+                        echo "El trabajo #$jid quedó en espera (reintento automático con jobs:run).\n";
+                        exit(2);
+                    }
+                    if ($job['status'] !== 'succeeded') {
+                        fwrite(STDERR, "Publicación fallida: {$job['error']}\n");
+                        exit(1);
+                    }
+                    echo $job['skipped'] ? "Sin cambios: la versión activa {$job['release_id']} ya está al día (usa --force para regenerar).\n" : "Publicada la versión {$job['release_id']}.\n";
+                    $sv->audit->log('site.publish', null, 'cli', null, ['release' => $job['release_id'], 'job' => $jid]);
+                    break;
                 }
             }
             echo "Publicada la versión {$res['id']} ({$res['pages']} páginas, activación: {$res['strategy']}).\n";
@@ -185,11 +207,26 @@ try {
             }
             break;
 
+        case 'jobs':
+            $sv = services($root, true);
+            foreach (array_reverse($sv->jobs()->recent((int)($opts['limit'] ?? 15))) as $j) {
+                printf("#%d %-9s %-8s %-8s intentos %d/%d %s%s\n", $j['id'], $j['status'], $j['kind'], $j['source'], $j['attempts'], $j['max_attempts'], (string)($j['release_id'] ?? ''), $j['error'] ? '  ! ' . $j['error'] : '');
+            }
+            break;
+
+        case 'jobs:run':
+            $sv = services($root, true);
+            $n = $sv->publishing()->runAll();
+            echo "Trabajos procesados: $n\n";
+            break;
+
         case 'releases':
-            $store = store(Config::load($root));
+            $sv = services($root, true);
+            $store = $sv->releaseStore();
             $cur = $store->currentId();
             foreach (array_reverse($store->all()) as $id) {
-                echo ($id === $cur ? '* ' : '  ') . $id . "\n";
+                $m = $store->meta($id) ?? [];
+                echo ($id === $cur ? '* ' : '  ') . $id . '  ' . ($m['pages'] ?? '?') . ' páginas  ' . ($m['created'] ?? '') . "\n";
             }
             if ($store->all() === []) {
                 echo "No hay versiones.\n";
@@ -198,10 +235,17 @@ try {
 
         case 'rollback':
             $id = $pos[1] ?? '';
-            $config = Config::load($root);
-            $store = store($config);
-            (new Activator($store, (string)$config->get('publishing.activation', 'auto')))->activate($id);
-            logger($root)->info('reversión', ['release' => $id]);
+            $sv = services($root, true);
+            $svc = $sv->publishing();
+            $job = $svc->runNext($svc->enqueueRollback($id, 'cli', null, 'bin/lux rollback'));
+            foreach ($sv->jobs()->logs((int)$job['id']) as $l) {
+                echo '  [' . $l['level'] . '] ' . $l['message'] . "\n";
+            }
+            if ($job['status'] !== 'succeeded') {
+                fwrite(STDERR, "Reversión fallida: {$job['error']}\n");
+                exit(1);
+            }
+            $sv->audit->log('site.rollback', null, 'cli', null, ['release' => $id]);
             echo "Versión $id activada.\n";
             break;
 

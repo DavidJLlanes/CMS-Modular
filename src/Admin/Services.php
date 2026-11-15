@@ -12,7 +12,13 @@ use LuxAeterna\Content\TypeRegistry;
 use LuxAeterna\Core\Config;
 use LuxAeterna\Core\Database;
 use LuxAeterna\Core\Migrator;
+use LuxAeterna\Core\Logger;
+use LuxAeterna\Publishing\JobStore;
 use LuxAeterna\Publishing\Preview;
+use LuxAeterna\Publishing\PublishService;
+use LuxAeterna\Publishing\Publisher;
+use LuxAeterna\Publishing\ReleaseStore;
+use LuxAeterna\Publishing\RuleSync;
 use LuxAeterna\Security\Audit;
 use LuxAeterna\Security\Csrf;
 use LuxAeterna\Security\Secrets;
@@ -39,6 +45,8 @@ final class Services
     public readonly Settings $settings;
     public readonly SiteBuilder $site;
     public readonly Preview $preview;
+    private ?PublishService $publishing = null;
+    private ?JobStore $jobStore = null;
 
     public function __construct(public readonly Config $config, bool $migrate = false)
     {
@@ -78,5 +86,32 @@ final class Services
     {
         $v = $this->config->get('security.trusted_proxies', []);
         return is_array($v) ? array_values(array_filter($v, 'is_string')) : [];
+    }
+
+    public function jobs(): JobStore
+    {
+        return $this->jobStore ??= new JobStore($this->db);
+    }
+
+    public function releaseStore(): ReleaseStore
+    {
+        return new ReleaseStore($this->config->path('publish'));
+    }
+
+    public function ruleSync(): RuleSync
+    {
+        $st = $this->config->get('publishing.rules_status', null);
+        return new RuleSync($this->config->path('publish'), is_string($st) && $st !== '' ? $st : null, (int)$this->config->get('publishing.rules_wait', 8));
+    }
+
+    /** Servicio de publicación (cola de trabajos + publicador + reglas HTTP). */
+    public function publishing(): PublishService
+    {
+        if ($this->publishing === null) {
+            $logger = new Logger($this->config->path('data') . '/logs');
+            $publisher = new Publisher($this->config, $this->releaseStore(), $logger, $this->config->root . '/components/layouts/base');
+            $this->publishing = new PublishService($this->config, $this->jobs(), $this->releaseStore(), $publisher, fn() => $this->site->build(), $logger, $this->ruleSync());
+        }
+        return $this->publishing;
     }
 }
