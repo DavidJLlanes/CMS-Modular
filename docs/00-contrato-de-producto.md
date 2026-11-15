@@ -31,6 +31,8 @@ CMS de uso general, un sitio por instancia, autohospedable en VPS con Ubuntu y N
 | R10 | Seguridad por diseño, publicación reversible, recuperación demostrada | 2, 4, 13, 14 | `src/Security/`, `src/Publishing/` | Modelo de amenazas, pruebas de seguridad, simulacros de fallo, reversión y restauración |
 | R11 | VPS económico, exportación y portabilidad | 0, 13, 14 | `deploy/`, `src/Publishing/` | Medición con catálogo representativo; restauración en entorno limpio; export en servidor estático |
 
+| R12 | Compatibilidad con hosting compartido barato (añadido por el propietario, 2026-11-15) | 1, 4, 6, 9, 13, 14 | `src/Core/`, `src/Publishing/`, `src/Media/`, `deploy/` | Instalación y publicación en perfil B (Apache, PHP 8.1, 128 MB, 30 s, sin root); matriz de pruebas por perfil. Ver [ADR-0007](decisiones/0007-compatibilidad-hosting-compartido.md) |
+
 **Aclaración R04/R07.** WebP cubre fotos, logos visibles y gráficos del tema. Favicon e icono de app se suben aparte y se generan en los formatos que exija la compatibilidad comprobada (PNG, ICO si se justifica). La tarjeta social: WebP por defecto, con comprobación por consumidor; cualquier excepción se somete a decisión.
 
 ## Mapa de fases

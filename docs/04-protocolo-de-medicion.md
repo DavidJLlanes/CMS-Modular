@@ -6,7 +6,7 @@ Versión 0.1. Define cómo se mide para que los resultados sean comparables entr
 
 | Entorno | Descripción | Etiqueta en informes |
 |---|---|---|
-| Referencia | 1 vCPU, 1 GB RAM total, Ubuntu LTS, Nginx, PHP 8.3 (limitado con cgroups/VM) | `sintético-ref` |
+| Referencia | 1 vCPU, 1 GB RAM total, Ubuntu LTS, Nginx, PHP 8.3 | `sintético-ref` |
 | VPS real | El servidor objetivo del propietario, cuando haya acceso | `vps-real` |
 | Desarrollo | Máquina de desarrollo; no vale para cifras de rendimiento | `dev` |
 
