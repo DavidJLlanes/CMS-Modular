@@ -54,6 +54,17 @@ final class ReleaseStore
         return (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('YmdHisu') . '-' . bin2hex(random_bytes(2));
     }
 
+    /** @return array<string,mixed>|null metadatos de una versión */
+    public function meta(string $id): ?array
+    {
+        $raw = @file_get_contents($this->releasePath($id) . '/' . self::META);
+        if ($raw === false && $id === $this->currentId()) {
+            $raw = @file_get_contents($this->currentPath() . '/' . self::META);
+        }
+        $d = $raw === false ? null : json_decode($raw, true);
+        return is_array($d) ? $d : null;
+    }
+
     /** Id de la versión activa, o null si no hay ninguna. */
     public function currentId(): ?string
     {
