@@ -67,7 +67,8 @@ Las fases 6 y 3 pueden avanzar en paralelo tras la 2.
 | 2 | Completada en perfil VPS ([fase-2.md](fase-2.md)) |
 | 3 | Completada en perfil VPS ([fase-3.md](fase-3.md)) |
 | 4 | Completada en perfil VPS ([fase-4.md](fase-4.md)) |
-| 5 | Implementada y probada en sandbox; verificación en el VPS pendiente ([fase-5.md](fase-5.md)) |
+| 5 | Completada en perfil VPS ([fase-5.md](fase-5.md)) |
+| 6 | Implementada y probada en sandbox; verificación en el VPS pendiente ([fase-6.md](fase-6.md)) |
 
 ## Criterio de cierre de la Fase 0
 

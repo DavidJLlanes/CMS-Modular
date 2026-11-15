@@ -42,6 +42,7 @@ Uso: bin/lux <comando> [opciones]
   resources [--path=/ruta/]      Inventario de recursos de la versión activa
   media [--q=texto]              Biblioteca multimedia: imágenes, tamaños y espacio
   media:add <archivo>...         Sube imágenes (validación completa); informa de tiempo y memoria por lote
+  media:warm                     Prepara de antemano los derivados WebP que necesita el contenido publicado (lotes grandes)
   media:check                    Verifica los originales (faltan, alterados, huérfanos); útil tras una restauración
   media:gc [--days=7] [--dry]    Limpia derivados sin uso (conserva los de las versiones retenidas)
   jobs                           Últimos trabajos de publicación
@@ -338,8 +339,22 @@ try {
                     fwrite(STDERR, "RECHAZADA  " . basename($f) . ': ' . $e->getMessage() . "\n");
                 }
             }
-            printf("Lote: %d archivo(s), %.2f s, pico de memoria %.1f MB\n", count($files), microtime(true) - $t0, memory_get_peak_usage(true) / 1048576);
+            printf("Lote: %d archivo(s), %.2f s, RAM máxima del proceso %.0f MB\n", count($files), microtime(true) - $t0, (getrusage()["ru_maxrss"] ?? 0) / 1024);
             exit($bad > 0 ? 1 : 0);
+
+        case 'media:warm':
+            // Mismo recorrido que la publicación, sin escribir una versión: así la primera publicación con muchas fotos es rápida.
+            $sv = services($root, true);
+            $t0 = microtime(true);
+            $snap = $sv->site->build();
+            $r = new \LuxAeterna\Publishing\SiteRenderer($sv->config, $root . '/components/layouts/base', $snap->design, false, $snap->media, $sv->media());
+            $site = $r->siteVars($snap);
+            foreach ($snap->pages as $pg) {
+                $r->page($pg, $site);
+            }
+            $files = $r->images->files();
+            printf("%d imágenes usadas, %d derivados listos en %.1f s; RAM máxima %.0f MB\n", count($r->images->keys()), count($files), microtime(true) - $t0, (getrusage()['ru_maxrss'] ?? 0) / 1024);
+            break;
 
         case 'media:check':
             $sv = services($root, true);

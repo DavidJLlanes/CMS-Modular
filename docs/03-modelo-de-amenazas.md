@@ -118,3 +118,17 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 | Logo malicioso (SVG con script, imagen falsa) | Solo PNG/WebP/JPEG verificados y SVG sin scripts ni referencias externas, ≤ 512 KB | `DesignTest` |
 | Ajustes de diseño obsoletos rompen la publicación | Diseño retirado o de otra familia → ranura omitida y aviso; el sitio se publica | `DesignTest` |
 
+## Controles añadidos en la Fase 6 (biblioteca multimedia)
+
+| Amenaza | Control | Verificación |
+|---|---|---|
+| Archivo que no es imagen (PHP, HTML, polimorfos) disfrazado con extensión o tipo MIME de imagen | Validación por contenido (`getimagesize` + `finfo`), decodificación y recodificación del derivado; el original nunca se sirve ni se ejecuta | `MediaTest`, `MediaPanelTest` |
+| Bomba de descompresión / agotamiento de CPU o memoria | Límites de bytes, lado y megapíxeles; estimación de memoria; un solo trabajador con `flock` y tiempo máximo; previsualización solo con recetas vigentes | `MediaTest` |
+| Imágenes animadas o corruptas que rompen el procesado | Rechazo explícito (GIF multi-fotograma, APNG, WebP animado); la subida decodifica y se deshace si falla | `MediaTest` |
+| Acceso a originales o fuga de metadatos privados (GPS) | Originales fuera de la raíz web con identificador generado; descarga solo para gestores de medios, como adjunto, `no-store` y `sandbox`; derivados sin EXIF | `MediaPanelTest`, `nginx-smoke.sh` |
+| Nombres de archivo maliciosos (rutas, caracteres de control) | El nombre subido nunca llega al disco; solo se limpia como título editorial | `MediaTest` |
+| Enumeración de recetas / DoS por URLs de previsualización | La ruta valida identificador, ancho y clave contra la receta vigente; otra clave → 404 sin procesar | `MediaPanelTest` |
+| Imagen publicada rota o sustituida por contenido no WebP | Preflight: cada archivo de `/media/` debe ser WebP; `src`/`srcset` deben existir | `MediaPanelTest`, `PublishTest` |
+| Borrar una imagen en uso y dejar páginas rotas | Borrado denegado si una revisión en edición o publicada la usa; publicación bloqueada con mensaje si una referencia no existe | `MediaPanelTest` |
+| Limpieza que borra lo que sirve una versión retenida o la reversión | La limpieza conserva claves de las versiones retenidas y aplica periodo de gracia | `MediaPanelTest` |
+

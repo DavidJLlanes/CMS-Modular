@@ -16,6 +16,7 @@ Se registra un ADR cuando una elección afecta al contrato del contenido, los m�
 | [0010](0010-contenido-revisiones-y-previsualizacion.md) | Contenido, revisiones, URLs y previsualización | Aceptada |
 | [0011](0011-motor-de-publicacion-y-reversion.md) | Motor de publicación, coherencia y reversión | Aceptada |
 | [0012](0012-contrato-de-disenos-por-carpeta.md) | Contrato de diseños por carpeta, tema y tipografía | Aceptada |
+| [0013](0013-biblioteca-multimedia-y-derivados-webp.md) | Biblioteca multimedia y derivados WebP con GD | Aceptada |
 
 ## Plantilla
 

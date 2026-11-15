@@ -49,12 +49,19 @@ check() { # nombre, esperado, obtenido
 code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 B="http://127.0.0.1:$PORT"
 
-# Publica una versión con tema tipográfico propio (fuentes locales) para comprobar su entrega real.
+# Publica una versión con tema tipográfico propio (fuentes locales) y una imagen de la biblioteca para comprobar su entrega real.
 php -r 'require "'"$ROOT"'/src/Core/Autoloader.php"; LuxAeterna\Core\Autoloader::register("'"$ROOT"'/src");
 $c=LuxAeterna\Core\Config::load("'"$ROOT"'"); $st=new LuxAeterna\Publishing\ReleaseStore($c->path("publish"));
+$sv=new LuxAeterna\Admin\Services($c,true);
+$im=imagecreatetruecolor(1800,1200); for($i=0;$i<200;$i++) imagefilledellipse($im,mt_rand(0,1800),mt_rand(0,1200),mt_rand(40,300),mt_rand(40,300),mt_rand(0,0xFFFFFF)); imagejpeg($im,"'"$T"'/smoke.jpg",88);
+$m=$sv->media()->add("'"$T"'/smoke.jpg","smoke.jpg");
+file_put_contents("'"$T"'/smoke.uid",$m["uid"]); file_put_contents("'"$T"'/smoke.orig",$sv->media()->originalPath($m));
 $pages=(new LuxAeterna\Content\ContentLoader())->load("'"$ROOT"'/examples/sitio-demo/content.json");
+$img=new LuxAeterna\Content\Page("img","imagen","Con imagen","Prueba",[["type"=>"image","ref"=>$m["uid"],"alt"=>"Prueba de imagen","caption"=>""]],false);
+$pages[]=$img;
 $d=["theme"=>["typography"=>["body"=>["family"=>"inter","size"=>17,"line"=>1.6,"align"=>"left"],"heading"=>["family"=>"lora","weight"=>700]]]];
-(new LuxAeterna\Publishing\Publisher($c,$st,new LuxAeterna\Core\Logger($c->path("data")."/logs"),"'"$ROOT"'/components/layouts/base"))->publishSnapshot(new LuxAeterna\Content\SiteSnapshot($pages,[],[],[],$d),["force"=>true]);' >/dev/null || { echo "No se pudo publicar con fuentes"; exit 2; }
+$media=["items"=>[$m["uid"]=>$sv->media()->get($m["uid"])],"quality"=>82,"max_width"=>1600];
+(new LuxAeterna\Publishing\Publisher($c,$st,new LuxAeterna\Core\Logger($c->path("data")."/logs"),"'"$ROOT"'/components/layouts/base",$sv->media()))->publishSnapshot(new LuxAeterna\Content\SiteSnapshot($pages,[],[],[],$d,$media),["force"=>true]);' >/dev/null || { echo "No se pudo publicar con fuentes e imagen"; exit 2; }
 
 # 1) Con el panel y PHP-FPM detenidos, el sitio público sigue sirviéndose.
 kill "$(cat "$T/fpm.pid")"; sleep 0.5; rm -f "$T/fpm.pid"
@@ -73,6 +80,17 @@ check "fuente local servida" 200 "$(code $B$FONT)"
 check "fuente con tipo MIME woff2" 1 "$(curl -sI $B$FONT | grep -ci 'content-type: font/woff2')"
 check "fuente caché inmutable" 1 "$(curl -sI $B$FONT | grep -ci 'cache-control: public, max-age=31536000, immutable')"
 check "sin peticiones a terceros en la portada" 0 "$(curl -s $B/ | grep -Eic '(href|src)="(https?:)?//(fonts|cdn|ajax)')"
+UID_IMG=$(cat "$T/smoke.uid")
+IMG=$(curl -s $B/imagen/ | grep -o "/media/$UID_IMG-[0-9]*\.[0-9a-f]*\.webp" | head -1)
+check "imagen publicada (WebP con huella)" 200 "$(code $B$IMG)"
+check "imagen con tipo MIME webp" 1 "$(curl -sI $B$IMG | grep -ci 'content-type: image/webp')"
+check "imagen caché inmutable" 1 "$(curl -sI $B$IMG | grep -ci 'cache-control: public, max-age=31536000, immutable')"
+check "imagen nosniff" 1 "$(curl -sI $B$IMG | grep -ci 'x-content-type-options: nosniff')"
+check "imagen con srcset y alt" 1 "$(curl -s $B/imagen/ | grep -c 'srcset=.*alt="Prueba de imagen"')"
+check "el WebP servido es WebP" RIFF "$(curl -s $B$IMG | head -c 4)"
+check "el original no se sirve por /media/" 404 "$(code $B/media/$UID_IMG.jpg)"
+check "originales fuera de la web" 404 "$(code $B/var/media/originals/$(echo $UID_IMG | cut -c5-6)/$UID_IMG.jpg)"
+check "cuerpo de 2 MB al panel sin 413" 0 "$(head -c 2097152 /dev/zero > "$T/body.bin"; [ "$(code -X POST --data-binary @$T/body.bin $B/admin/login)" = 413 ] && echo 1 || echo 0)"
 check "inventario de recursos oculto" 404 "$(code $B/.lux-inventory.json)"
 check "css caché inmutable" 1 "$(curl -sI $B$CSS | grep -ci 'cache-control: public, max-age=31536000, immutable')"
 check "html con no-cache" 1 "$(curl -sI $B/ | grep -ci 'cache-control: no-cache')"
@@ -97,7 +115,7 @@ check "panel: sin cabeceras duplicadas de nosniff" 1 "$(curl -sI $B/admin/login 
 check "público: CSP" 1 "$(curl -sI $B/ | grep -ci 'content-security-policy')"
 check "público: HSTS" 1 "$(curl -sI $B/ | grep -ci 'strict-transport-security')"
 check "público: nosniff en estáticos" 1 "$(curl -sI $B$CSS | grep -ci 'x-content-type-options: nosniff')"
-check "panel: cuerpo grande rechazado" 413 "$(head -c 2000000 /dev/zero | curl -s -o /dev/null -w '%{http_code}' -X POST --data-binary @- $B/admin/login)"
+check "panel: cuerpo mayor de 16 MB rechazado" 413 "$(head -c 17000000 /dev/zero | curl -s -o /dev/null -w '%{http_code}' -X POST --data-binary @- $B/admin/login)"
 check "redirección /admin → /admin/" 301 "$(code $B/admin)"
 check "panel noindex" 1 "$(curl -sI $B/admin/login | grep -ci 'x-robots-tag: noindex')"
 check "panel no-store" 1 "$(curl -sI $B/admin/login | grep -ci 'cache-control: no-store')"
