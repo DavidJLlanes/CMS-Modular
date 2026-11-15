@@ -329,7 +329,7 @@ T::test('alta con enlace: un solo uso, caduca, valida la contraseña y cierra se
     $tok = $sv->tokens->create($id, 'setup');
     $c = new Client($sv);
     T::eq(200, $c->get('/admin/setup', ['token' => $tok])->status);
-    T::eq(400, $c->get('/admin/setup', ['token' => 'x' . substr($tok, 1)])->status);
+    T::eq(400, $c->get('/admin/setup', ['token' => ($tok[0] === 'x' ? 'y' : 'x') . substr($tok, 1)])->status);
     T::eq(400, $c->get('/admin/reset', ['token' => $tok])->status, 'otro propósito');
     $form = fn(string $p, string $p2) => $c->req('POST', '/admin/setup', ['csrf' => $c->csrfFrom($c->get('/admin/setup', ['token' => $tok])), 'token' => $tok, 'password' => $p, 'password2' => $p2]);
     T::eq(422, $form('corta', 'corta')->status);

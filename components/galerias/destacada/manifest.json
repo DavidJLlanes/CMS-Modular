@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "id": "destacada",
+  "type": "gallery",
+  "name": "Destacada",
+  "version": "1.0.0",
+  "description": "La primera foto grande y el resto en rejilla debajo.",
+  "requires": {
+    "lux": "0.7.0"
+  },
+  "template": "template.html",
+  "item": "item.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "columnas": {
+      "type": "number",
+      "label": "Columnas",
+      "min": 2,
+      "max": 6,
+      "default": 3
+    },
+    "espacio": {
+      "type": "number",
+      "label": "Espacio entre fotos (px)",
+      "min": 0,
+      "max": 40,
+      "default": 8
+    },
+    "captions": {
+      "type": "bool",
+      "label": "Mostrar pies de foto",
+      "default": true
+    }
+  },
+  "gallery": {
+    "crops": [
+      "landscape",
+      "square",
+      "free"
+    ],
+    "crop_default": "landscape",
+    "thumb_px": 500,
+    "sizes": "(min-width: 800px) 33vw, 50vw"
+  },
+  "resources": {
+    "fonts": [],
+    "images": []
+  }
+}

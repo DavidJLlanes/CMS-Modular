@@ -19,6 +19,8 @@ final class SiteBuilder
         private readonly Settings $settings,
         /** @var ?\Closure():array{quality:int,max_width:int} ajustes de procesado de imágenes */
         private readonly ?\Closure $mediaSettings = null,
+        /** @var ?\Closure():\LuxAeterna\Gallery\GalleryStore galerías (Fase 8) */
+        private readonly ?\Closure $galleries = null,
     ) {
     }
 
@@ -45,6 +47,7 @@ final class SiteBuilder
         $pages = [];
         $uses = [];
         $noAlt = [];
+        $galUses = [];
         $pageWarnings = [];
         $paths = [];
         $uidPath = [];
@@ -61,9 +64,9 @@ final class SiteBuilder
                 $redirects[] = ['from' => $this->types->path('page', (string)$r['slug']), 'to' => '/'];
             }
             $blocks = Blocks::validate(json_decode((string)$r['blocks'], true) ?: []);
-            Blocks::walk($blocks, function (array $b) use ($r, &$uses, &$noAlt): void {
+            Blocks::walk($blocks, function (array $b) use ($r, &$uses, &$noAlt, &$galUses): void {
                 if ($b['type'] === 'gallery') {
-                    throw new LuxException("«{$r['title']}» incluye una galería, que se publica a partir de la Fase 8. Quita ese bloque o espera a esa fase.");
+                    $galUses[(string)$b['ref']][] = (string)$r['title'];
                 }
                 if ($b['type'] === 'image') {
                     $uses[(string)$b['ref']][] = (string)$r['title'];
@@ -102,7 +105,7 @@ final class SiteBuilder
             $final[$rd['from']] = $rd;
         }
         $design = json_decode((string)$this->settings->get('design', '{}'), true);
-        $media = $this->mediaFor($uses, $noAlt, $warnings);
+        $media = $this->mediaFor($uses, $noAlt, $warnings, $galUses);
         return new SiteSnapshot($pages, $menus, array_values($final), $warnings, is_array($design) ? $design : [], $media);
     }
 
@@ -111,9 +114,31 @@ final class SiteBuilder
      * @param array<string,list<string>> $uses ref → títulos @param array<string,list<string>> $noAlt @param list<string> $warnings
      * @return array{items:array<string,array<string,mixed>>,quality:int,max_width:int}
      */
-    private function mediaFor(array $uses, array $noAlt, array &$warnings): array
+    private function mediaFor(array $uses, array $noAlt, array &$warnings, array $galUses = []): array
     {
         $items = [];
+        $galleries = [];
+        if ($galUses !== []) {
+            if ($this->galleries === null) {
+                throw new LuxException('Hay galerías en el contenido pero el módulo de galerías no está disponible.');
+            }
+            $snap = ($this->galleries)()->snapshot(array_keys($galUses));
+            foreach ($galUses as $uid => $titles) {
+                $g = $snap['galleries'][$uid] ?? throw new LuxException('«' . $titles[0] . '» usa una galería que ya no existe (' . $uid . '). Quita el bloque o elige otra galería.');
+                if ($g['dangling'] > 0) {
+                    throw new LuxException('La galería «' . ($g['title'] !== '' ? $g['title'] : $uid) . '» (usada en «' . $titles[0] . '») contiene ' . $g['dangling'] . ' foto(s) que ya no están en la biblioteca. Quítalas de la galería.');
+                }
+                if ($g['items'] === []) {
+                    $warnings[] = 'La galería «' . ($g['title'] !== '' ? $g['title'] : $uid) . '» está vacía y no mostrará nada en «' . $titles[0] . '».';
+                }
+                $missing = count(array_filter($g['items'], static fn(array $i): bool => $i['missing_alt']));
+                if ($missing > 0) {
+                    $warnings[] = 'La galería «' . ($g['title'] !== '' ? $g['title'] : $uid) . '» tiene ' . $missing . ' foto(s) sin texto alternativo.';
+                }
+                $galleries[$uid] = $g;
+            }
+            $items = $snap['media'];
+        }
         if ($uses !== []) {
             $marks = implode(',', array_fill(0, count($uses), '?'));
             foreach ($this->db->all("SELECT * FROM media WHERE uid IN ($marks)", array_keys($uses)) as $m) {
@@ -131,7 +156,7 @@ final class SiteBuilder
             }
         }
         $s = $this->mediaSettings === null ? ['quality' => 82, 'max_width' => 1600] : ($this->mediaSettings)();
-        return ['items' => $items, 'quality' => (int)$s['quality'], 'max_width' => (int)$s['max_width']];
+        return ['items' => $items, 'galleries' => $galleries, 'quality' => (int)$s['quality'], 'max_width' => (int)$s['max_width']];
     }
 
     /**

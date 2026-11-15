@@ -1,0 +1,10 @@
+.lux-g{list-style:none;margin:0;padding:0}
+.lux-g-i{margin:0;padding:0}
+.lux-g-i figure{margin:0;position:relative}
+.lux-g-i img{display:block;width:100%;height:auto}
+.lux-g-a{display:block;line-height:0}
+.lux-g-cap{display:block;font-size:.85em;line-height:1.35;margin-top:.35rem;color:inherit;opacity:.8}
+
+.lux-g--feature{display:grid;grid-template-columns:repeat(var(--lux-f-columnas,3),minmax(0,1fr));gap:calc(var(--lux-f-espacio,8) * 1px)}
+.lux-g--feature .lux-g-i:first-child{grid-column:1 / -1}
+@media (max-width:600px){.lux-g--feature{grid-template-columns:repeat(2,minmax(0,1fr))}}

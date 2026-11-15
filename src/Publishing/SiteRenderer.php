@@ -17,7 +17,10 @@ final class SiteRenderer
     private string $template;
     public readonly DesignAssembler $design;
     public readonly ImageRenderer $images;
+    public readonly \LuxAeterna\Gallery\GalleryRenderer $galleries;
     private bool $planned = false;
+    /** @var array<string,mixed> */
+    private array $media = [];
 
     /**
      * @param array<string,mixed> $designSettings ajustes de diseño del snapshot
@@ -30,6 +33,8 @@ final class SiteRenderer
         $this->design = new DesignAssembler($config, dirname($layoutDir, 2), $designSettings, $preview);
         $width = (int)round((float)($this->design->theme()['width'] ?? 46) * 16);
         $this->images = new ImageRenderer((array)($media['items'] ?? []), (int)($media['quality'] ?? 82), (int)($media['max_width'] ?? 1600), $width, $store, $preview);
+        $this->galleries = new \LuxAeterna\Gallery\GalleryRenderer((array)($media['galleries'] ?? []), (array)($media['items'] ?? []), $this->design->registry, dirname($layoutDir, 2), $this->images, fn(array $d, array $v): string => $this->design->galleryClass($d, $v), $preview);
+        $this->media = $media;
     }
 
     /** Recursos que hay que escribir junto a las páginas (ruta pública → contenido o archivo). @return array<string,array{content?:string,file?:string}> */
@@ -58,7 +63,7 @@ final class SiteRenderer
             'footer_nav' => self::navHtml($s->menus['footer'] ?? []),
             'head_extra' => $headExtra,
         ];
-        $this->design->plan($s->pages, $site, $previewCssUrl);
+        $this->design->plan($s->pages, $site, $previewCssUrl, (array)($this->media['galleries'] ?? []));
         $this->planned = true;
         return $site;
     }
@@ -71,7 +76,7 @@ final class SiteRenderer
             'heading' => $p->title,
             'description' => $p->description,
             'canonical' => $this->config->baseUrl() . $p->path(),
-            'content' => BlockRenderer::render($p, $this->images),
+            'content' => BlockRenderer::render($p, $this->images, $this->galleries),
         ] + $this->design->pageVars($p));
     }
 

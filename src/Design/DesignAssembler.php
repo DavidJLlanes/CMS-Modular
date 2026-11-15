@@ -75,7 +75,7 @@ final class DesignAssembler
      * Resuelve todas las ranuras de todas las páginas y construye los recursos. Debe llamarse antes de pageVars().
      * @param list<Page> $pages @param array<string,string> $site variables comunes (site_name, nav, footer_nav, lang…)
      */
-    public function plan(array $pages, array $site, string $previewCssUrl = ''): void
+    public function plan(array $pages, array $site, string $previewCssUrl = '', array $galleries = []): void
     {
         $this->planned = true;
         $this->assets = [];
@@ -106,6 +106,12 @@ final class DesignAssembler
                 $used[] = $d['id'];
                 $componentFiles[$d['id']] ??= $this->componentAssets($d);
             }
+            foreach ($this->galleryComponents($p, $galleries) as $gid) {
+                if (!in_array($gid, $used, true)) {
+                    $used[] = $gid;
+                    $componentFiles[$gid] ??= $this->componentAssets($this->registry->get($gid) ?? []);
+                }
+            }
             $this->perPage[$path] = [
                 'slots' => $slots,
                 'used' => $used,
@@ -134,6 +140,36 @@ final class DesignAssembler
     }
 
     private string $previewCssUrl = '';
+
+    /**
+     * Diseños de galería y visor que necesita una página (solo si la usan: una página sin galería no carga nada del visor).
+     * De paso fija la clase de instancia, que debe existir antes de construir el CSS núcleo.
+     * @param array<string,array<string,mixed>> $galleries @return list<string>
+     */
+    private function galleryComponents(Page $p, array $galleries): array
+    {
+        $ids = [];
+        \LuxAeterna\Content\Blocks::walk($p->blocks, function (array $b) use ($galleries, &$ids): void {
+            $g = $b['type'] === 'gallery' ? ($galleries[(string)$b['ref']] ?? null) : null;
+            $d = $g === null ? null : $this->registry->get((string)$g['layout']);
+            if ($d === null || $d['type'] !== 'gallery' || $g['items'] === []) {
+                return;
+            }
+            $ids[] = $d['id'];
+            $this->galleryClass($d, array_replace($d['defaults'], array_intersect_key((array)$g['options'], $d['fields'])));
+            $v = $this->registry->get(\LuxAeterna\Gallery\GalleryRenderer::VIEWER);
+            if (!empty($g['lightbox']['enabled']) && $v !== null && $v['type'] === 'viewer') {
+                $ids[] = $v['id'];
+            }
+        });
+        return array_values(array_unique($ids));
+    }
+
+    /** @param array<string,mixed> $d @param array<string,mixed> $values */
+    public function galleryClass(array $d, array $values): string
+    {
+        return $this->instanceClass($d, $values);
+    }
 
     /** Añade una página generada fuera del snapshot (404) reutilizando los recursos ya planificados. @param array<string,string> $site */
     public function planExtra(Page $p, array $site): void

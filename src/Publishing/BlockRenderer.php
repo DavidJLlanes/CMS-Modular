@@ -17,7 +17,7 @@ final class BlockRenderer
         return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    public static function render(Page $page, ?ImageRenderer $images = null): string
+    public static function render(Page $page, ?ImageRenderer $images = null, ?\LuxAeterna\Gallery\GalleryRenderer $galleries = null): string
     {
         $html = '';
         if ($page->type !== 'page' && $page->type !== 'listing' && $page->date !== null) {
@@ -25,6 +25,7 @@ final class BlockRenderer
         }
         $ctx = new \stdClass();
         $ctx->images = $images;
+        $ctx->galleries = $galleries;
         $ctx->seenImage = false;
         foreach ($page->blocks as $i => $b) {
             $ctx->top = $i;
@@ -72,7 +73,10 @@ final class BlockRenderer
                 $ctx->seenImage = true;
                 return isset($b['align']) ? preg_replace('/^<figure class="lux-img"/', '<figure class="lux-img lux-img--' . $b['align'] . '"', $fig, 1) : $fig;
             case 'gallery':
-                throw new LuxException('Las galerías se publican a partir de la Fase 8. Quita el bloque de galería (' . (string)$b['ref'] . ') o espera a esa fase.');
+                if ($ctx->galleries === null) {
+                    throw new LuxException('Hay una galería que publicar pero no se ha preparado el módulo de galerías.');
+                }
+                return $ctx->galleries->render((string)$b['ref']);
             case 'button':
                 return '<p class="lux-btn-row' . (isset($b['align']) ? ' lux-a-' . $b['align'] : '') . '"><a class="lux-btn lux-btn--' . $b['variant'] . '" href="' . self::e((string)$b['href']) . '"'
                     . (preg_match('#^https?://#i', (string)$b['href']) ? ' rel="noopener noreferrer"' : '') . '>' . self::e((string)$b['label']) . "</a></p>\n";

@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "id": "rejilla",
+  "type": "gallery",
+  "name": "Rejilla",
+  "version": "1.0.0",
+  "description": "Cuadrícula regular de columnas iguales.",
+  "requires": {
+    "lux": "0.7.0"
+  },
+  "template": "template.html",
+  "item": "item.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "columnas": {
+      "type": "number",
+      "label": "Columnas",
+      "min": 2,
+      "max": 6,
+      "default": 3
+    },
+    "espacio": {
+      "type": "number",
+      "label": "Espacio entre fotos (px)",
+      "min": 0,
+      "max": 40,
+      "default": 8
+    },
+    "captions": {
+      "type": "bool",
+      "label": "Mostrar pies de foto",
+      "default": true
+    }
+  },
+  "gallery": {
+    "crops": [
+      "square",
+      "landscape",
+      "portrait",
+      "free"
+    ],
+    "crop_default": "square",
+    "thumb_px": 400,
+    "sizes": "(min-width: 800px) 400px, 50vw"
+  },
+  "resources": {
+    "fonts": [],
+    "images": []
+  }
+}

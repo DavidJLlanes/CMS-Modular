@@ -42,10 +42,11 @@ function lux_site(array $types = []): object
     $o->menus = $menus;
     $o->settings = $settings;
     $o->types = $reg;
-    $o->builder = new SiteBuilder($db, $reg, $menus, $settings);
+    $o->galleries = new \LuxAeterna\Gallery\GalleryStore($db, fn() => new \LuxAeterna\Design\DesignRegistry($root . '/components', null, \LuxAeterna\Core\Version::CURRENT));
+    $o->builder = new SiteBuilder($db, $reg, $menus, $settings, null, fn() => $o->galleries);
     $o->store = new ReleaseStore("$d/publish");
     $o->publisher = new Publisher($config, $o->store, new Logger("$d/logs"), $root . '/components/layouts/base');
-    $o->preview = new Preview($config, $reg, $menus, $db, $root . '/components/layouts/base');
+    $o->preview = new Preview($config, $reg, $menus, $db, $root . '/components/layouts/base', null, null, fn() => $o->galleries);
     $o->publishSite = function () use ($o): array {
         return $o->publisher->publishSnapshot($o->builder->build());
     };
@@ -179,12 +180,12 @@ T::test('redirecciones: apuntar a algo no publicado se ignora con aviso y no rom
     T::eq(null, ($s->read)('/vieja/index.html'));
     T::ok((bool)array_filter($res['warnings'], fn($w) => str_contains($w, '/vieja/')));
 });
-T::test('galerías: se guardan por identificador pero no se publican hasta la Fase 8 (error claro)', function () {
+T::test('galerías: una referencia a una galería que no existe bloquea la publicación con un error claro', function () {
     $s = lux_site();
     $home = ($s->page)('Inicio', 'Hola');
     $s->settings->set('home_uid', $s->repo->get($home)['uid']);
     ($s->page)('Galería', "Texto\n\n[galeria:viaje-2026]");
-    T::throws(LuxException::class, fn() => ($s->publishSite)(), 'Fase 8');
+    T::throws(LuxException::class, fn() => ($s->publishSite)(), 'galería que ya no existe');
     T::ok($s->store->currentId() === null, 'no se activó nada');
 });
 T::test('previsualización: mismas plantillas, noindex, sin escribir en la versión pública', function () {

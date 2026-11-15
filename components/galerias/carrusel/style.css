@@ -1,0 +1,10 @@
+.lux-g{list-style:none;margin:0;padding:0}
+.lux-g-i{margin:0;padding:0}
+.lux-g-i figure{margin:0;position:relative}
+.lux-g-i img{display:block;width:100%;height:auto}
+.lux-g-a{display:block;line-height:0}
+.lux-g-cap{display:block;font-size:.85em;line-height:1.35;margin-top:.35rem;color:inherit;opacity:.8}
+
+.lux-g--strip{overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:.5rem}
+.lux-g--strip .lux-g-track{list-style:none;margin:0;padding:0;display:flex;gap:calc(var(--lux-f-espacio,8) * 1px)}
+.lux-g--strip .lux-g-i{flex:0 0 min(85%,calc(var(--lux-f-ancho,22) * 1rem));scroll-snap-align:start}

@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "id": "carrusel",
+  "type": "gallery",
+  "name": "Carrusel",
+  "version": "1.0.0",
+  "description": "Tira horizontal con desplazamiento táctil y por teclado, sin JavaScript.",
+  "requires": {
+    "lux": "0.7.0"
+  },
+  "template": "template.html",
+  "item": "item.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "ancho": {
+      "type": "number",
+      "label": "Ancho de cada foto (rem)",
+      "min": 10,
+      "max": 40,
+      "default": 22
+    },
+    "espacio": {
+      "type": "number",
+      "label": "Espacio entre fotos (px)",
+      "min": 0,
+      "max": 40,
+      "default": 8
+    },
+    "captions": {
+      "type": "bool",
+      "label": "Mostrar pies de foto",
+      "default": true
+    }
+  },
+  "gallery": {
+    "crops": [
+      "landscape",
+      "square",
+      "portrait",
+      "free"
+    ],
+    "crop_default": "landscape",
+    "thumb_px": 600,
+    "sizes": "(min-width: 800px) 600px, 80vw"
+  },
+  "resources": {
+    "fonts": [],
+    "images": []
+  }
+}

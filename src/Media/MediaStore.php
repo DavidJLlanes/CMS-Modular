@@ -188,6 +188,10 @@ final class MediaStore
     public function delete(string $uid): void
     {
         $m = $this->get($uid) ?? throw new LuxException('La imagen no existe.');
+        $gal = (int)$this->db->val('SELECT COUNT(DISTINCT gallery_id) FROM gallery_items WHERE media_uid = ?', [$uid]);
+        if ($gal > 0) {
+            throw new LuxException('No se puede borrar: forma parte de ' . $gal . ' galería(s). Quítala de ellas primero.');
+        }
         $refs = $this->references($uid);
         if ($refs !== []) {
             throw new LuxException('No se puede borrar: la usan ' . count($refs) . ' contenido(s) (por ejemplo «' . $refs[0]['title'] . '»). Quita la imagen de esos contenidos o sustitúyela.');

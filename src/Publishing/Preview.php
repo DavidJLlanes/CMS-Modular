@@ -21,7 +21,7 @@ final class Preview
 {
     public const CSS_URL = '/admin/preview/style.css';
 
-    public function __construct(private readonly Config $config, private readonly TypeRegistry $types, private readonly Menus $menus, private readonly Database $db, private readonly string $layoutDir, private readonly ?\Closure $design = null, private readonly ?\Closure $media = null)
+    public function __construct(private readonly Config $config, private readonly TypeRegistry $types, private readonly Menus $menus, private readonly Database $db, private readonly string $layoutDir, private readonly ?\Closure $design = null, private readonly ?\Closure $media = null, private readonly ?\Closure $galleries = null)
     {
     }
 
@@ -47,12 +47,22 @@ final class Preview
         $store = $this->store();
         $s = $store?->settings();
         $items = [];
-        \LuxAeterna\Content\Blocks::walk($blocks, static function (array $b) use ($store, &$items): void {
+        $gal = [];
+        \LuxAeterna\Content\Blocks::walk($blocks, static function (array $b) use ($store, &$items, &$gal): void {
             if ($store !== null && $b['type'] === 'image' && ($m = $store->get((string)$b['ref'])) !== null) {
                 $items[(string)$m['uid']] = $m;
             }
+            if ($b['type'] === 'gallery') {
+                $gal[] = (string)$b['ref'];
+            }
         });
-        return ['items' => $items, 'quality' => $s?->quality() ?? 82, 'max_width' => $s?->maxWidth() ?? 1600];
+        $galleries = [];
+        if ($gal !== [] && $this->galleries !== null) {
+            $snap = ($this->galleries)()->snapshot($gal);
+            $galleries = $snap['galleries'];
+            $items += $snap['media'];
+        }
+        return ['items' => $items, 'galleries' => $galleries, 'quality' => $s?->quality() ?? 82, 'max_width' => $s?->maxWidth() ?? 1600];
     }
 
     /**
@@ -62,7 +72,7 @@ final class Preview
     public function image(string $name): ?array
     {
         $store = $this->store();
-        if ($store === null || !preg_match('/^(img-[0-9a-f]{12})-(\d{2,5})\.([0-9a-f]{16})\.webp$/', $name, $m)) {
+        if ($store === null || !preg_match('/^(img-[0-9a-f]{12})-(\d{2,5})(?:x(\d{2,5})f(\d{1,3})-(\d{1,3}))?\.([0-9a-f]{16})\.webp$/', $name, $m)) {
             return null;
         }
         $rec = $store->get($m[1]);
@@ -70,14 +80,19 @@ final class Preview
             return null;
         }
         $s = $store->settings();
-        $r = Recipe::make((int)$m[2], 0, 'inside', 50, 50, $s->quality());
-        if (Recipe::key((string)$rec['sha256'], $r) !== $m[3]) {
+        $key = $m[6];
+        if (($m[3] ?? '') !== '') {
+            $r = Recipe::make((int)$m[2], (int)$m[3], 'cover', (int)$m[4], (int)$m[5], $s->quality());
+        } else {
+            $r = Recipe::make((int)$m[2], 0, 'inside', 50, 50, $s->quality());
+        }
+        if (Recipe::key((string)$rec['sha256'], $r) !== $key) {
             $r = $store->thumbRecipe(); // miniatura de la biblioteca
-            if ((int)$m[2] !== MediaStore::THUMB || Recipe::key((string)$rec['sha256'], $r) !== $m[3]) {
+            if (($m[3] ?? '') !== '' || (int)$m[2] !== MediaStore::THUMB || Recipe::key((string)$rec['sha256'], $r) !== $key) {
                 return null;
             }
         }
-        $d = $store->ensure($rec, [$r])[$m[3]] ?? null;
+        $d = $store->ensure($rec, [$r])[$key] ?? null;
         return $d === null ? null : ['image/webp', (string)file_get_contents($d['file'])];
     }
 
@@ -112,9 +127,7 @@ final class Preview
     /** @param array<string,mixed> $rev revisión decodificada (title, slug, summary, fields, blocks) */
     public function html(string $type, array $rev, string $cssUrl = self::CSS_URL, string $uid = 'preview', ?array $edit = null): string
     {
-        $blocks = array_map(static fn(array $b): array => $b['type'] === 'gallery'
-            ? ['type' => 'paragraph', 'text' => '[Aquí irá la galería «' . $b['ref'] . '» cuando exista el módulo de galerías (Fase 8)]']
-            : $b, (array)$rev['blocks']);
+        $blocks = (array)$rev['blocks'];
         $colors = \LuxAeterna\Content\Blocks::colors($blocks);
         if ($edit !== null) { // edición visual: la plantilla real con el editor montado en lugar del contenido
             $blocks = [['type' => 'mount']];
@@ -130,6 +143,7 @@ final class Preview
             $this->types->path($type, (string)$rev['slug']), $type, time(), $fields);
         $snap = new SiteSnapshot([$page], ['main' => $this->links('main'), 'footer' => $this->links('footer')]);
         $r = $this->renderer($this->mediaFor($blocks));
+        // (los bloques de galería llegan tal cual: el renderizador los resuelve con el mismo código que la publicación)
         $site = $r->siteVars($snap, $cssUrl . (str_contains($cssUrl, '?') ? '&' : '?') . 'u=' . rawurlencode($uid) . '&t=' . rawurlencode($type)
             . ($colors !== [] ? '&c=' . implode(',', array_map(static fn(string $c): string => substr($c, 1), $colors)) : ''), '<meta name="robots" content="noindex,nofollow">' . ($edit['head'] ?? ''));
         $html = $r->page($page, $site);

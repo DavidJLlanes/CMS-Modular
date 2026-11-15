@@ -50,6 +50,8 @@ final class Services
     private ?PublishService $publishing = null;
     private ?JobStore $jobStore = null;
     private ?MediaStore $mediaStore = null;
+    private ?\LuxAeterna\Design\DesignRegistry $designRegistry = null;
+    private ?\LuxAeterna\Gallery\GalleryStore $galleryStore = null;
 
     public function __construct(public readonly Config $config, bool $migrate = false)
     {
@@ -75,8 +77,8 @@ final class Services
         $this->content = new ContentRepository($this->db, $this->types, $this->taxonomy);
         $this->menus = new Menus($this->db);
         $this->settings = new Settings($this->db);
-        $this->site = new SiteBuilder($this->db, $this->types, $this->menus, $this->settings, fn(): array => $this->mediaSettings()->toArray());
-        $this->preview = new Preview($config, $this->types, $this->menus, $this->db, $config->root . '/components/layouts/base', fn(): array => $this->designSettings(), fn(): MediaStore => $this->media());
+        $this->site = new SiteBuilder($this->db, $this->types, $this->menus, $this->settings, fn(): array => $this->mediaSettings()->toArray(), fn() => $this->galleries());
+        $this->preview = new Preview($config, $this->types, $this->menus, $this->db, $config->root . '/components/layouts/base', fn(): array => $this->designSettings(), fn(): MediaStore => $this->media(), fn() => $this->galleries());
     }
 
     /** @return array<string,mixed> ajustes de diseño guardados */
@@ -91,6 +93,16 @@ final class Services
     {
         $d = json_decode((string)$this->settings->get('media', '{}'), true);
         return new MediaSettings($this->config, is_array($d) ? $d : []);
+    }
+
+    public function designs(): \LuxAeterna\Design\DesignRegistry
+    {
+        return $this->designRegistry ??= new \LuxAeterna\Design\DesignRegistry($this->config->root . '/components', $this->config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT);
+    }
+
+    public function galleries(): \LuxAeterna\Gallery\GalleryStore
+    {
+        return $this->galleryStore ??= new \LuxAeterna\Gallery\GalleryStore($this->db, fn() => $this->designs());
     }
 
     /** Biblioteca multimedia: originales privados en var/media y derivados WebP con huella. */

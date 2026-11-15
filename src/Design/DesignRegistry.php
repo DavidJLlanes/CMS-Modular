@@ -14,7 +14,13 @@ use LuxAeterna\Core\Fs;
  */
 final class DesignRegistry
 {
-    public const TYPES = ['header' => 'Cabecera', 'topbar' => 'Barra superior', 'hero' => 'Hero', 'footer' => 'Pie'];
+    public const TYPES = ['header' => 'Cabecera', 'topbar' => 'Barra superior', 'hero' => 'Hero', 'footer' => 'Pie', 'gallery' => 'Galería', 'viewer' => 'Visor'];
+    /** Variables de las plantillas de galería (wrapper) y de ítem. raw = HTML preparado por el generador. */
+    public const GALLERY_RAW = ['items'];
+    public const GALLERY_ESC = ['title', 'count'];
+    public const ITEM_RAW = ['a_open', 'a_close', 'img', 'caption'];
+    public const ITEM_ESC = ['index', 'alt', 'cls', 'title'];
+    public const CROPS = ['free', 'square', 'landscape', 'portrait'];
     /** Marcadores de plantilla siempre disponibles. raw = HTML preparado por el generador. */
     public const STD_RAW = ['nav', 'footer_nav', 'logo'];
     public const STD_ESC = ['site_name', 'home_url', 'title', 'description', 'year'];
@@ -185,7 +191,9 @@ final class DesignRegistry
             $errs[] = "Requiere LuxAeterna $min o superior (instalado: $this->luxVersion).";
         }
         $files = [];
-        foreach (['template' => true, 'css' => true, 'js' => false, 'preview' => false] as $k => $required) {
+        $isGallery = ($m['type'] ?? '') === 'gallery';
+        $isViewer = ($m['type'] ?? '') === 'viewer';
+        foreach (['template' => !$isViewer, 'item' => $isGallery, 'css' => true, 'js' => false, 'preview' => false] as $k => $required) {
             $v = $m[$k] ?? null;
             if ($v === null || $v === '') {
                 if ($required) {
@@ -198,8 +206,8 @@ final class DesignRegistry
                 continue;
             }
             $ext = strtolower(pathinfo($v, PATHINFO_EXTENSION));
-            if (['template' => 'html', 'css' => 'css', 'js' => 'js', 'preview' => 'webp'][$k] !== $ext) {
-                $errs[] = "$k debe tener extensión ." . ['template' => 'html', 'css' => 'css', 'js' => 'js', 'preview' => 'webp'][$k] . '.';
+            if (['template' => 'html', 'item' => 'html', 'css' => 'css', 'js' => 'js', 'preview' => 'webp'][$k] !== $ext) {
+                $errs[] = "$k debe tener extensión ." . ['template' => 'html', 'item' => 'html', 'css' => 'css', 'js' => 'js', 'preview' => 'webp'][$k] . '.';
                 continue;
             }
             $files[$k] = $v;
@@ -207,7 +215,7 @@ final class DesignRegistry
         $fields = $m['fields'] ?? [];
         $errs = array_merge($errs, FieldSchema::checkDefs($fields));
         foreach (array_keys(is_array($fields) ? $fields : []) as $f) {
-            if (in_array($f, array_merge(self::STD_RAW, self::STD_ESC), true)) {
+            if (in_array($f, array_merge(self::STD_RAW, self::STD_ESC, self::GALLERY_RAW, self::GALLERY_ESC, self::ITEM_RAW, self::ITEM_ESC), true)) {
                 $errs[] = "El campo «{$f}» usa un nombre reservado.";
             }
         }
@@ -226,14 +234,24 @@ final class DesignRegistry
             }
         }
         if ($errs === [] && isset($files['template'])) {
-            $errs = array_merge($errs, $this->checkTemplate((string)file_get_contents("$base/{$files['template']}"), is_array($fields) ? $fields : []));
+            $errs = array_merge($errs, $this->checkTemplate((string)file_get_contents("$base/{$files['template']}"), is_array($fields) ? $fields : [], (string)($m['type'] ?? ''), 'gallery'));
+            if (isset($files['item'])) {
+                $errs = array_merge($errs, $this->checkTemplate((string)file_get_contents("$base/{$files['item']}"), is_array($fields) ? $fields : [], 'gallery', 'item'));
+            }
             if (($m['type'] ?? '') === 'hero' && !preg_match('/<h1[\s>]/i', (string)file_get_contents("$base/{$files['template']}"))) {
                 $errs[] = 'Un hero debe contener el <h1> de la página.';
             }
+        }
+        if ($errs === [] && isset($files['css'])) {
             $errs = array_merge($errs, $this->checkCss((string)file_get_contents("$base/{$files['css']}")));
             if (isset($files['js'])) {
                 $errs = array_merge($errs, $this->checkJs((string)file_get_contents("$base/{$files['js']}")));
             }
+        }
+        $gallery = null;
+        if ($isGallery) {
+            [$gallery, $gerrs] = self::checkGallery($m['gallery'] ?? null);
+            $errs = array_merge($errs, $gerrs);
         }
         if ($errs !== []) {
             return [null, $errs];
@@ -243,22 +261,53 @@ final class DesignRegistry
             'id' => $id, 'type' => $m['type'], 'name' => $m['name'], 'version' => $m['version'], 'dir' => $rel,
             'description' => is_string($m['description'] ?? null) ? mb_substr($m['description'], 0, 300) : '',
             'files' => $files, 'fields' => $fields, 'defaults' => FieldSchema::defaults($fields),
-            'resources' => $declared, 'hash' => substr($hash, 0, 10),
+            'resources' => $declared, 'gallery' => $gallery, 'hash' => substr($hash, 0, 10),
         ], []];
     }
 
+    /**
+     * Metadatos propios de un diseño de galería: recortes admitidos, tamaño de miniatura y ajuste `sizes`.
+     * @return array{0:?array<string,mixed>,1:list<string>}
+     */
+    private static function checkGallery(mixed $g): array
+    {
+        if (!is_array($g)) {
+            return [null, ['Un diseño de galería necesita el objeto «gallery» (crops, crop_default, thumb_px, sizes).']];
+        }
+        $errs = [];
+        $crops = $g['crops'] ?? null;
+        if (!is_array($crops) || $crops === [] || array_diff($crops, self::CROPS) !== []) {
+            $errs[] = 'gallery.crops debe listar valores de: ' . implode(', ', self::CROPS) . '.';
+        }
+        if (!is_string($g['crop_default'] ?? null) || !in_array($g['crop_default'], is_array($crops) ? $crops : [], true)) {
+            $errs[] = 'gallery.crop_default debe estar entre los recortes admitidos.';
+        }
+        $px = $g['thumb_px'] ?? null;
+        if (!is_int($px) || $px < 120 || $px > 1600) {
+            $errs[] = 'gallery.thumb_px debe ser un entero entre 120 y 1600 (ancho en pantalla de la miniatura).';
+        }
+        if (!is_string($g['sizes'] ?? null) || !preg_match('/^[a-z0-9 :,().%\/*+-]{1,160}$/i', $g['sizes'])) {
+            $errs[] = 'gallery.sizes no válido.';
+        }
+        if ($errs !== []) {
+            return [null, $errs];
+        }
+        return [['crops' => array_values($crops), 'crop_default' => $g['crop_default'], 'thumb_px' => $px, 'sizes' => $g['sizes']], []];
+    }
+
     /** @param array<string,mixed> $fields @return list<string> */
-    private function checkTemplate(string $t, array $fields): array
+    private function checkTemplate(string $t, array $fields, string $type = '', string $part = 'template'): array
     {
         $errs = [];
+        [$stdRaw, $stdEsc] = $type === 'gallery' ? ($part === 'item' ? [self::ITEM_RAW, self::ITEM_ESC] : [self::GALLERY_RAW, self::GALLERY_ESC]) : [self::STD_RAW, self::STD_ESC];
         preg_match_all('/\{\{\{\s*([^}\s]*)\s*\}\}\}|\{\{\s*([^}\s]*)\s*\}\}/', $t, $mm, PREG_SET_ORDER);
         foreach ($mm as $m) {
             $raw = ($m[1] ?? '') !== '';
             $n = $raw ? $m[1] : ($m[2] ?? '');
-            $okRaw = in_array($n, self::STD_RAW, true);
-            $okEsc = in_array($n, self::STD_ESC, true) || isset($fields[$n]);
+            $okRaw = in_array($n, $stdRaw, true);
+            $okEsc = in_array($n, $stdEsc, true) || isset($fields[$n]);
             if ($raw && !$okRaw) {
-                $errs[] = "Plantilla: «{{{ $n }}}» no permitido (solo HTML preparado: " . implode(', ', self::STD_RAW) . ').';
+                $errs[] = "Plantilla: «{{{ $n }}}» no permitido (solo HTML preparado: " . implode(', ', $stdRaw) . ').';
             } elseif (!$raw && !$okEsc && !$okRaw) {
                 $errs[] = "Plantilla: marcador desconocido «{{ $n }}».";
             } elseif (!$raw && $okRaw) {
@@ -297,7 +346,7 @@ final class DesignRegistry
     private function checkJs(string $js): array
     {
         $errs = [];
-        if (preg_match('/\b(?:eval|Function)\s*\(|document\.write|import\s*\(|importScripts|\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket/i', $js)) {
+        if (preg_match('/\beval\s*\(|(?<![A-Za-z0-9_$.])(?-i:Function)\s*\(|document\.write|import\s*\(|importScripts|\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket/i', $js)) {
             $errs[] = 'JS: eval, document.write, importación dinámica y peticiones de red no permitidos en diseños.';
         }
         if (preg_match('/https?:\/\//i', $js)) {

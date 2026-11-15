@@ -1,0 +1,14 @@
+.lux-g{list-style:none;margin:0;padding:0}
+.lux-g-i{margin:0;padding:0}
+.lux-g-i figure{margin:0;position:relative}
+.lux-g-i img{display:block;width:100%;height:auto}
+.lux-g-a{display:block;line-height:0}
+.lux-g-cap{display:block;font-size:.85em;line-height:1.35;margin-top:.35rem;color:inherit;opacity:.8}
+
+.lux-g--mosaic{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,10rem),1fr));grid-auto-rows:calc(var(--lux-f-altura,11) * 1rem);grid-auto-flow:dense;gap:calc(var(--lux-f-espacio,8) * 1px)}
+.lux-g--mosaic .lux-g-i,.lux-g--mosaic figure,.lux-g--mosaic .lux-g-a{height:100%}
+.lux-g--mosaic img{height:100%;object-fit:cover}
+.lux-g--mosaic .is-wide{grid-column:span 2}
+.lux-g--mosaic .is-tall{grid-row:span 2}
+.lux-g--mosaic .lux-g-cap{position:absolute;left:0;right:0;bottom:0;margin:0;padding:.4rem .6rem;background:rgba(0,0,0,.55);color:#fff;opacity:1}
+@media (max-width:600px){.lux-g--mosaic .is-wide{grid-column:auto}}

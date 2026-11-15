@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "id": "mosaico",
+  "type": "gallery",
+  "name": "Mosaico",
+  "version": "1.0.0",
+  "description": "Mosaico con fotos horizontales y verticales de mayor tamaño.",
+  "requires": {
+    "lux": "0.7.0"
+  },
+  "template": "template.html",
+  "item": "item.html",
+  "css": "style.css",
+  "preview": "preview.webp",
+  "fields": {
+    "altura": {
+      "type": "number",
+      "label": "Alto de fila (rem)",
+      "min": 6,
+      "max": 24,
+      "default": 11
+    },
+    "espacio": {
+      "type": "number",
+      "label": "Espacio entre fotos (px)",
+      "min": 0,
+      "max": 40,
+      "default": 8
+    },
+    "captions": {
+      "type": "bool",
+      "label": "Mostrar pies de foto",
+      "default": false
+    }
+  },
+  "gallery": {
+    "crops": [
+      "free"
+    ],
+    "crop_default": "free",
+    "thumb_px": 600,
+    "sizes": "(min-width: 800px) 600px, 100vw"
+  },
+  "resources": {
+    "fonts": [],
+    "images": []
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "lightbox",
+  "type": "viewer",
+  "name": "Visor de imágenes (lightbox)",
+  "version": "1.0.0",
+  "description": "Pantalla completa accesible con teclado, gestos táctiles, contador, pies de foto y precarga de la siguiente imagen. Solo se carga en las páginas con galerías.",
+  "requires": { "lux": "0.7.0" },
+  "css": "style.css",
+  "preview": "preview.webp",
+  "js": "viewer.js",
+  "fields": {},
+  "resources": { "fonts": [], "images": [] }
+}

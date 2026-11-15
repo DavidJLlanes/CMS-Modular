@@ -61,14 +61,64 @@ final class ImageRenderer
     }
 
     /** @param array<string,mixed> $rec @return list<array{url:string,width:int,height:int}> de menor a mayor */
-    public function plan(array $rec): array
+    public function plan(array $rec, ?int $displayPx = null): array
     {
         $out = [];
-        foreach (Recipe::widths((int)$rec['width'], $this->maxWidth, $this->displayPx) as $w) {
+        foreach (Recipe::widths((int)$rec['width'], $this->maxWidth, $displayPx ?? $this->displayPx) as $w) {
             $r = Recipe::make($w, 0, 'inside', 50, 50, $this->quality);
             $key = Recipe::key((string)$rec['sha256'], $r);
             [$rw, $rh] = Recipe::dims($r, (int)$rec['width'], (int)$rec['height']);
             $url = ($this->preview ? self::PREVIEW_DIR : self::PUBLIC_DIR) . $rec['uid'] . '-' . $w . '.' . $key . '.webp';
+            $out[] = ['url' => $url, 'width' => $rw, 'height' => $rh];
+            $this->used[(string)$rec['uid']]['rec'] = $rec;
+            $this->used[(string)$rec['uid']]['recipes'][$key] = $r;
+            $this->urls[$url] = $key;
+        }
+        return $out;
+    }
+
+    /**
+     * Variantes en las anchuras pedidas (acotadas al original y al máximo configurado); para el visor de galerías.
+     * @param array<string,mixed> $rec @param list<int> $widths @return list<array{url:string,width:int,height:int}>
+     */
+    public function planWidths(array $rec, array $widths): array
+    {
+        $cap = max(16, min((int)$rec['width'], $this->maxWidth));
+        $ws = array_values(array_unique(array_map(static fn(int $w): int => min($w, $cap), $widths)));
+        sort($ws);
+        $out = [];
+        foreach ($ws as $w) {
+            $r = Recipe::make($w, 0, 'inside', 50, 50, $this->quality);
+            $key = Recipe::key((string)$rec['sha256'], $r);
+            [$rw, $rh] = Recipe::dims($r, (int)$rec['width'], (int)$rec['height']);
+            $url = ($this->preview ? self::PREVIEW_DIR : self::PUBLIC_DIR) . $rec['uid'] . '-' . $w . '.' . $key . '.webp';
+            $out[] = ['url' => $url, 'width' => $rw, 'height' => $rh];
+            $this->used[(string)$rec['uid']]['rec'] = $rec;
+            $this->used[(string)$rec['uid']]['recipes'][$key] = $r;
+            $this->urls[$url] = $key;
+        }
+        return $out;
+    }
+
+    /**
+     * Variantes recortadas (proporción fija, centradas en el foco) para miniaturas de galería. Nunca amplía el original.
+     * @param array<string,mixed> $rec @return list<array{url:string,width:int,height:int}> de menor a mayor
+     */
+    public function planCover(array $rec, int $displayPx, float $ratio, int $fx, int $fy): array
+    {
+        $out = [];
+        $seen = [];
+        foreach (Recipe::widths((int)$rec['width'], $this->maxWidth, $displayPx) as $w) {
+            $h = max(16, (int)round($w / $ratio));
+            // Un original más pequeño que la receta daría un recorte menor que lo pedido: se acota con las dimensiones reales.
+            $r = Recipe::make($w, $h, 'cover', $fx, $fy, $this->quality);
+            [$rw, $rh] = Recipe::dims($r, (int)$rec['width'], (int)$rec['height']);
+            if (isset($seen[$rw])) {
+                continue;
+            }
+            $seen[$rw] = true;
+            $key = Recipe::key((string)$rec['sha256'], $r);
+            $url = ($this->preview ? self::PREVIEW_DIR : self::PUBLIC_DIR) . $rec['uid'] . '-' . $w . 'x' . $h . 'f' . $r['fx'] . '-' . $r['fy'] . '.' . $key . '.webp';
             $out[] = ['url' => $url, 'width' => $rw, 'height' => $rh];
             $this->used[(string)$rec['uid']]['rec'] = $rec;
             $this->used[(string)$rec['uid']]['recipes'][$key] = $r;

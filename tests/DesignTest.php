@@ -43,12 +43,12 @@ function lux_clone_design(string $comp, string $from, string $to, ?callable $mut
 
 function lux_registry(string $comp): DesignRegistry
 {
-    return new DesignRegistry($comp, dirname($comp) . '/designs.json', '0.4.0');
+    return new DesignRegistry($comp, dirname($comp) . '/designs.json', '0.7.0');
 }
 
 T::test('diseños: se detectan los de ejemplo y todos son válidos', function () {
     $i = lux_registry(lux_components())->index();
-    T::eq(['barra-aviso', 'cabecera-basica', 'cabecera-corporativa', 'footer-basico', 'footer-centrado', 'hero-simple'], array_keys($i['designs']));
+    T::eq(['barra-aviso', 'cabecera-basica', 'cabecera-corporativa', 'carrusel', 'destacada', 'filas', 'footer-basico', 'footer-centrado', 'hero-simple', 'lightbox', 'mamposteria', 'mosaico', 'rejilla'], array_keys($i['designs']));
     T::eq([], $i['errors']);
     foreach ($i['designs'] as $d) {
         T::ok(is_file(dirname(__DIR__) . '/components/' . $d['dir'] . '/preview.webp'), 'vista previa WebP de ' . $d['id']);
@@ -87,7 +87,7 @@ T::test('diseños: el contrato rechaza manifiestos, rutas, enlaces y contenido p
         T::ok(!isset($reg['designs'][$id]) && !isset($reg['designs']['Mal Id']), "rechazado: $id");
     }
     T::ok(count($reg['errors']) >= count($bad), 'cada rechazo explica el motivo');
-    T::eq(6, count($reg['designs']), 'los diseños buenos siguen funcionando');
+    T::eq(13, count($reg['designs']), 'los diseños buenos siguen funcionando');
 });
 T::test('diseños: plantillas, CSS y JS con capacidades peligrosas se rechazan', function () {
     $comp = lux_components();
