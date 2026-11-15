@@ -56,4 +56,4 @@ git -C /var/www/luxaeterna.es/app pull -q && bash /var/www/luxaeterna.es/app/dep
 - El visor no tiene zoom propio (se deja al pellizco del navegador), modo presentación, ni compartir.
 - La selección de visor es global (`lightbox`); elegir otro visor por galería queda para cuando exista más de uno.
 - Sin arrastrar y soltar para ordenar fotos (↑ ↓ y número de orden).
-- La estimación de peso es aproximada; la selección de varias galerías por página y las galerías anidadas en columnas no están limitadas pero no se han optimizado.
+- La estimación de peso es aproximada. Una galería no puede ir dentro de columnas (solo en el primer nivel); se puede poner más de una galería por página.
