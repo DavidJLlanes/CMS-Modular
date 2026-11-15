@@ -6,7 +6,7 @@ namespace LuxAeterna\Content;
 use LuxAeterna\Core\LuxException;
 
 /**
- * Biblioteca de bloques como estructura serializable (schema 1). Las imágenes y galerías se referencian por
+ * Biblioteca de bloques como estructura serializable (schema 2). Las imágenes y galerías se referencian por
  * identificador estable (`ref`), nunca por ruta, para sobrevivir a cambios de almacenamiento (Fase 6).
  *
  * Sintaxis de texto del editor (sin JavaScript): bloques separados por línea en blanco.
@@ -14,53 +14,17 @@ use LuxAeterna\Core\LuxException;
  */
 final class Blocks
 {
-    public const MAX_BLOCKS = 500;
-    public const MAX_TEXT = 20000;
-    private const REF = '/^[a-z0-9][a-z0-9_-]{2,63}$/';
+    public const MAX_BLOCKS = BlockValidator::MAX_BLOCKS;
+    public const MAX_TEXT = BlockValidator::MAX_TEXT;
 
     /**
+     * Valida y normaliza (esquema 2: formato en línea, columnas, tablas, botones…). Ver BlockValidator.
      * @param mixed $blocks
      * @return list<array<string,mixed>>
      */
     public static function validate(mixed $blocks): array
     {
-        if (!is_array($blocks) || count($blocks) > self::MAX_BLOCKS) {
-            throw new LuxException('El cuerpo no es válido o tiene demasiados bloques (máx. ' . self::MAX_BLOCKS . ').');
-        }
-        $out = [];
-        foreach (array_values($blocks) as $i => $b) {
-            $n = $i + 1;
-            $type = is_array($b) ? (string)($b['type'] ?? '') : '';
-            switch ($type) {
-                case 'paragraph':
-                case 'quote':
-                    $out[] = ['type' => $type, 'text' => self::text($b['text'] ?? '', $n)];
-                    break;
-                case 'heading':
-                    $level = (int)($b['level'] ?? 2);
-                    if ($level < 2 || $level > 6) {
-                        throw new LuxException("Bloque $n: el nivel del título debe estar entre 2 y 6.");
-                    }
-                    $out[] = ['type' => 'heading', 'level' => $level, 'text' => self::text($b['text'] ?? '', $n)];
-                    break;
-                case 'list':
-                    $items = $b['items'] ?? null;
-                    if (!is_array($items) || $items === [] || count($items) > 200) {
-                        throw new LuxException("Bloque $n: la lista debe tener entre 1 y 200 elementos.");
-                    }
-                    $out[] = ['type' => 'list', 'items' => array_map(static fn($t): string => self::text($t, $n), array_values($items))];
-                    break;
-                case 'image':
-                    $out[] = ['type' => 'image', 'ref' => self::ref($b['ref'] ?? '', $n), 'alt' => self::text($b['alt'] ?? '', $n, 300), 'caption' => self::text($b['caption'] ?? '', $n, 500)];
-                    break;
-                case 'gallery':
-                    $out[] = ['type' => 'gallery', 'ref' => self::ref($b['ref'] ?? '', $n)];
-                    break;
-                default:
-                    throw new LuxException("Bloque $n: tipo no soportado.");
-            }
-        }
-        return $out;
+        return BlockValidator::validate($blocks);
     }
 
     /** @return list<array<string,mixed>> */
@@ -98,21 +62,91 @@ final class Blocks
         $out = [];
         foreach ($blocks as $b) {
             $out[] = match ($b['type'] ?? '') {
-                'heading' => str_repeat('#', (int)$b['level']) . ' ' . $b['text'],
-                'list' => implode("\n", array_map(static fn(string $i): string => '- ' . $i, $b['items'])),
-                'quote' => '> ' . $b['text'],
+                'heading' => str_repeat('#', max(2, (int)$b['level'])) . ' ' . ($b['text'] ?? Inline::plain((array)($b['inlines'] ?? []))),
+                'list' => implode("\n", array_map(static fn(mixed $i): string => '- ' . (is_string($i) ? $i : Inline::plain((array)($i['inlines'] ?? []))), $b['items'])),
+                'quote' => '> ' . ($b['text'] ?? Inline::plain((array)($b['inlines'] ?? []))),
                 'image' => '[imagen:' . $b['ref'] . '|' . $b['alt'] . '|' . $b['caption'] . ']',
                 'gallery' => '[galeria:' . $b['ref'] . ']',
-                default => preg_match('/^(#{2,6} |- |> |\[imagen:|\[galeria:|\\\\)/', (string)$b['text']) ? '\\' . $b['text'] : (string)$b['text'],
+                'paragraph' => preg_match('/^(#{2,6} |- |> |\[imagen:|\[galeria:|\\\\)/', (string)($b['text'] ?? '')) ? '\\' . $b['text'] : (string)($b['text'] ?? Inline::plain((array)($b['inlines'] ?? []))),
+                default => '',
             };
         }
         return implode("\n\n", $out);
     }
 
-    /** @param list<array<string,mixed>> $blocks @return list<string> tipos que requieren módulos aún no disponibles */
+    /** Recorre los bloques, incluidos los de dentro de columnas. @param list<array<string,mixed>> $blocks @param callable(array<string,mixed>):void $fn */
+    public static function walk(array $blocks, callable $fn): void
+    {
+        foreach ($blocks as $b) {
+            $fn($b);
+            foreach ((array)($b['cols'] ?? []) as $col) {
+                self::walk((array)$col, $fn);
+            }
+        }
+    }
+
+    /** @param list<array<string,mixed>> $blocks @return list<string> referencias de imágenes y galerías (también dentro de columnas) */
     public static function mediaRefs(array $blocks): array
     {
-        return array_values(array_map(static fn(array $b): string => (string)$b['ref'], array_filter($blocks, static fn(array $b): bool => in_array($b['type'], ['image', 'gallery'], true))));
+        $refs = [];
+        self::walk($blocks, static function (array $b) use (&$refs): void {
+            if (in_array($b['type'], ['image', 'gallery'], true)) {
+                $refs[] = (string)$b['ref'];
+            }
+        });
+        return $refs;
+    }
+
+    /** Colores #rrggbb usados (tramos, tipografía): hace falta una clase CSS por cada uno. @param list<array<string,mixed>> $blocks @return list<string> */
+    public static function colors(array $blocks): array
+    {
+        $out = [];
+        $add = static function (mixed $c) use (&$out): void {
+            if (is_string($c) && $c !== '' && $c[0] === '#') {
+                $out[$c] = true;
+            }
+        };
+        $runs = static function (array $list) use ($add): void {
+            foreach ($list as $r) {
+                $add($r['c'] ?? null);
+            }
+        };
+        self::walk($blocks, static function (array $b) use ($add, $runs): void {
+            $add($b['style']['color'] ?? null);
+            $runs((array)($b['inlines'] ?? []));
+            foreach ((array)($b['items'] ?? []) as $it) {
+                $runs(is_array($it) ? (array)($it['inlines'] ?? []) : []);
+            }
+            foreach ((array)($b['rows'] ?? []) as $row) {
+                foreach ((array)$row as $cell) {
+                    $runs(is_array($cell) ? (array)($cell['inlines'] ?? []) : []);
+                }
+            }
+        });
+        $c = array_keys($out);
+        sort($c);
+        return $c;
+    }
+
+    /** ¿Se puede editar sin pérdida con la sintaxis de texto (sin JavaScript)? @param list<array<string,mixed>> $blocks */
+    public static function isPlain(array $blocks): bool
+    {
+        foreach ($blocks as $b) {
+            $t = $b['type'];
+            $ok = match ($t) {
+                'paragraph' => isset($b['text']) && !isset($b['align'], $b['style']),
+                'heading' => isset($b['text']) && $b['level'] >= 2 && !isset($b['align']),
+                'quote' => isset($b['text']) && !isset($b['cite'], $b['align'], $b['style']),
+                'list' => empty($b['ordered']) && array_reduce($b['items'], static fn(bool $c, mixed $i): bool => $c && is_string($i), true),
+                'image' => !isset($b['align']),
+                'gallery' => true,
+                default => false,
+            };
+            if (!$ok) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** @param list<string> $lines */
@@ -124,21 +158,5 @@ final class Blocks
             }
         }
         return true;
-    }
-
-    private static function text(mixed $t, int $n, int $max = self::MAX_TEXT): string
-    {
-        if (!is_string($t) || mb_strlen($t) > $max || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', $t)) {
-            throw new LuxException("Bloque $n: texto no válido o demasiado largo (máx. $max caracteres).");
-        }
-        return trim($t);
-    }
-
-    private static function ref(mixed $r, int $n): string
-    {
-        if (!is_string($r) || !preg_match(self::REF, $r)) {
-            throw new LuxException("Bloque $n: referencia de imagen o galería no válida.");
-        }
-        return $r;
     }
 }

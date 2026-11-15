@@ -45,6 +45,7 @@ final class SiteBuilder
         $pages = [];
         $uses = [];
         $noAlt = [];
+        $pageWarnings = [];
         $paths = [];
         $uidPath = [];
         $redirects = [];
@@ -60,7 +61,7 @@ final class SiteBuilder
                 $redirects[] = ['from' => $this->types->path('page', (string)$r['slug']), 'to' => '/'];
             }
             $blocks = Blocks::validate(json_decode((string)$r['blocks'], true) ?: []);
-            foreach ($blocks as $b) {
+            Blocks::walk($blocks, function (array $b) use ($r, &$uses, &$noAlt): void {
                 if ($b['type'] === 'gallery') {
                     throw new LuxException("«{$r['title']}» incluye una galería, que se publica a partir de la Fase 8. Quita ese bloque o espera a esa fase.");
                 }
@@ -70,6 +71,9 @@ final class SiteBuilder
                         $noAlt[(string)$b['ref']][] = (string)$r['title'];
                     }
                 }
+            });
+            foreach (self::editorialWarnings((string)$r['title'], $blocks) as $w) {
+                $pageWarnings[] = $w;
             }
             $pages[] = new Page(
                 (string)$r['uid'], $isHome ? '' : (string)$r['slug'], (string)$r['title'], (string)$r['summary'], $blocks, false,
@@ -78,7 +82,7 @@ final class SiteBuilder
             );
         }
         array_push($pages, ...$this->listings($rows, $termsByContent, $paths, (string)$homeRow['uid']));
-        $warnings = [];
+        $warnings = $pageWarnings;
         $menus = [];
         foreach (array_keys(Menus::MENUS) as $m) {
             $menus[$m] = $this->resolveMenu($m, $uidPath, $warnings);
@@ -128,6 +132,34 @@ final class SiteBuilder
         }
         $s = $this->mediaSettings === null ? ['quality' => 82, 'max_width' => 1600] : ($this->mediaSettings)();
         return ['items' => $items, 'quality' => (int)$s['quality'], 'max_width' => (int)$s['max_width']];
+    }
+
+    /**
+     * Avisos editoriales de un contenido (no bloquean): el título ya sale como H1 en la plantilla, saltos de nivel, enlaces y encabezados vacíos…
+     * @param list<array<string,mixed>> $blocks @return list<string>
+     */
+    public static function editorialWarnings(string $title, array $blocks): array
+    {
+        $w = [];
+        $prev = 1; // el H1 lo escribe la plantilla con el título de la página
+        Blocks::walk($blocks, static function (array $b) use (&$w, &$prev, $title): void {
+            if ($b['type'] === 'heading') {
+                $text = trim(isset($b['inlines']) ? Inline::plain($b['inlines']) : (string)($b['text'] ?? ''));
+                if ($b['level'] === 1) {
+                    $w[] = "«{$title}» tiene un título de nivel 1 en el contenido y la plantilla ya muestra el título de la página como H1: usa nivel 2 o revisa el SEO.";
+                } elseif ($b['level'] > $prev + 1) {
+                    $w[] = "«{$title}» salta de un título de nivel $prev a uno de nivel {$b['level']}.";
+                }
+                if ($text === '') {
+                    $w[] = "«{$title}» tiene un título vacío.";
+                }
+                $prev = (int)$b['level'];
+            }
+            if ($b['type'] === 'table' && !$b['header_row'] && !$b['header_col']) {
+                $w[] = "«{$title}» tiene una tabla sin fila ni columna de encabezados.";
+            }
+        });
+        return array_values(array_unique($w));
     }
 
     /** @param list<Page> $pages */

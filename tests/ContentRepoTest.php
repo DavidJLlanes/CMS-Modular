@@ -48,7 +48,8 @@ T::test('bloques: validación, texto↔estructura sin pérdidas y escapes de mar
     T::eq($blocks, Blocks::fromText(Blocks::toText($blocks)), 'ida y vuelta');
     T::eq(['foto-001', 'viaje-2026'], Blocks::mediaRefs($blocks));
     T::throws(LuxException::class, fn() => Blocks::validate([['type' => 'script', 'text' => 'x']]), 'tipo no soportado');
-    T::throws(LuxException::class, fn() => Blocks::validate([['type' => 'heading', 'level' => 1, 'text' => 'x']]));
+    T::throws(LuxException::class, fn() => Blocks::validate([['type' => 'heading', 'level' => 7, 'text' => 'x']]));
+    T::eq(1, Blocks::validate([['type' => 'heading', 'level' => 1, 'text' => 'x']])[0]['level']);
     T::throws(LuxException::class, fn() => Blocks::validate([['type' => 'image', 'ref' => '../../etc/passwd', 'alt' => '']]), 'referencia');
     T::throws(LuxException::class, fn() => Blocks::validate([['type' => 'paragraph', 'text' => "a\x00b"]]));
     T::throws(LuxException::class, fn() => Blocks::validate(array_fill(0, 501, ['type' => 'paragraph', 'text' => 'x'])));

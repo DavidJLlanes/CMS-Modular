@@ -81,6 +81,12 @@ final class DesignAssembler
         $this->assets = [];
         $this->perPage = [];
         $this->instanceCss = [];
+        $this->contentColors = [];
+        foreach ($pages as $pg) {
+            foreach (\LuxAeterna\Content\Blocks::colors($pg->blocks) as $col) {
+                $this->contentColors[$col] = true;
+            }
+        }
         $this->prepareFontsAndLogo();
         $componentFiles = [];
         foreach ($pages as $p) {
@@ -371,6 +377,8 @@ final class DesignAssembler
     }
 
     private string $faces = '';
+    /** @var array<string,true> colores #rrggbb que usan los contenidos (una clase CSS por cada uno) */
+    private array $contentColors = [];
 
     private function buildCore(): void
     {
@@ -381,6 +389,10 @@ final class DesignAssembler
         foreach ($this->logo['sizes'] as $place => [$d, $m]) {
             $css .= ".lux-logo--$place{width:{$d}px;height:auto;max-width:100%}\n";
             $css .= "@media (max-width:640px){.lux-logo--$place{width:{$m}px}}\n";
+        }
+        ksort($this->contentColors);
+        foreach (array_keys($this->contentColors) as $col) {
+            $css .= '.' . \LuxAeterna\Content\Inline::colorClass((string)$col) . '{color:' . $col . "}\n";
         }
         ksort($this->instanceCss);
         $css .= implode("\n", $this->instanceCss) . "\n";
