@@ -32,7 +32,8 @@ usa su misma versión (≥ 8.1) sin cambiar de rama. **Si el dominio ya tiene ce
 otro. El puerto 80 sirve `/.well-known/acme-challenge/` desde `/var/www/luxaeterna.es/acme` para que la renovación automática siga
 funcionando sea cual sea el método con el que se emitió. Si `/var/www/luxaeterna.es` ya existe, conserva su dueño y permisos (solo
 asegura que Nginx pueda atravesarlo). Se niega a continuar, sin cambiar nada, si `app/` existe y no es un clon de Git, o si otra
-configuración de Nginx ya declara `server_name luxaeterna.es`. Antes de reescribir su propio `luxaeterna.es.conf` guarda una copia
+configuración de Nginx ya declara `server_name luxaeterna.es` (tu sitio actual): revísala y, si es provisional, repite con `--replace-vhost`, que guarda
+una copia en `/root/lux-nginx-backup-<fecha>/`, desactiva la antigua (no borra el original de `sites-available`) y la restaura sola si algo falla. Antes de reescribir su propio `luxaeterna.es.conf` guarda una copia
 `.bak-<fecha>`.
 
 El script es idempotente: repetirlo actualiza el código (`git merge --ff-only`) y reaplica la configuración. No modifica otros

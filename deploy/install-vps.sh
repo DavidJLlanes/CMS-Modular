@@ -4,7 +4,7 @@
 #
 # Uso (como root):
 #   bash install-vps.sh --domain=luxaeterna.es [--base=/var/www/luxaeterna.es] [--email=tu@correo]
-#                       [--repo=https://github.com/DavidJLlanes/LuxAeterna.git] [--branch=main] [--skip-ssl] [--no-ipv6]
+#                       [--repo=https://github.com/DavidJLlanes/LuxAeterna.git] [--branch=main] [--skip-ssl] [--no-ipv6] [--replace-vhost]
 #                       [--cert-dir=/etc/letsencrypt/live/NOMBRE]   (certificado existente; si no, se detecta con certbot)
 #
 # Variables solo para pruebas: LUX_NO_SERVICES=1 (no recarga servicios), LUX_SKIP_DNS=1.
@@ -18,6 +18,7 @@ EMAIL=""
 CERT_DIR_OPT=""
 SKIP_SSL=0
 NO_IPV6=0
+REPLACE_VHOST=0
 for a in "$@"; do
   case "$a" in
     --domain=*) DOMAIN="${a#*=}" ;;
@@ -28,6 +29,7 @@ for a in "$@"; do
     --cert-dir=*) CERT_DIR_OPT="${a#*=}" ;;
     --skip-ssl) SKIP_SSL=1 ;;
     --no-ipv6) NO_IPV6=1 ;;
+    --replace-vhost) REPLACE_VHOST=1 ;;
     *) echo "Opción desconocida: $a"; exit 1 ;;
   esac
 done
@@ -137,7 +139,28 @@ fi
 DOMRE="${DOMAIN//./\\.}"
 CLASH="$(grep -RlsE "^[[:space:]]*server_name[^;]*[[:space:]]${DOMRE}([[:space:]]|;)" /etc/nginx/nginx.conf /etc/nginx/conf.d /etc/nginx/sites-enabled 2>/dev/null \
   | grep -v -F -e "$VHOST" -e "${LINK:-/sin-enlace}" -e '.bak-' || true)"
-[ -z "$CLASH" ] || die "Ya hay otra configuración de Nginx con server_name $DOMAIN: $CLASH. Revísala o elimínala y repite."
+MOVED=""      # "origen|copia" de las configuraciones retiradas, para poder restaurarlas
+BK=""
+if [ -n "$CLASH" ]; then
+  if [ "$REPLACE_VHOST" = 0 ]; then
+    die "Ya hay otra configuración de Nginx con server_name $DOMAIN: $CLASH
+Revísala (cat) y, si es solo provisional, repite con --replace-vhost: se guardará una copia y se desactivará; nada se borra."
+  fi
+  BK="/root/lux-nginx-backup-$(date +%Y%m%d%H%M%S)"; mkdir -p "$BK"
+  for f in $CLASH; do
+    [ "$f" != /etc/nginx/nginx.conf ] || die "server_name $DOMAIN está en nginx.conf; edítalo a mano."
+    cp -aL "$f" "$BK/$(basename "$f")"
+    rm -f "$f"          # enlace en sites-enabled (el original de sites-available no se toca) o archivo de conf.d (queda la copia)
+    MOVED="$MOVED $f|$BK/$(basename "$f")"
+    echo "Desactivada: $f (copia en $BK)"
+  done
+fi
+restore_moved() {
+  for pair in $MOVED; do
+    src="${pair%%|*}"; cp_="${pair##*|}"
+    [ -e "$src" ] || [ -L "$src" ] || cp -a "$cp_" "$src"
+  done
+}
 [ -f "$VHOST" ] && cp -a "$VHOST" "$VHOST.bak-$(date +%Y%m%d%H%M%S)"
 enable() { [ -z "$LINK" ] || ln -sfn "$VHOST" "$LINK"; }
 reload_nginx() {
@@ -178,23 +201,26 @@ server {
 }
 NGX
   enable
-  reload_nginx || { rm -f "$VHOST" "$LINK"; die "Nginx rechaza la configuración temporal; se ha retirado."; }
+  reload_nginx || { rm -f "$VHOST" "$LINK"; restore_moved; die "Nginx rechaza la configuración temporal; se ha retirado y se ha restaurado la anterior."; }
   say "8/9 Certificado Let's Encrypt"
   MAIL_ARG="--register-unsafely-without-email"; [ -z "$EMAIL" ] || MAIL_ARG="--email $EMAIL"
   # shellcheck disable=SC2086
   certbot certonly --webroot -w "$BASE/acme" -d "$DOMAIN" --non-interactive --agree-tos $MAIL_ARG \
-    || { rm -f "$VHOST" "$LINK"; reload_nginx || true; die "No se pudo obtener el certificado (¿DNS y puerto 80 abiertos?). Configuración retirada."; }
+    || { rm -f "$VHOST" "$LINK"; restore_moved; reload_nginx || true; die "No se pudo obtener el certificado (¿DNS y puerto 80 abiertos?). Configuración retirada y anterior restaurada."; }
 else
   say "8/9 Certificado"; echo "Ya existe o se omite (--skip-ssl)."
 fi
 if [ ! -f "$CERT" ]; then
+  restore_moved
   die "No hay certificado en $CERT: la configuración incluida exige HTTPS. Instálalo (o repite sin --skip-ssl)."
 fi
 render_final
 enable
 if ! reload_nginx; then
-  die "Nginx rechaza la configuración final. Revisa $VHOST (copia anterior: $VHOST.bak-*)."
+  rm -f "$VHOST" "$LINK"; restore_moved; reload_nginx || true
+  die "Nginx rechaza la configuración final; se ha retirado y se ha restaurado la anterior (copias en ${BK:-ninguna})."
 fi
+[ -z "$BK" ] || echo "Configuración anterior de Nginx guardada en $BK (para volver atrás: copia de vuelta y recarga Nginx)."
 
 say "9/9 Publicación y verificación"
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" publish
