@@ -15,16 +15,16 @@ use LuxAeterna\Publishing\Publisher;
 use LuxAeterna\Publishing\ReleaseStore;
 
 /** @param ?\Closure():SiteSnapshot $snap */
-function lux_jobs(?Closure $snap = null): stdClass
+function lux_jobs(?Closure $snap = null, ?string $layout = null, array $pubCfg = []): stdClass
 {
     $d = T::tmpDir();
     $root = dirname(__DIR__);
     $db = new Database("$d/lux.sqlite");
     (new Migrator($db, "$root/migrations"))->migrate();
-    $c = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => 'symlink', 'keep_releases' => 5]], $root);
+    $c = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => $pubCfg + ['activation' => 'symlink', 'keep_releases' => 5]], $root);
     $store = new ReleaseStore("$d/pub");
     $log = new Logger("$d/var/logs");
-    $pub = new Publisher($c, $store, $log, "$root/components/layouts/base");
+    $pub = new Publisher($c, $store, $log, $layout ?? "$root/components/layouts/base");
     $jobs = new JobStore($db);
     $snap ??= function () use ($root): SiteSnapshot {
         $pages = (new ContentLoader())->load("$root/examples/sitio-demo/content.json");

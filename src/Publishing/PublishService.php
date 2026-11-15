@@ -43,7 +43,7 @@ final class PublishService
     public function runNext(?int $id = null): ?array
     {
         $this->store->init();
-        $this->jobs->recoverStale(fn(): bool => $this->store->lockFree());
+        $this->jobs->recoverStale(fn(): bool => $this->store->lockFree(), (int)$this->config->get('publishing.job_grace', 60));
         $job = $this->jobs->claim($id);
         if ($job === null) {
             return null;
