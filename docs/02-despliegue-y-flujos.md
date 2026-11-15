@@ -1,5 +1,11 @@
 # Despliegue, flujos y límites de confianza
 
+## Dominio y rutas
+
+- Sitio público: `https://luxaeterna.es/` (raíz del dominio, sin subcarpeta).
+- Panel: `https://luxaeterna.es/admin` (prefijo configurable).
+- Proveedor: IONOS.
+
 ## Configuración de referencia (provisional)
 
 Sin datos del VPS real, las mediciones usan **1 vCPU, 1 GB de RAM** (incluida la memoria del sistema), Ubuntu LTS, Nginx, PHP 8.3 (ver ADR-0001, ADR-0006). Se sustituirá por el inventario real cuando el propietario lo aporte.
