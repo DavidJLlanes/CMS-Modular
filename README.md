@@ -4,7 +4,14 @@ CMS estático de uso general, autohospedable en un VPS económico (Ubuntu + Ngin
 
 El panel administra el contenido; el generador lo publica como HTML, CSS, JS y recursos estáticos. **Nginx sirve la web pública con el panel, la base de datos y el generador apagados.**
 
-> Estado: **Fase 0 — descubrimiento y decisiones** (sin código de aplicación todavía).
+> Estado: **Fase 1 — esqueleto, instalación y separación del sitio público** completada en el perfil VPS. Ver [docs/fase-1.md](docs/fase-1.md).
+
+```bash
+bin/lux install --url=https://tu-dominio && bin/lux publish && bin/lux doctor
+php tests/run.php
+```
+
+Requisitos: PHP ≥ 8.1 con `pdo_sqlite`, `mbstring`, `fileinfo`, `ctype`, `json` (y GD con WebP a partir de la Fase 6).
 
 ## Principios
 
@@ -25,6 +32,7 @@ El panel administra el contenido; el generador lo publica como HTML, CSS, JS y r
 | [docs/05-sitios-de-prueba.md](docs/05-sitios-de-prueba.md) | Web de servicios y portfolio sintéticos |
 | [docs/decisiones/](docs/decisiones/) | Decisiones de arquitectura (ADR) |
 | [docs/06-decisiones-pendientes.md](docs/06-decisiones-pendientes.md) | Preguntas abiertas para el propietario |
+| [docs/fase-1.md](docs/fase-1.md) | Entrega de la Fase 1: mapa de cambios, evidencia y pendientes |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
 
 Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0* (proyecto LuxAeterna en Claude).

@@ -1,0 +1,9 @@
+:root{--fg:#1d1d1f;--bg:#fff;--accent:#7a5c00}
+*{box-sizing:border-box}
+body{margin:0;font:1rem/1.6 system-ui,sans-serif;color:var(--fg);background:var(--bg)}
+.site-header,.site-footer,main{max-width:46rem;margin:0 auto;padding:1rem}
+.site-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.brand{font-weight:700;color:var(--accent);text-decoration:none}
+nav a{margin-left:1rem}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){a{transition:opacity .15s}a:hover{opacity:.7}}

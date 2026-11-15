@@ -1,0 +1,25 @@
+# LuxAeterna · perfil B (hosting compartido, Apache/LiteSpeed). Plantilla orientativa.
+# El diseño definitivo del docroot en hosting compartido se cierra en la Fase 4 (ver docs/fase-1.md).
+
+Options -Indexes
+ErrorDocument 404 /404.html
+
+# Nunca servir archivos ocultos ni datos privados.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+<FilesMatch "\.(sqlite3?|db|sql|bak|log|env|key|pem)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+</IfModule>

@@ -1,7 +1,6 @@
 # Datos privados: nunca en Git
 /var/
-/releases/
-/current
+/publish/
 *.sqlite
 *.sqlite3
 *.db
@@ -31,3 +30,4 @@
 Thumbs.db
 .idea/
 .vscode/
+/config/lux.json

@@ -1,0 +1,152 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+use LuxAeterna\Core\Autoloader;
+use LuxAeterna\Core\Config;
+use LuxAeterna\Core\Doctor;
+use LuxAeterna\Core\Installer;
+use LuxAeterna\Core\Logger;
+use LuxAeterna\Core\LuxException;
+use LuxAeterna\Core\Operation;
+use LuxAeterna\Publishing\Activator;
+use LuxAeterna\Publishing\Publisher;
+use LuxAeterna\Publishing\ReleaseStore;
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+if (version_compare(PHP_VERSION, '8.1.0', '<')) {
+    fwrite(STDERR, "LuxAeterna requiere PHP 8.1 o superior (actual: " . PHP_VERSION . ").\n");
+    exit(1);
+}
+
+$root = dirname(__DIR__);
+require $root . '/src/Core/Autoloader.php';
+Autoloader::register($root . '/src');
+
+const USAGE = <<<TXT
+Uso: bin/lux <comando> [opciones]
+
+  doctor [--json] [--http]       Diagnóstico del entorno (--http comprueba que var/ no se sirve)
+  install --url=https://dominio  Crea configuración y directorios (--force regenera la configuración)
+  publish [--content=ARCHIVO]    Genera y activa una versión (por defecto, el sitio de ejemplo)
+  releases                       Lista las versiones y marca la activa
+  rollback <id>                  Reactiva una versión anterior
+  version                        Muestra la versión
+
+TXT;
+
+/** @return array{0:list<string>,1:array<string,string|true>} */
+function parseArgs(array $argv): array
+{
+    $pos = [];
+    $opts = [];
+    foreach (array_slice($argv, 1) as $a) {
+        if (str_starts_with($a, '--')) {
+            $kv = explode('=', substr($a, 2), 2);
+            $opts[$kv[0]] = $kv[1] ?? true;
+        } else {
+            $pos[] = $a;
+        }
+    }
+    return [$pos, $opts];
+}
+
+function logger(string $root): Logger
+{
+    try {
+        return new Logger(Config::load($root)->path('data') . '/logs');
+    } catch (Throwable) {
+        return new Logger($root . '/var/logs');
+    }
+}
+
+function store(Config $c): ReleaseStore
+{
+    return new ReleaseStore($c->path('publish'));
+}
+
+[$pos, $opts] = parseArgs($argv);
+$cmd = $pos[0] ?? 'help';
+
+try {
+    switch ($cmd) {
+        case 'version':
+            echo "LuxAeterna 0.1.0-fase1\n";
+            break;
+
+        case 'doctor':
+            try {
+                $config = Config::load($root);
+            } catch (LuxException) {
+                $config = null;
+            }
+            $results = (new Doctor($root, $config))->run(isset($opts['http']));
+            if (isset($opts['json'])) {
+                echo json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), "\n";
+            } else {
+                $icons = ['ok' => 'OK   ', 'warn' => 'AVISO', 'fail' => 'ERROR'];
+                foreach ($results as $r) {
+                    printf("[%s] %-12s %s\n", $icons[$r['level']], $r['name'], $r['message']);
+                }
+            }
+            exit(Doctor::exitCode($results));
+
+        case 'install':
+            $url = $opts['url'] ?? null;
+            if (!is_string($url)) {
+                throw new LuxException('Indica la URL pública: bin/lux install --url=https://tu-dominio');
+            }
+            foreach ((new Installer($root))->install($url, isset($opts['force'])) as $line) {
+                echo "- $line\n";
+            }
+            $results = (new Doctor($root, Config::load($root)))->run();
+            $fails = array_filter($results, static fn(array $r): bool => $r['level'] === 'fail');
+            echo $fails === [] ? "Instalación correcta. Ejecuta bin/lux doctor para el detalle.\n" : "Instalación con errores; ejecuta bin/lux doctor.\n";
+            exit($fails === [] ? 0 : 1);
+
+        case 'publish':
+            $config = Config::load($root);
+            $content = is_string($opts['content'] ?? null) ? $opts['content'] : $root . '/examples/sitio-demo/content.json';
+            $res = (new Publisher($config, store($config), logger($root), $root . '/components/layouts/base'))->publish($content);
+            echo "Publicada la versión {$res['id']} ({$res['pages']} páginas, activación: {$res['strategy']}).\n";
+            if ($res['removed'] !== []) {
+                echo 'Versiones antiguas eliminadas: ' . implode(', ', $res['removed']) . "\n";
+            }
+            break;
+
+        case 'releases':
+            $store = store(Config::load($root));
+            $cur = $store->currentId();
+            foreach (array_reverse($store->all()) as $id) {
+                echo ($id === $cur ? '* ' : '  ') . $id . "\n";
+            }
+            if ($store->all() === []) {
+                echo "No hay versiones.\n";
+            }
+            break;
+
+        case 'rollback':
+            $id = $pos[1] ?? '';
+            $config = Config::load($root);
+            $store = store($config);
+            (new Activator($store, (string)$config->get('publishing.activation', 'auto')))->activate($id);
+            logger($root)->info('reversión', ['release' => $id]);
+            echo "Versión $id activada.\n";
+            break;
+
+        default:
+            echo USAGE;
+            exit($cmd === 'help' ? 0 : 1);
+    }
+} catch (LuxException $e) {
+    logger($root)->error($e->getMessage(), ['detail' => $e->detail()]);
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . ' (operación ' . Operation::id() . ")\n");
+    exit(1);
+} catch (Throwable $e) {
+    logger($root)->error('error interno', ['type' => get_class($e), 'msg' => $e->getMessage(), 'at' => $e->getFile() . ':' . $e->getLine()]);
+    fwrite(STDERR, 'Error interno (operación ' . Operation::id() . "). El detalle está en el log privado.\n");
+    exit(2);
+}

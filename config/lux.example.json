@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "site": {
+    "base_url": "https://luxaeterna.es",
+    "lang": "es",
+    "name": "LuxAeterna"
+  },
+  "paths": {
+    "data": "var",
+    "publish": "publish"
+  },
+  "admin": {
+    "prefix": "/admin"
+  },
+  "publishing": {
+    "keep_releases": 5,
+    "activation": "auto"
+  }
+}

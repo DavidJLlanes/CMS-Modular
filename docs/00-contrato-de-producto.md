@@ -58,6 +58,13 @@ CMS de uso general, un sitio por instancia, autohospedable en VPS con Ubuntu y N
 
 Las fases 6 y 3 pueden avanzar en paralelo tras la 2.
 
+## Estado de las fases
+
+| Fase | Estado |
+|---|---|
+| 0 | Completada (pendiente inventario del VPS real) |
+| 1 | Completada en perfil VPS ([fase-1.md](fase-1.md)) |
+
 ## Criterio de cierre de la Fase 0
 
 - [x] Contrato de producto (este documento)

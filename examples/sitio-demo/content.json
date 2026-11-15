@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "pages": [
+    {
+      "id": "inicio",
+      "slug": "",
+      "title": "LuxAeterna · CMS estático",
+      "description": "Sitio de demostración generado como HTML estático.",
+      "menu": true,
+      "body": [
+        {"type": "paragraph", "text": "Esta página se ha generado como archivo estático. Nginx la sirve sin PHP ni base de datos."},
+        {"type": "heading", "level": 2, "text": "Qué demuestra"},
+        {"type": "paragraph", "text": "Contenido de ejemplo → plantilla → versión de salida → activación atómica."}
+      ]
+    },
+    {
+      "id": "sobre-nosotros",
+      "slug": "sobre-nosotros",
+      "title": "Sobre nosotros",
+      "description": "Página interior de ejemplo con caracteres españoles: ñ, á, é, í, ó, ú, ü, ¿? y ¡!.",
+      "menu": true,
+      "body": [
+        {"type": "paragraph", "text": "Texto de prueba con <etiquetas> & símbolos, que deben aparecer escapados."}
+      ]
+    }
+  ]
+}
