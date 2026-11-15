@@ -27,6 +27,9 @@ final class GalleryRenderer
     {
     }
 
+    /** @var array{items:int,shown_bytes:int} fotos dibujadas y bytes aproximados que descarga un visitante sin abrir el visor */
+    public array $stats = ['items' => 0, 'shown_bytes' => 0];
+
     public function render(string $uid): string
     {
         $g = $this->galleries[$uid] ?? null;
@@ -69,6 +72,8 @@ final class GalleryRenderer
                     break;
                 }
             }
+            $this->stats['items']++;
+            $this->stats['shown_bytes'] += $this->img->approxBytes($src['width'], $src['height']);
             $alt = (string)($it['alt'] ?? '');
             $img = '<img src="' . self::e($src['url']) . '"';
             if (count($variants) > 1) {

@@ -55,6 +55,31 @@ final class Ui
         }
     }
 
+    /** Campo de ajuste de un diseño (los nombres del formulario los decide quien llama). @param array<string,mixed> $def */
+    public static function valueInput(string $name, array $def, mixed $value): string
+    {
+        $label = self::h((string)$def['label']);
+        $n = self::h($name);
+        switch ($def['type']) {
+            case 'bool':
+                return '<label class="check"><input type="checkbox" name="' . $n . '" value="1"' . ($value ? ' checked' : '') . '> ' . $label . '</label>';
+            case 'select':
+                $o = '';
+                foreach ($def['options'] as $opt) {
+                    $o .= '<option' . ((string)$value === (string)$opt ? ' selected' : '') . '>' . self::h((string)$opt) . '</option>';
+                }
+                return "<label>$label<select name=\"$n\">$o</select></label>";
+            case 'color':
+                return "<label>$label<input type=\"color\" name=\"$n\" value=\"" . self::h((string)$value) . '"></label>';
+            case 'number':
+                return "<label>$label<input type=\"number\" step=\"any\" name=\"$n\"" . (isset($def['min']) ? ' min="' . (float)$def['min'] . '"' : '') . (isset($def['max']) ? ' max="' . (float)$def['max'] . '"' : '') . ' value="' . self::h((string)$value) . '"></label>';
+            case 'textarea':
+                return "<label>$label<textarea name=\"$n\" rows=\"3\">" . self::h((string)$value) . '</textarea></label>';
+            default:
+                return "<label>$label<input name=\"$n\" maxlength=\"" . (int)($def['max'] ?? 200) . '" value="' . self::h((string)$value) . '"></label>';
+        }
+    }
+
     public static function date(int $ts): string
     {
         return date('Y-m-d H:i', $ts);

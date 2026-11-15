@@ -30,7 +30,7 @@
         } else if (b.type === 'columns') {
           b.cols.forEach(function (c, ci) { walk(c, path.concat([ci])); });
         } else if (b.type === 'gallery') {
-          out.push({ level: 'warn', msg: 'Las galerías se publican a partir de la Fase 8: quita este bloque antes de publicar.', path: path });
+          if (!b.ref) { out.push({ level: 'warn', msg: 'Galería sin seleccionar.', path: path }); }
         }
       });
     }

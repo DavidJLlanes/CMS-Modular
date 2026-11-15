@@ -188,3 +188,59 @@ T::test('galerías (vista previa): mismas plantillas, miniaturas generadas a dem
     T::eq(200, $a->get($m[1])->status, 'el panel lo sirve a una sesión abierta');
     T::eq(303, (new Client($sv, '203.0.113.70'))->get($m[1])->status, 'y no sin sesión');
 });
+T::test('galerías (panel): permisos, CSRF, crear, ajustes, fotos con orden y foco, añadir, peso y borrado', function () {
+    [$sv, $dir, $a, $u, $gid] = lux_gal_site(3);
+    $anon = new Client($sv, '203.0.113.80');
+    foreach (['/admin/galleries', "/admin/galleries/$gid", '/admin/galleries/list.json'] as $p) {
+        T::eq(303, $anon->get($p)->status, "sin sesión: $p");
+    }
+    T::ok($a->req('POST', '/admin/galleries/create', ['title' => 'x', 'layout' => 'rejilla'])->status >= 400, 'sin CSRF no se crea');
+    T::eq(200, $a->get('/admin/galleries')->status);
+    T::contains('Viaje a Asturias', $a->get('/admin/galleries')->body);
+    T::contains('Galerías de fotos', $a->get('/admin/')->body);
+    T::eq(404, $a->get('/admin/galleries/gal-zzzzzzzzzzzz')->status);
+    T::eq(404, $a->get('/admin/galleries/../../etc')->status);
+    $c = $a->post('/admin/galleries/create', ['title' => 'Nueva <b>', 'layout' => 'mosaico'], '/admin/galleries');
+    T::eq(303, $c->status);
+    preg_match('#/galleries/(gal-[0-9a-f]{12})#', $c->headers['Location'], $m);
+    $new = $m[1];
+    T::eq(422, $a->post('/admin/galleries/create', ['title' => 'x', 'layout' => '../x'], '/admin/galleries')->status);
+    // detalle
+    $page = $a->get("/admin/galleries/$gid");
+    T::eq(200, $page->status);
+    T::contains('[galeria:' . $gid . ']', $page->body);
+    T::contains('Peso estimado', $page->body);
+    T::contains('KB', $page->body);
+    T::contains('Usada en: Inicio', $page->body);
+    T::ok(!str_contains($page->body, 'Borrar galería'), 'no se ofrece borrar una galería en uso');
+    // ajustes
+    $s = $a->post("/admin/galleries/$gid/settings", ['title' => 'Otro', 'layout' => 'rejilla', 'crop' => 'portrait', 'options' => ['columnas' => '5', 'espacio' => '12'], 'lightbox' => ['enabled' => '1', 'variant' => 'zoom'], 'protect' => ['noctx' => '1']], "/admin/galleries/$gid");
+    T::contains('Ajustes guardados', $s->body);
+    $g = $sv->galleries()->get($gid);
+    T::eq(['Otro', 'portrait', 5, 12, 'zoom', true, false], [$g['title'], $g['crop'], $g['options']['columnas'], $g['options']['espacio'], $g['lightbox']['variant'], $g['protect']['noctx'], $g['protect']['nodrag']]);
+    T::eq(422, $a->post("/admin/galleries/$gid/settings", ['title' => 'x', 'layout' => 'rejilla', 'options' => ['columnas' => '99']], "/admin/galleries/$gid")->status);
+    // fotos: reordenar por número, quitar, foco y textos
+    $it = [['media' => $u[0], 'order' => '3', 'alt' => 'A <i>', 'focus_x' => '30', 'focus_y' => '70'], ['media' => $u[1], 'order' => '1', 'caption' => 'Pie'], ['media' => $u[2], 'order' => '2', 'remove' => '1']];
+    $r = $a->post("/admin/galleries/$gid/items", ['items' => $it], "/admin/galleries/$gid");
+    T::contains('Fotos guardadas', $r->body);
+    $rows = $sv->galleries()->items($gid);
+    T::eq([$u[1], $u[0]], array_column($rows, 'media_uid'));
+    T::eq(['A <i>', 30, 70, 'Pie'], [$rows[1]['alt'], (int)$rows[1]['focus_x'], (int)$rows[1]['focus_y'], $rows[0]['caption']]);
+    T::ok(!str_contains($r->body, 'alt="A <i>"') && str_contains($r->body, 'A &lt;i&gt;'), 'valores escapados en el formulario');
+    T::eq(422, $a->post("/admin/galleries/$gid/items", ['items' => [['media' => $u[0], 'order' => '1', 'focus_x' => '500']]], "/admin/galleries/$gid")->status);
+    // añadir
+    T::contains('1 foto(s) añadida(s)', $a->post("/admin/galleries/$gid/add", ['media' => [$u[2], $u[0], 'img-xx', '../x']], "/admin/galleries/$gid")->body);
+    T::eq(422, $a->post("/admin/galleries/$gid/add", [], "/admin/galleries/$gid")->status);
+    T::eq(3, count($sv->galleries()->items($gid)));
+    // listado para el editor
+    $l = json_decode($a->get('/admin/galleries/list.json')->body, true);
+    T::eq(true, $l['ok']);
+    T::ok(in_array($gid, array_column($l['items'], 'ref'), true));
+    // permisos: un editor edita, no hay rol que borre galerías sin permiso de medios
+    $ed = lux_logged($sv, 'ed@b.es', 'editor', '198.51.100.81');
+    T::eq(200, $ed->get("/admin/galleries/$gid")->status);
+    // borrar: la nueva (sin uso) sí; la usada no
+    T::contains('No se puede borrar', $a->post("/admin/galleries/$gid/delete", [], "/admin/galleries/$gid")->body);
+    T::contains('Galería borrada', $a->post("/admin/galleries/$new/delete", [], "/admin/galleries/$new")->body);
+    T::eq(null, $sv->galleries()->get($new));
+});

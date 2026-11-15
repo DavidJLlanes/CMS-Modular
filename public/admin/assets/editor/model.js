@@ -132,6 +132,7 @@
       case 'quote': return { type: 'quote', text: '' };
       case 'list': return { type: 'list', items: [''] };
       case 'image': return { type: 'image', ref: '', alt: '', caption: '' };
+      case 'gallery': return { type: 'gallery', ref: '' };
       case 'button': return { type: 'button', label: 'Botón', href: '/', variant: 'primary' };
       case 'separator': return { type: 'separator', style: 'line' };
       case 'columns': return { type: 'columns', layout: '1-1', gap: 'm', valign: 'top', cols: [[{ type: 'paragraph', text: '' }], [{ type: 'paragraph', text: '' }]] };

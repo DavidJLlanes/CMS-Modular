@@ -12,7 +12,7 @@
       function type(el, html) { el.innerHTML = html; el.dispatchEvent(new W.Event('input', { bubbles: true })); }
       function paste(el, html, text) { var dt = new W.DataTransfer(); if (html) { dt.setData('text/html', html); } dt.setData('text/plain', text || ''); el.dispatchEvent(new W.ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }
       function key(el, k, o) { var e = new W.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true, cancelable: true }, o || {})); el.dispatchEvent(e); return e; }
-      W.addEventListener('securitypolicyviolation', function (e) { violations.push('frame ' + e.violatedDirective + ' ' + e.blockedURI); });
+      W.addEventListener('securitypolicyviolation', function (e) { violations.push('frame ' + e.violatedDirective + ' ' + e.blockedURI + ' ' + e.sample + ' ' + e.sourceFile + ':' + e.lineNumber); });
       ok(!!ed, 'el editor arranca dentro de la plantilla');
       var hidden = document.querySelector('[data-body-json]');
       ok(hidden.name === 'body_json', 'el campo JSON del formulario recibe nombre');
@@ -70,8 +70,30 @@
       document.getElementById('f').addEventListener('submit', function (e) { e.preventDefault(); });
       document.getElementById('f').dispatchEvent(new Event('submit', { cancelable: true }));
       ok(!localStorage.getItem('harness-key'), 'al enviar se limpia el borrador');
-      ok(violations.length === 0, 'ninguna violación de CSP: ' + violations.join(' | '));
+      // bloque de galería: elegir una existente, información y aviso de SEO
+      var gi = json().length; ed.addAfter([gi - 1], 'gallery');
+      ok(json()[gi].type === 'gallery' && json()[gi].ref === '', 'se añade un bloque de galería vacío');
+      ed.lint(); ok(q('.lux-ed-toolbar').textContent.indexOf('SEO (') >= 0, 'una galería sin elegir se avisa');
+      q('.lux-blk--gallery .lux-ed-extra .lux-ed-btn').click();
+      ok(!!q('[role=dialog][aria-label="Elegir galería"]'), 'selector de galerías modal');
+      setTimeout(function () {
+        try {
+          var items = qa('[role=dialog] .lux-mp-item'); ok(items.length === 2, 'lista las galerías del panel');
+          items[1].click();
+          ok(json()[gi].ref === 'gal-abcdef012345' && !q('[role=dialog]'), 'al elegir se guarda la referencia y se cierra');
+          ok(q('.lux-ed-gallery').textContent.indexOf('Boda · 12 foto(s)') >= 0, 'el bloque muestra título y número de fotos');
+          ok(/\/admin\/galleries\/gal-abcdef012345$/.test(q('.lux-blk--gallery a.lux-ed-link').getAttribute('href')), 'enlace para editar las fotos');
+        } catch (e) { fails++; out.push('FALLO excepción galería: ' + e.message); }
+        finish();
+      }, 400);
+      return;
     } catch (e) { fails++; out.push('FALLO excepción: ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' / ')); }
+    finish();
+  }
+  function finish() {
+    // el onerror=… que la prueba inyecta a propósito en un campo lo bloquea la CSP (y no llega al modelo): es lo esperado
+    var unexpected = violations.filter(function (v) { return v.indexOf('script-src-attr') < 0; });
+    ok(unexpected.length === 0, 'ninguna violación de CSP inesperada: ' + unexpected.join(' | '));
     document.getElementById('result').textContent = out.join('\n') + '\nRESULT ' + (fails ? 'FAIL ' + fails : 'PASS');
   }
 })();

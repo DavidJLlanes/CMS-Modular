@@ -320,26 +320,7 @@ final class DesignController
     /** @param array<string,mixed> $def */
     private function valueInput(string $name, array $def, mixed $value): string
     {
-        $label = View::h((string)$def['label']);
-        $n = View::h($name);
-        switch ($def['type']) {
-            case 'bool':
-                return '<label class="check"><input type="checkbox" name="' . $n . '" value="1"' . ($value ? ' checked' : '') . '> ' . $label . '</label>';
-            case 'select':
-                $o = '';
-                foreach ($def['options'] as $opt) {
-                    $o .= '<option' . ((string)$value === (string)$opt ? ' selected' : '') . '>' . View::h((string)$opt) . '</option>';
-                }
-                return "<label>$label<select name=\"$n\">$o</select></label>";
-            case 'color':
-                return "<label>$label<input type=\"color\" name=\"$n\" value=\"" . View::h((string)$value) . '"></label>';
-            case 'number':
-                return "<label>$label<input type=\"number\" step=\"any\" name=\"$n\" value=\"" . View::h((string)$value) . '"></label>';
-            case 'textarea':
-                return "<label>$label<textarea name=\"$n\" rows=\"3\">" . View::h((string)$value) . '</textarea></label>';
-            default:
-                return "<label>$label<input name=\"$n\" maxlength=\"" . (int)($def['max'] ?? 200) . '" value="' . View::h((string)$value) . '"></label>';
-        }
+        return Ui::valueInput($name, $def, $value);
     }
 
     private function inventoryHtml(): string

@@ -161,7 +161,25 @@
       field('Texto alternativo (describe la imagen)', el('input', { type: 'text', maxlength: '300', value: b.alt || '', oninput: function (e) { b.alt = e.target.value; warn.textContent = b.ref && !b.alt.trim() ? '⚠ Falta el texto alternativo: ayuda a la accesibilidad y al SEO.' : ''; ed.commit(false); } })), warn]);
   };
 
-  renderers.gallery = function (ed, b, path) { return frame(ed, b, path, [el('p', { 'class': 'lux-ed-placeholder', text: 'Galería «' + b.ref + '»: se publicará con el módulo de galerías (Fase 8). Puedes moverla o quitarla.' })]); };
+  renderers.gallery = function (ed, b, path) {
+    var cfg = ed.cfg, card = el('div', { 'class': 'lux-ed-gallery' });
+    function fill(info) {
+      card.textContent = '';
+      if (!b.ref) { card.appendChild(el('p', { 'class': 'lux-ed-placeholder', text: 'Haz clic en «Elegir galería»' })); return; }
+      if (!info) { card.appendChild(el('p', { 'class': 'lux-ed-placeholder', text: 'Galería ' + b.ref + ' (no se ha podido cargar su información)' })); return; }
+      if (info.thumb) { card.appendChild(el('img', { src: info.thumb, alt: '', width: '120' })); }
+      card.appendChild(el('p', { text: info.title + ' · ' + info.count + ' foto(s) · diseño ' + info.layout }));
+    }
+    fill(ed.galleryInfo && ed.galleryInfo[b.ref]);
+    if (b.ref && !(ed.galleryInfo && ed.galleryInfo[b.ref]) && cfg.galleries) {
+      LE.galleryPicker.info(cfg, function (map) { ed.galleryInfo = map; fill(map[b.ref]); });
+    }
+    var tools = [button(b.ref ? 'Cambiar galería' : 'Elegir galería', 'Elegir una galería existente', function () {
+      LE.galleryPicker.open(cfg, function (it) { b.ref = it.ref; ed.galleryInfo = ed.galleryInfo || {}; ed.galleryInfo[it.ref] = it; ed.commit(true); ed.render({ path: path }); });
+    })];
+    if (b.ref && cfg.galleryEdit) { tools.push(el('a', { href: cfg.galleryEdit + encodeURIComponent(b.ref), target: '_blank', rel: 'noopener', 'class': 'lux-ed-link', text: 'Editar fotos y diseño ↗' })); }
+    return frame(ed, b, path, [card], tools);
+  };
   renderers.extension = function (ed, b, path) { return frame(ed, b, path, [el('p', { 'class': 'lux-ed-placeholder', text: 'Bloque de extensión «' + b.kind + '» (se conserva tal cual).' })]); };
 
   renderers.button = function (ed, b, path) {

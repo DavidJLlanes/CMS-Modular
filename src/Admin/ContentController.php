@@ -217,7 +217,7 @@ final class ContentController
             : '<p class="lux-fallback error">Este contenido usa formato avanzado (columnas, tablas, estilos…) y necesita el editor completo, que requiere JavaScript. Tu contenido está a salvo: no se modificará si guardas sin él.</p>';
         $src = $this->url('/content/' . (int)$c['id'] . '/editframe');
         return '<div class="lux-editor-root" data-lux-editor data-media-list="' . View::h($this->url('/media/list.json')) . '" data-media-upload="' . View::h($this->url('/media/upload.json'))
-            . '" data-media-thumb="' . View::h($this->url('/media/')) . '" data-key="' . View::h('lux-editor-' . (string)$c['uid']) . '">'
+            . '" data-media-thumb="' . View::h($this->url('/media/')) . '" data-gallery-list="' . View::h($this->url('/galleries/list.json')) . '" data-gallery-edit="' . View::h($this->url('/galleries/')) . '" data-key="' . View::h('lux-editor-' . (string)$c['uid']) . '">'
             . '<input type="hidden" data-body-json value="' . View::h($json) . '">' . $fallback
             . '<iframe class="lux-ed-frame" src="' . View::h($src) . '" title="Editor visual: así se verá la página"></iframe></div>';
     }

@@ -3,7 +3,7 @@
   'use strict';
   var LE = root.LuxEditor = root.LuxEditor || {};
   var M = LE.model, H = LE.html, D = LE.dom, R = LE.renderers;
-  var TYPES = [['paragraph', 'Párrafo'], ['heading', 'Título'], ['list', 'Lista'], ['quote', 'Cita'], ['image', 'Imagen'], ['button', 'Botón'], ['separator', 'Separador'], ['columns', 'Columnas'], ['table', 'Tabla']];
+  var TYPES = [['paragraph', 'Párrafo'], ['heading', 'Título'], ['list', 'Lista'], ['quote', 'Cita'], ['image', 'Imagen'], ['gallery', 'Galería'], ['button', 'Botón'], ['separator', 'Separador'], ['columns', 'Columnas'], ['table', 'Tabla']];
 
   /** Se ejecuta dentro de la página de edición visual (un iframe del mismo origen con la plantilla real); habla con el formulario del panel. */
   function init(mount) {
@@ -15,7 +15,7 @@
     var initial;
     try { initial = M.normalize(JSON.parse(hidden.value || '[]')); } catch (e) { return; } // si el JSON no se entiende, no se toma el control: el servidor conserva el contenido
     var csrfInput = form.querySelector('input[name=csrf]');
-    var cfg = { list: rootEl.getAttribute('data-media-list'), upload: rootEl.getAttribute('data-media-upload'), thumb: rootEl.getAttribute('data-media-thumb'), csrf: csrfInput ? csrfInput.value : '' };
+    var cfg = { list: rootEl.getAttribute('data-media-list'), upload: rootEl.getAttribute('data-media-upload'), thumb: rootEl.getAttribute('data-media-thumb'), galleries: rootEl.getAttribute('data-gallery-list'), galleryEdit: rootEl.getAttribute('data-gallery-edit'), csrf: csrfInput ? csrfInput.value : '' };
     var key = rootEl.getAttribute('data-key') || 'lux-editor';
     var base = JSON.stringify(initial);
     var history = new LE.History(base), saving = false, timers = {};

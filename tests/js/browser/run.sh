@@ -10,7 +10,12 @@ SRV=$!
 trap 'kill $SRV 2>/dev/null' EXIT
 sleep 1
 D=$(mktemp -d)
-OUT=$("$CHROME" --headless=new --no-sandbox --disable-gpu --user-data-dir="$D" --virtual-time-budget=4000 --dump-dom "http://127.0.0.1:$PORT/tests/js/browser/harness.html" 2>/dev/null | sed -n '/<pre id="result">/,/<\/pre>/p' | sed 's/<[^>]*>//g' | sed 's/&lt;/</g;s/&gt;/>/g;s/&amp;/\&/g')
+STATUS=0
+for PAGE in harness lightbox; do
+  OUT=$("$CHROME" --headless=new --no-sandbox --disable-gpu --user-data-dir="$D" --virtual-time-budget=4000 --dump-dom "http://127.0.0.1:$PORT/tests/js/browser/$PAGE.html" 2>/dev/null | sed -n '/<pre id="result">/,/<\/pre>/p' | sed 's/<[^>]*>//g' | sed 's/&lt;/</g;s/&gt;/>/g;s/&amp;/\&/g')
+  echo "== $PAGE"
+  echo "$OUT"
+  echo "$OUT" | grep -q "RESULT PASS" || STATUS=1
+done
 rm -rf "$D"
-echo "$OUT"
-echo "$OUT" | grep -q "RESULT PASS"
+exit $STATUS

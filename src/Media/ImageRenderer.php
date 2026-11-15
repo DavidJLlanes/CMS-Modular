@@ -153,6 +153,27 @@ final class ImageRenderer
         return $out;
     }
 
+    /** Bytes aproximados de un WebP con pérdida de esas dimensiones (orden de magnitud: ~0,17 B/píxel a calidad 82). */
+    public function approxBytes(int $w, int $h): int
+    {
+        return (int)round($w * $h * 0.0021 * $this->quality);
+    }
+
+    /** @return array{files:int,bytes:int} derivados que se publicarían y su tamaño aproximado */
+    public function estimate(): array
+    {
+        $n = 0;
+        $b = 0;
+        foreach ($this->used as $u) {
+            foreach ($u['recipes'] as $r) {
+                [$w, $h] = Recipe::dims($r, (int)$u['rec']['width'], (int)$u['rec']['height']);
+                $n++;
+                $b += $this->approxBytes($w, $h);
+            }
+        }
+        return ['files' => $n, 'bytes' => $b];
+    }
+
     /** @return array<string,list<string>> uid → claves de derivados usadas (para la limpieza posterior) */
     public function keys(): array
     {

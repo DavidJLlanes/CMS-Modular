@@ -56,5 +56,40 @@
     document.body.appendChild(overlay);
     search.focus(); load();
   }
+  /** Selector de galerías existentes (las crea y edita el panel de galerías). */
+  function galleries(cfg, cb) {
+    fetch(cfg.galleries, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }).then(function (r) { return r.json(); }).then(function (j) { cb(j); }).catch(function () { cb(null); });
+  }
+  function openGalleries(cfg, done) {
+    var opener = document.activeElement;
+    var list = D.el('ul', { 'class': 'lux-mp-grid' }), msg = D.el('p', { role: 'status', 'class': 'lux-mp-msg' });
+    var close = D.button('Cerrar', 'Cerrar el selector', function () { shut(); });
+    var box = D.el('div', { 'class': 'lux-mp', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Elegir galería' }, [
+      D.el('div', { 'class': 'lux-ed-row' }, [D.el('strong', { text: 'Elegir galería' }), close]),
+      D.el('p', { 'class': 'lux-mp-msg' }, [D.el('a', { href: cfg.galleryEdit ? cfg.galleryEdit.replace(/\/[^\/]*$/, '') : '#', target: '_blank', rel: 'noopener', text: 'Crear o gestionar galerías ↗' })]), msg, list]);
+    var overlay = D.el('div', { 'class': 'lux-mp-overlay' }, [box]);
+    function shut() { document.removeEventListener('keydown', onKey, true); overlay.remove(); if (opener && opener.focus) { opener.focus(); } }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); shut(); return; }
+      if (e.key !== 'Tab') { return; }
+      var a = [].filter.call(box.querySelectorAll('button,input,select,a[href]'), function (n) { return !n.disabled; });
+      if (!a.length) { return; }
+      if (e.shiftKey && document.activeElement === a[0]) { e.preventDefault(); a[a.length - 1].focus(); } else if (!e.shiftKey && document.activeElement === a[a.length - 1]) { e.preventDefault(); a[0].focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(overlay);
+    msg.textContent = 'Cargando…';
+    galleries(cfg, function (j) {
+      list.textContent = '';
+      if (!j || !j.ok) { msg.textContent = 'No se pudieron cargar las galerías.'; return; }
+      msg.textContent = j.items.length ? j.items.length + ' galería(s)' : 'Aún no hay galerías: créalas desde el enlace de arriba.';
+      j.items.forEach(function (it) {
+        var b = D.el('button', { type: 'button', 'class': 'lux-mp-item', onclick: function () { shut(); done(it); }, 'aria-label': 'Elegir ' + it.title }, [it.thumb ? D.el('img', { src: it.thumb, alt: '', width: '120', loading: 'lazy' }) : D.el('span', { text: '(vacía)' }), D.el('span', { text: it.title + ' · ' + it.count })]);
+        list.appendChild(D.el('li', {}, [b]));
+      });
+      var first = list.querySelector('button'); if (first) { first.focus(); } else { close.focus(); }
+    });
+  }
   LE.mediaPicker = { open: open };
+  LE.galleryPicker = { open: openGalleries, info: function (cfg, cb) { galleries(cfg, function (j) { var m = {}; if (j && j.ok) { j.items.forEach(function (i) { m[i.ref] = i; }); } cb(m); }); } };
 })(window);

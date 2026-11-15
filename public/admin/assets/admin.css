@@ -46,3 +46,12 @@ button.danger{background:#a4262c}
 .lux-ed-frame{display:none;width:100%;height:78vh;min-height:440px;border:1px solid #c9cdd4;border-radius:.5rem;background:#fff}
 .lux-editor-root.is-ready .lux-ed-frame{display:block}
 .lux-editor-root.is-ready .lux-fallback{display:none}
+/* Galerías */
+.g-rows{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.8rem}
+.g-row{display:flex;flex-wrap:wrap;gap:.8rem;border:1px solid #c9c6dc;border-radius:.5rem;padding:.6rem;background:#fff}
+.g-thumb{position:relative;flex:0 0 180px;max-width:100%;line-height:0;cursor:crosshair;align-self:flex-start}
+.g-thumb img{width:100%;height:auto;border-radius:.3rem;background:#eee}
+.g-mark{position:absolute;width:1.2rem;height:1.2rem;margin:-.6rem 0 0 -.6rem;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #1f2a44;pointer-events:none;left:50%;top:50%}
+.g-fields{flex:1 1 14rem;min-width:0;display:grid;gap:.4rem;align-content:start}
+.g-move button{margin-right:.4rem}
+.g-check-all{margin:.4rem 0}
