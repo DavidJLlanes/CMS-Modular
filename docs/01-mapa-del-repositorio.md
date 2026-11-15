@@ -10,6 +10,7 @@ Las carpetas se crean cuando exista una responsabilidad real. Esta es la estruct
 | `src/Admin/` | Rutas, controladores, vistas y acciones del panel | 2 |
 | `src/Publishing/` | Planificación, dependencias, compilación, preflight, versiones, reversión | 4 |
 | `src/Media/` | Ingesta, biblioteca, recetas de derivados, colas, caché WebP | 6 |
+| `src/Gallery/` | Galerías: almacén validado, renderizador de diseños de galería, recortes con foco | 8 |
 | `src/Seo/` | Metadatos, canonicals, indexación, sitemaps, validaciones | 9 |
 | `src/Extensions/` | Descubrimiento, validación, registro, ciclo de vida | 11 |
 | `assets/admin/` | CSS y JS del panel, un módulo por función | 2 |

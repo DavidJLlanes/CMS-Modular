@@ -29,7 +29,7 @@
   "resources": { "fonts": [], "images": [] }
 }
 ```
-- `type`: `header | topbar | hero | footer`. `js` y `preview` son opcionales.
+- `type`: `header | topbar | hero | footer` y, desde la Fase 8, `gallery | viewer` (ver [fase-8.md](fase-8.md)). `js` y `preview` son opcionales.
 - Campos: `text`, `textarea`, `bool`, `select` (con `options`), `number` (`min`, `max`), `color` (`#rrggbb`). El valor por defecto es obligatorio y válido.
 - Marcadores de plantilla: los campos propios, `{{ site_name }}`, `{{ home_url }}`, `{{ title }}`, `{{ description }}`, `{{ year }}` (escapados) y `{{{ nav }}}`, `{{{ footer_nav }}}`, `{{{ logo }}}` (HTML preparado). Los campos `color` y `number` se exponen en el CSS como `var(--lux-f-<campo>)`.
 - Variables del tema disponibles en el CSS: `--lux-bg|surface|text|muted|primary|primary-text|link|border`, `--lux-<ranura>-bg|text|link` (opcionales), `--lux-font-body|heading`, `--lux-width`, `--lux-gap`.

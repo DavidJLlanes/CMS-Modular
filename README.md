@@ -4,7 +4,7 @@ CMS estático de uso general, autohospedable en un VPS económico (Ubuntu + Ngin
 
 El panel administra el contenido; el generador lo publica como HTML, CSS, JS y recursos estáticos. **Nginx sirve la web pública con el panel, la base de datos y el generador apagados.**
 
-> Estado: **Fase 7 — editor completo y ligero** implementada (verificación en el VPS y en móvil real pendiente). Ver [docs/fase-7.md](docs/fase-7.md); fases anteriores: [fase-6](docs/fase-6.md), [fase-5](docs/fase-5.md), [fase-4](docs/fase-4.md), fases anteriores en [fase-1](docs/fase-1.md), [fase-2](docs/fase-2.md) y [fase-3](docs/fase-3.md).
+> Estado: **Fase 8 — galerías fotográficas, visor y efectos** implementada (verificación en el VPS y en móvil real pendiente). Ver [docs/fase-8.md](docs/fase-8.md); fases anteriores: [fase-7](docs/fase-7.md), [fase-6](docs/fase-6.md), [fase-5](docs/fase-5.md), [fase-4](docs/fase-4.md), fases anteriores en [fase-1](docs/fase-1.md), [fase-2](docs/fase-2.md) y [fase-3](docs/fase-3.md).
 
 ```bash
 bin/lux install --url=https://tu-dominio && bin/lux publish && bin/lux doctor
@@ -39,6 +39,7 @@ Requisitos: PHP ≥ 8.1 con `pdo_sqlite`, `mbstring`, `fileinfo`, `ctype`, `json
 | [docs/fase-5.md](docs/fase-5.md) | Entrega de la Fase 5: diseños por carpeta, tema, tipografía y logo |
 | [docs/fase-6.md](docs/fase-6.md) | Entrega de la Fase 6: biblioteca multimedia, derivados WebP, imágenes responsive |
 | [docs/fase-7.md](docs/fase-7.md) | Entrega de la Fase 7: editor de bloques propio, pegado limpio, columnas, tablas, tipografía |
+| [docs/fase-8.md](docs/fase-8.md) | Entrega de la Fase 8: galerías, 6 diseños, recorte con foco, visor, peso estimado |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
 
 Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0* (proyecto LuxAeterna en Claude).

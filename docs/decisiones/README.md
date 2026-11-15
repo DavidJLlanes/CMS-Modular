@@ -18,6 +18,7 @@ Se registra un ADR cuando una elección afecta al contrato del contenido, los m�
 | [0012](0012-contrato-de-disenos-por-carpeta.md) | Contrato de diseños por carpeta, tema y tipografía | Aceptada |
 | [0013](0013-biblioteca-multimedia-y-derivados-webp.md) | Biblioteca multimedia y derivados WebP con GD | Aceptada |
 | [0014](0014-editor-de-bloques-propio-y-modelo-sin-html.md) | Editor de bloques propio y modelo sin HTML libre | Aceptada |
+| [0015](0015-galerias-recortes-con-foco-y-visor.md) | Galerías: diseños por carpeta, recortes con foco y visor sin dependencias | Aceptada |
 
 ## Plantilla
 

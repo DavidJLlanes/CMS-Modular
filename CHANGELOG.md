@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). V
 
 ## [Sin publicar]
 
+### Añadido
+- Fase 8: galerías fotográficas: tablas `galleries`/`gallery_items`, panel `/admin/galleries` (crear, ordenar fotos, texto alternativo, pie, foco y recorte por foto, opciones del diseño, visor y disuasión, peso estimado), bloque «Galería» en el editor, seis diseños (`rejilla`, `mamposteria`, `mosaico`, `filas`, `carrusel`, `destacada`) y visor `lightbox` sin dependencias (teclado, gestos, contador, pies, precarga, tres transiciones, respeta `prefers-reduced-motion`). Los contratos de diseño admiten los tipos `gallery` y `viewer`. Recortes WebP con foco (`cover`), recursos por página (el visor solo se carga donde hay una galería con visor) y avisos de fotos sin texto alternativo, galerías vacías o fotos desaparecidas. **La CSP pública pasa a `script-src 'self'`** (antes `default-src 'none'` bloqueaba todo script). Ver `docs/fase-8.md`, ADR-0015.
+
 ### Cambiado
 - La cabecera de ejemplo `cabeceraguay2` pasa a llamarse «Cabecera corporativa» (`cabecera-corporativa`); el id antiguo sigue resolviéndose. Los selectores de color del panel ya muestran su muestra.
 

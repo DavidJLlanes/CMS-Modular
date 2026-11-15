@@ -145,3 +145,16 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 | Pérdida de contenido al guardar sin JavaScript | El campo JSON no tiene `name` hasta que el editor arranca; sin cuerpo enviado se conserva el actual; el texto simple solo se ofrece si el contenido es 100 % simple | `EditorPanelTest` |
 | Código del editor expuesto a visitantes | El editor vive en `/admin/assets/editor/` y solo se enlaza en la pantalla de edición; la salida publicada no lo referencia | `EditorPanelTest`, `nginx-smoke.sh` |
 | Subida desde el editor que salte las comprobaciones de la biblioteca | `POST /admin/media/upload.json` usa el mismo `MediaStore::add` con permiso `media.write` y CSRF | `EditorPanelTest` |
+
+## Controles añadidos en la Fase 8 (galerías y visor)
+
+| Amenaza | Control | Verificación |
+|---|---|---|
+| Diseño de galería malicioso (script, `style=`, enlaces remotos, variables ajenas) | El contrato `gallery`/`viewer` aplica a ambas plantillas (carpeta y foto) la misma lista blanca de marcadores y las mismas prohibiciones que el resto de diseños; el JS no admite `eval`, red ni direcciones remotas; `sizes` y recortes se validan con listas cerradas | `GalleryTest` («contrato») |
+| XSS por textos de foto (alt, pie, título) | Todo se escapa al generar (`GalleryRenderer`), también en `data-cap`/`data-alt`; el visor usa `textContent`, nunca `innerHTML` | `GalleryTest` («publicación»), `browser/lightbox.js` |
+| Scripts del visor bloqueados o CSP debilitada | La CSP pública solo gana `script-src 'self'` (sin `unsafe-inline`, sin dominios externos); el visor no usa estilos ni manejadores en línea | `nginx-smoke.sh`, `browser/lightbox.js` (sin violaciones) |
+| Enumeración o DoS por URLs de miniaturas recortadas en la previsualización | El nombre lleva ancho, alto y foco y la clave debe coincidir con la receta; otra clave → 404 sin procesar; solo con sesión | `GalleryTest` («vista previa») |
+| Galerías gigantes que agotan tiempo o disco al publicar | Máximo 500 fotos por galería; derivados solo de las anchuras necesarias (≤ 4 por foto) y deduplicados por receta; la publicación sigue siendo un trabajo en segundo plano con guarda de disco | `GalleryTest`, `tests/bench-gallery.php` |
+| Referencias rotas (borrar una foto o una galería en uso) | No se puede borrar una foto que está en una galería ni una galería usada en un contenido; la publicación se bloquea con un mensaje claro si falta alguna | `GalleryTest` («almacén», «publicación») |
+| Falsa sensación de protección de las fotos | La «disuasión» (impedir arrastrar, menú contextual) se documenta como molestia, no protección; los originales nunca se publican | `docs/fase-8.md` |
+
