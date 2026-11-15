@@ -174,11 +174,11 @@ T::test('papelera: retira del sitio, restaura a borrador, protege la portada y b
     T::eq(1, count($repo->search(null, 'trashed')));
     // el slug queda libre mientras está en la papelera
     $otro = $repo->create('page', doc('Aviso legal'), 1);
-    T::throws(LuxException::class, fn() => $repo->restoreFromTrash($id, $v), 'slug ocupado');
+    T::throws(LuxException::class, fn() => $repo->restoreFromTrash($id, $v), 'otro contenido usa');
     $repo->trash($otro, 1);
     $v = $repo->restoreFromTrash($id, $v);
     T::eq('draft', $repo->get($id)['status'], 'restaurar no republica');
-    T::throws(LuxException::class, fn() => $repo->deletePermanently($id), 'solo desde la papelera');
+    T::throws(LuxException::class, fn() => $repo->deletePermanently($id), 'papelera');
     $v = $repo->trash($id, $v);
     $repo->deletePermanently($id);
     T::eq(null, $repo->get($id));

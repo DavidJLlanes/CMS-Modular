@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace LuxAeterna\Publishing;
 
 use LuxAeterna\Content\ContentLoader;
-use LuxAeterna\Content\Page;
+use LuxAeterna\Content\SiteSnapshot;
 use LuxAeterna\Core\Config;
 use LuxAeterna\Core\Fs;
 use LuxAeterna\Core\Logger;
@@ -24,8 +24,21 @@ final class Publisher
     ) {
     }
 
-    /** @return array{id:string,pages:int,strategy:string,removed:list<string>} */
+    /** Publica el contenido de ejemplo de un archivo JSON (demostración y pruebas). @return array{id:string,pages:int,strategy:string,removed:list<string>,warnings:list<string>} */
     public function publish(string $contentFile): array
+    {
+        $pages = (new ContentLoader())->load($contentFile);
+        $nav = [];
+        foreach ($pages as $p) {
+            if ($p->inMenu) {
+                $nav[] = ['label' => $p->title, 'url' => $p->path()];
+            }
+        }
+        return $this->publishSnapshot(new SiteSnapshot($pages, ['main' => $nav]));
+    }
+
+    /** @return array{id:string,pages:int,strategy:string,removed:list<string>,warnings:list<string>} */
+    public function publishSnapshot(SiteSnapshot $snapshot): array
     {
         $this->store->init();
         $lock = fopen($this->store->base . '/.publish.lock', 'c');
@@ -33,11 +46,10 @@ final class Publisher
             throw new LuxException('Ya hay una publicación en curso.');
         }
         try {
-            $pages = (new ContentLoader())->load($contentFile);
             $id = $this->store->newId();
             $tmp = $this->store->releasesDir() . '/.building-' . $id;
             try {
-                $this->render($pages, $tmp, $id);
+                $this->render($snapshot, $tmp, $id);
                 $errors = (new Preflight())->check($tmp);
                 if ($errors !== []) {
                     throw new LuxException('La comprobación previa ha fallado: ' . $errors[0] . (count($errors) > 1 ? ' (+' . (count($errors) - 1) . ' más)' : ''), implode("\n", $errors));
@@ -54,65 +66,35 @@ final class Publisher
             $activator = new Activator($this->store, (string)$this->config->get('publishing.activation', 'auto'));
             $activator->activate($id);
             $removed = $this->store->prune((int)$this->config->get('publishing.keep_releases', 5));
-            $this->logger->info('publicación completada', ['release' => $id, 'pages' => count($pages), 'strategy' => $activator->strategy()]);
-            return ['id' => $id, 'pages' => count($pages), 'strategy' => $activator->strategy(), 'removed' => $removed];
+            $this->logger->info('publicación completada', ['release' => $id, 'pages' => count($snapshot->pages), 'strategy' => $activator->strategy()]);
+            return ['id' => $id, 'pages' => count($snapshot->pages), 'strategy' => $activator->strategy(), 'removed' => $removed, 'warnings' => $snapshot->warnings];
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
         }
     }
 
-    /** @param list<Page> $pages */
-    private function render(array $pages, string $out, string $id): void
+    private function render(SiteSnapshot $snap, string $out, string $id): void
     {
-        $tpl = $this->read($this->layoutDir . '/template.html');
-        $css = $this->read($this->layoutDir . '/style.css');
-        $hash = substr(hash('sha256', $css), 0, 10);
-        $cssPath = "/assets/style.$hash.css";
+        $r = new SiteRenderer($this->config, $this->layoutDir);
+        $cssPath = $r->publicStylesheet();
         Fs::ensureDir($out . '/assets', 0755);
-        Fs::atomicWrite($out . $cssPath, $css, 0644);
-
-        $nav = '';
-        foreach ($pages as $p) {
-            if ($p->inMenu) {
-                $nav .= '<a href="' . htmlspecialchars($p->path(), ENT_QUOTES) . '">' . htmlspecialchars($p->title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</a>';
-            }
+        Fs::atomicWrite($out . $cssPath, $r->css, 0644);
+        $site = $r->siteVars($snap, $cssPath);
+        foreach ($snap->pages as $p) {
+            $this->write($out, $p->path(), $r->page($p, $site));
         }
-        $site = [
-            'lang' => (string)$this->config->get('site.lang', 'es'),
-            'site_name' => (string)$this->config->get('site.name', 'LuxAeterna'),
-            'nav' => $nav,
-            'stylesheet' => $cssPath,
-        ];
-        foreach ($pages as $p) {
-            $html = Template::render($tpl, $site + [
-                'title' => $p->title,
-                'heading' => $p->title,
-                'description' => $p->description,
-                'canonical' => $this->config->baseUrl() . $p->path(),
-                'content' => BlockRenderer::render($p),
-            ]);
-            $target = $p->slug === '' ? '/index.html' : '/' . $p->slug . '/index.html';
-            Fs::ensureDir(dirname($out . $target), 0755);
-            Fs::atomicWrite($out . $target, $html, 0644);
+        foreach ($snap->redirects as $rd) {
+            $this->write($out, $rd['from'], $r->redirectStub($rd['to']));
         }
-        $nf = Template::render($tpl, $site + [
-            'title' => 'Página no encontrada',
-            'heading' => 'Página no encontrada',
-            'description' => '',
-            'canonical' => $this->config->baseUrl() . '/',
-            'content' => "<p>La página que buscas no existe. <a href=\"/\">Volver al inicio</a>.</p>\n",
-        ]);
-        Fs::atomicWrite($out . '/404.html', $nf, 0644);
-        Fs::atomicWrite($out . '/' . ReleaseStore::META, (string)json_encode(['id' => $id, 'created' => gmdate('c'), 'pages' => count($pages)]), 0644);
+        Fs::atomicWrite($out . '/404.html', $r->notFound($site), 0644);
+        Fs::atomicWrite($out . '/' . ReleaseStore::META, (string)json_encode(['id' => $id, 'created' => gmdate('c'), 'pages' => count($snap->pages)]), 0644);
     }
 
-    private function read(string $file): string
+    private function write(string $out, string $path, string $html): void
     {
-        $c = @file_get_contents($file);
-        if ($c === false) {
-            throw new LuxException('Falta un archivo de diseño.', "read $file");
-        }
-        return $c;
+        $target = $path === '/' ? '/index.html' : rtrim($path, '/') . '/index.html';
+        Fs::ensureDir(dirname($out . $target), 0755);
+        Fs::atomicWrite($out . $target, $html, 0644);
     }
 }

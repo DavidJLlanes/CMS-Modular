@@ -6,6 +6,7 @@
 <title>{{ title }}</title>
 <meta name="description" content="{{ description }}">
 <link rel="canonical" href="{{ canonical }}">
+{{{ head_extra }}}
 <link rel="stylesheet" href="{{ stylesheet }}">
 </head>
 <body>
@@ -14,6 +15,7 @@
 <main>
 <h1>{{ heading }}</h1>
 {{{ content }}}</main>
-<footer class="site-footer"><p>{{ site_name }}</p></footer>
+<footer class="site-footer"><p>{{ site_name }}</p>
+<nav aria-label="Pie">{{{ footer_nav }}}</nav></footer>
 </body>
 </html>

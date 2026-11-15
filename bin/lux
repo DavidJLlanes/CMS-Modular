@@ -32,7 +32,9 @@ Uso: bin/lux <comando> [opciones]
 
   doctor [--json] [--http]       Diagnóstico del entorno (--http comprueba que var/ no se sirve)
   install --url=https://dominio  Crea configuración y directorios (--force regenera la configuración)
-  publish [--content=ARCHIVO]    Genera y activa una versión (por defecto, el sitio de ejemplo)
+  publish [--content=ARCHIVO|--demo]
+                                 Genera y activa una versión con el contenido publicado en el panel
+                                 (si no hay ninguno, el sitio de demostración)
   releases                       Lista las versiones y marca la activa
   rollback <id>                  Reactiva una versión anterior
   migrate                        Aplica las migraciones de base de datos pendientes
@@ -159,9 +161,25 @@ try {
 
         case 'publish':
             $config = Config::load($root);
-            $content = is_string($opts['content'] ?? null) ? $opts['content'] : $root . '/examples/sitio-demo/content.json';
-            $res = (new Publisher($config, store($config), logger($root), $root . '/components/layouts/base'))->publish($content);
+            $layout = $root . '/components/layouts/base';
+            $publisher = new Publisher($config, store($config), logger($root), $layout);
+            if (is_string($opts['content'] ?? null) || isset($opts['demo'])) {
+                $content = is_string($opts['content'] ?? null) ? $opts['content'] : $root . '/examples/sitio-demo/content.json';
+                $res = $publisher->publish($content);
+            } else {
+                $sv = new Services($config, true);
+                if ($sv->site->hasPublished()) {
+                    $res = $publisher->publishSnapshot($sv->site->build());
+                    $sv->audit->log('site.publish', null, 'cli', null, ['release' => $res['id']]);
+                } else {
+                    echo "No hay contenido publicado en el panel: se publica el sitio de demostración.\n";
+                    $res = $publisher->publish($root . '/examples/sitio-demo/content.json');
+                }
+            }
             echo "Publicada la versión {$res['id']} ({$res['pages']} páginas, activación: {$res['strategy']}).\n";
+            foreach ($res['warnings'] as $w) {
+                echo "  Aviso: $w\n";
+            }
             if ($res['removed'] !== []) {
                 echo 'Versiones antiguas eliminadas: ' . implode(', ', $res['removed']) . "\n";
             }
