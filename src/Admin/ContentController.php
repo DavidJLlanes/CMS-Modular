@@ -25,7 +25,13 @@ final class ContentController
         if ($p === '/preview/style.css') {
             $uid = preg_match('/^c_[A-Za-z0-9]{4,40}$/', $r->query['u'] ?? '') ? (string)$r->query['u'] : 'preview';
             $type = preg_match('/^[a-z][a-z0-9_-]{0,30}$/', $r->query['t'] ?? '') ? (string)$r->query['t'] : 'page';
-            return $this->need($user, 'content.read') ?? new Response(200, $this->sv->preview->css($uid, $type), ['Content-Type' => 'text/css; charset=utf-8', 'Cache-Control' => 'no-store, private']);
+            $colors = [];
+            foreach (array_slice(explode(',', (string)($r->query['c'] ?? '')), 0, 100) as $hex) {
+                if (preg_match('/^[0-9a-f]{6}$/', $hex)) {
+                    $colors[] = '#' . $hex;
+                }
+            }
+            return $this->need($user, 'content.read') ?? new Response(200, $this->sv->preview->css($uid, $type, $colors), ['Content-Type' => 'text/css; charset=utf-8', 'Cache-Control' => 'no-store, private']);
         }
         if (preg_match('#^/preview/(font)/([a-z0-9-]{1,40})/([a-z0-9-]+\.woff2)$#', $p, $m) || preg_match('#^/preview/(logo)/([A-Za-z0-9][A-Za-z0-9_.-]{0,60})$#', $p, $m)) {
             $a = $this->need($user, 'content.read') ?? $this->sv->preview->asset($m[1], $m[2], $m[3] ?? '');
@@ -166,7 +172,7 @@ final class ContentController
             . '<label>Slug <small>(ruta pública: ' . View::h($slugPath) . ')</small><input name="slug" maxlength="80" value="' . View::h((string)$rev['slug']) . '"></label>'
             . '<label>Resumen <small>(descripción para buscadores y listados, máx. 300)</small><textarea name="summary" rows="2" maxlength="300">' . View::h((string)$rev['summary']) . '</textarea></label>'
             . $fields
-            . '<label>Contenido <small>(bloques separados por línea en blanco: <code>## Título</code>, <code>- lista</code>, <code>&gt; cita</code>)</small><textarea name="body" rows="16" class="body">' . View::h(Blocks::toText($rev['blocks'])) . '</textarea></label>'
+            . $this->editorHtml($rev['blocks'], $c)
             . ($c['type'] !== 'page' && $cats !== '' ? '<fieldset><legend>Categorías</legend>' . $cats . '</fieldset>' : '')
             . ($c['type'] !== 'page' ? '<label>Etiquetas <small>(separadas por comas)</small><input name="tags" maxlength="400" value="' . View::h((string)$tagNames) . '"></label>' : '')
             . '<p><span id="autosave-status" class="muted" aria-live="polite"></span></p>' . Ui::button('Guardar'),
@@ -189,8 +195,37 @@ final class ContentController
         }
         $body = '<h1>' . View::h((string)$c['rev']['title'] ?: '(sin título)') . '</h1><p class="muted">' . View::h($this->sv->types->label((string)$c['type'])) . ' · ' . $stateLabel . '</p>' . $banner
             . '<p class="toolbar"><a class="btn" href="' . $this->url("/content/$id/preview") . '">Previsualizar</a> <a class="btn" href="' . $this->url("/content/$id/revisions") . '">Revisiones</a> ' . $actions . '</p>'
-            . $main . ($trashed ? '' : '<script src="' . $this->url('/assets/autosave.js') . '" defer></script>');
+            . $main . ($trashed ? '' : self::editorScripts($this->url('/assets/editor/'), $this->url('/assets/autosave.js')));
         return new Response($error !== null ? $status : 200, View::page('Editar', $body, ($this->ctx)($user, $error, null)));
+    }
+
+    /** Módulos del editor en orden de carga (cada uno cuelga de `LuxEditor`); solo se envían en la pantalla de edición. */
+    public const EDITOR_JS = ['model', 'html', 'history', 'lint', 'storage', 'blocks', 'inspector', 'media-picker', 'main'];
+
+    private static function editorScripts(string $base, string $autosave): string
+    {
+        $s = '<link rel="stylesheet" href="' . View::h($base . 'editor.css') . '">';
+        foreach (self::EDITOR_JS as $m) {
+            $s .= '<script src="' . View::h($base . $m . '.js') . '" defer></script>';
+        }
+        return $s . '<script src="' . View::h($autosave) . '" defer></script>';
+    }
+
+    /**
+     * Zona del editor. El campo JSON no tiene `name` hasta que el editor arranca: si el JavaScript falla, el texto simple
+     * (solo cuando el contenido no usa formato rico) sigue funcionando y nunca se envían dos versiones distintas.
+     * @param list<array<string,mixed>> $blocks @param array<string,mixed> $c
+     */
+    private function editorHtml(array $blocks, array $c): string
+    {
+        $json = (string)json_encode($blocks, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
+        $plain = Blocks::isPlain($blocks);
+        $fallback = $plain
+            ? '<label class="lux-fallback">Contenido <small>(bloques separados por línea en blanco: <code>## Título</code>, <code>- lista</code>, <code>&gt; cita</code>)</small><textarea name="body" rows="16" class="body">' . View::h(Blocks::toText($blocks)) . '</textarea></label>'
+            : '<p class="lux-fallback error">Este contenido usa formato avanzado (columnas, tablas, estilos…) y necesita el editor completo, que requiere JavaScript. Tu contenido está a salvo: no se modificará si guardas sin él.</p>';
+        return '<div class="lux-editor-root" data-lux-editor data-media-list="' . View::h($this->url('/media/list.json')) . '" data-media-upload="' . View::h($this->url('/media/upload.json'))
+            . '" data-media-thumb="' . View::h($this->url('/media/')) . '" data-key="' . View::h('lux-editor-' . (string)$c['uid']) . '" data-can-upload="1">'
+            . '<input type="hidden" data-body-json value="' . View::h($json) . '">' . $fallback . '</div>';
     }
 
     /** @param array<string,mixed> $c @return array<string,mixed> */
@@ -200,7 +235,28 @@ final class ContentController
         foreach (array_keys($this->sv->types->fields((string)$c['type'])) as $name) {
             $fields[$name] = $r->post['f_' . $name] ?? ($this->sv->types->fields((string)$c['type'])[$name]['type'] === 'bool' ? false : '');
         }
-        return ['title' => $r->input('title'), 'slug' => $r->input('slug'), 'summary' => $r->input('summary'), 'fields' => $fields, 'blocks' => Blocks::fromText($r->input('body'))];
+        return ['title' => $r->input('title'), 'slug' => $r->input('slug'), 'summary' => $r->input('summary'), 'fields' => $fields, 'blocks' => $this->blocksFrom($r, $c)];
+    }
+
+    /**
+     * Cuerpo enviado: JSON del editor (esquema 2, se valida siempre en servidor), o texto simple sin JavaScript, o
+     * nada (se conserva el actual: p. ej. si el editor no cargó y el contenido solo se edita con el editor completo).
+     * @param array<string,mixed> $c @return list<array<string,mixed>>
+     */
+    private function blocksFrom(Request $r, array $c): array
+    {
+        $json = (string)($r->post['body_json'] ?? '');
+        if ($json !== '') {
+            if (strlen($json) > 2_000_000) {
+                throw new LuxException('El contenido es demasiado grande.');
+            }
+            $d = json_decode($json, true, 32);
+            if (!is_array($d)) {
+                throw new LuxException('El contenido del editor no es válido (JSON).');
+            }
+            return Blocks::validate($d);
+        }
+        return isset($r->post['body']) ? Blocks::fromText($r->input('body')) : (array)$c['rev']['blocks'];
     }
 
     private function save(array $c, Request $r, array $user, string $sid): Response
@@ -221,18 +277,25 @@ final class ContentController
             return Response::redirect($this->url("/content/$id/edit"));
         } catch (ConflictException $e) {
             $fresh = $this->sv->content->get($id) ?? $c;
-            $values['blocks'] = $this->safeBlocks($r->input('body'));
+            $values['blocks'] = $this->safeBlocks($r);
             $this->audit('content.conflict', $user, $id);
             return $this->editForm($fresh, $user, $sid, $r, $e->getMessage() . ' Se muestra tu texto; si guardas de nuevo, la versión de la otra persona queda en el historial de revisiones.', $values, 409);
         } catch (LuxException $e) {
-            $values['blocks'] = $this->safeBlocks($r->input('body'));
+            $values['blocks'] = $this->safeBlocks($r);
             return $this->editForm($c, $user, $sid, $r, $e->getMessage(), $values, 422);
         }
     }
 
     /** @return list<array<string,mixed>> */
-    private function safeBlocks(string $text): array
+    private function safeBlocks(Request $r): array
     {
+        $json = (string)($r->post['body_json'] ?? '');
+        if ($json !== '') {
+            $d = json_decode($json, true, 32);
+            // Para volver a mostrar lo escrito tras un error se pasa tal cual al editor, que lo sanea al cargar; el servidor revalida al guardar.
+            return is_array($d) ? array_values(array_filter($d, 'is_array')) : [];
+        }
+        $text = $r->input('body');
         try {
             return Blocks::fromText($text);
         } catch (LuxException) {

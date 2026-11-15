@@ -47,11 +47,11 @@ final class Preview
         $store = $this->store();
         $s = $store?->settings();
         $items = [];
-        foreach ($blocks as $b) {
+        \LuxAeterna\Content\Blocks::walk($blocks, static function (array $b) use ($store, &$items): void {
             if ($store !== null && $b['type'] === 'image' && ($m = $store->get((string)$b['ref'])) !== null) {
                 $items[(string)$m['uid']] = $m;
             }
-        }
+        });
         return ['items' => $items, 'quality' => $s?->quality() ?? 82, 'max_width' => $s?->maxWidth() ?? 1600];
     }
 
@@ -82,10 +82,12 @@ final class Preview
     }
 
     /** CSS de previsualización para un contenido concreto (mismas clases de instancia que la publicación). */
-    public function css(string $uid = 'preview', string $type = 'page'): string
+    public function css(string $uid = 'preview', string $type = 'page', array $colors = []): string
     {
         $r = $this->renderer();
-        $p = new Page($uid, 'x', 'x', '', [], false, '/x/', $type);
+        // Los colores libres del contenido necesitan su clase CSS: se pasan como un bloque sintético (solo en la vista previa).
+        $runs = array_map(static fn(string $c): array => ['t' => 'x', 'c' => $c], $colors);
+        $p = new Page($uid, 'x', 'x', '', $runs === [] ? [] : [['type' => 'paragraph', 'inlines' => $runs]], false, '/x/', $type);
         $r->siteVars(new SiteSnapshot([$p], []), self::CSS_URL);
         return $r->design->previewCss();
     }
@@ -123,8 +125,10 @@ final class Preview
         $page = new Page($uid, (string)$rev['slug'], (string)$rev['title'] !== '' ? (string)$rev['title'] : '(sin título)', (string)$rev['summary'], $blocks, false,
             $this->types->path($type, (string)$rev['slug']), $type, time(), $fields);
         $snap = new SiteSnapshot([$page], ['main' => $this->links('main'), 'footer' => $this->links('footer')]);
+        $colors = \LuxAeterna\Content\Blocks::colors($blocks);
         $r = $this->renderer($this->mediaFor($blocks));
-        $site = $r->siteVars($snap, $cssUrl . (str_contains($cssUrl, '?') ? '&' : '?') . 'u=' . rawurlencode($uid) . '&t=' . rawurlencode($type), '<meta name="robots" content="noindex,nofollow">');
+        $site = $r->siteVars($snap, $cssUrl . (str_contains($cssUrl, '?') ? '&' : '?') . 'u=' . rawurlencode($uid) . '&t=' . rawurlencode($type)
+            . ($colors !== [] ? '&c=' . implode(',', array_map(static fn(string $c): string => substr($c, 1), $colors)) : ''), '<meta name="robots" content="noindex,nofollow">');
         return $r->page($page, $site);
     }
 

@@ -29,6 +29,12 @@ final class MediaController
         if ($p === '/media') {
             return $this->need($user, 'media.read') ?? $this->library($r, $user);
         }
+        if ($p === '/media/list.json' && !$post) {
+            return $this->need($user, 'media.read') ?? $this->listJson($r);
+        }
+        if ($p === '/media/upload.json' && $post) {
+            return $this->need($user, 'media.write') ?? $this->uploadJson($r, $user);
+        }
         if ($p === '/media/upload' && $post) {
             return $this->need($user, 'media.write') ?? $this->upload($r, $user);
         }
@@ -105,6 +111,48 @@ final class MediaController
                 . 'Al cambiarla, la próxima publicación regenera los derivados desde los originales, que no se modifican. Solo se generan los tamaños que realmente usa cada página y nunca se amplía una foto pequeña.</p>';
         }
         return new Response($error !== null ? 422 : 200, View::page('Biblioteca multimedia', $body, ($this->ctx)($user, $error, $flash)));
+    }
+
+    private static function json(int $status, array $data): Response
+    {
+        return new Response($status, (string)json_encode($data, JSON_UNESCAPED_UNICODE), ['Content-Type' => 'application/json; charset=utf-8', 'Cache-Control' => 'no-store, private']);
+    }
+
+    /** @param array<string,mixed> $m @return array<string,mixed> */
+    private function item(array $m): array
+    {
+        return ['ref' => (string)$m['uid'], 'title' => (string)$m['title'], 'alt' => (string)$m['alt'], 'caption' => (string)$m['caption'], 'w' => (int)$m['width'], 'h' => (int)$m['height'],
+            'thumb' => $this->url('/media/' . $m['uid'] . '/thumb')];
+    }
+
+    /** Listado para el selector de imágenes del editor. */
+    private function listJson(Request $r): Response
+    {
+        $q = mb_substr(trim((string)($r->query['q'] ?? '')), 0, 80);
+        $page = max(1, min(1000, (int)($r->query['page'] ?? 1)));
+        $res = $this->sv->media()->search($q, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+        return self::json(200, ['ok' => true, 'total' => $res['total'], 'page' => $page, 'per_page' => self::PER_PAGE, 'items' => array_map(fn(array $m): array => $this->item($m), $res['items'])]);
+    }
+
+    /** Subida desde el editor (misma validación que la biblioteca). @param array<string,mixed> $user */
+    private function uploadJson(Request $r, array $user): Response
+    {
+        $f = ($r->files['files'] ?? [])[0] ?? null;
+        if ($f === null) {
+            return self::json(422, ['ok' => false, 'error' => 'No se ha recibido ningún archivo.']);
+        }
+        try {
+            if ($f['error'] !== UPLOAD_ERR_OK) {
+                throw new LuxException($f['error'] === UPLOAD_ERR_INI_SIZE || $f['error'] === UPLOAD_ERR_FORM_SIZE ? 'El archivo supera el límite de subida del servidor.' : 'La subida no se completó.');
+            }
+            $m = $this->sv->media()->add($f['tmp_name'], $f['name'], (int)$user['id']);
+            if (!$m['duplicate']) {
+                $this->audit('media.upload', $user, (string)$m['uid']);
+            }
+            return self::json(200, ['ok' => true, 'duplicate' => (bool)$m['duplicate'], 'item' => $this->item($m)]);
+        } catch (LuxException $e) {
+            return self::json(422, ['ok' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     /** @param array<string,mixed> $user */
