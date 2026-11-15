@@ -1,0 +1,26 @@
+# Decisiones de arquitectura (ADR)
+
+Se registra un ADR cuando una elección afecta al contrato del contenido, los módulos, la seguridad, la compatibilidad o el despliegue.
+
+| ADR | Título | Estado |
+|---|---|---|
+| [0001](0001-stack-tecnico.md) | Stack técnico: PHP, SQLite, Nginx, JS nativo | Provisional |
+| [0002](0002-modularidad-y-contratos.md) | Modularidad por carpetas y contratos versionados | Aceptada |
+| [0003](0003-publicacion-atomica.md) | Publicación atómica con `releases/` y `current` | Aceptada |
+| [0004](0004-procesado-de-imagenes.md) | Procesado de imágenes y WebP | Provisional |
+| [0005](0005-politica-de-dependencias.md) | Política de dependencias (R03) | Aceptada |
+| [0006](0006-entorno-de-referencia.md) | Entorno de referencia para mediciones | Provisional |
+
+## Plantilla
+
+```
+# ADR-NNNN · Título
+Estado: Propuesta | Provisional | Aceptada | Sustituida por ADR-XXXX
+Fecha: AAAA-MM-DD
+
+## Contexto
+## Decisión
+## Alternativas evaluadas
+## Consecuencias
+## Verificación / revisión
+```

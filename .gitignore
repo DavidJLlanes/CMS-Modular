@@ -1,0 +1,33 @@
+# Datos privados: nunca en Git
+/var/
+/releases/
+/current
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.sql.gz
+*.bak
+*.tar.gz
+*.zip
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+/config/local.*
+*.key
+*.pem
+
+# Dependencias y artefactos
+/vendor/
+/node_modules/
+/build/
+*.log
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
