@@ -15,7 +15,8 @@ trap cleanup EXIT
 awk '/^server \{/{n++} n>=2' "$ROOT/deploy/nginx/luxaeterna.conf" \
  | sed -e "s#listen 443 ssl http2;#listen 127.0.0.1:$PORT;#" -e '/listen \[::\]:443/d' -e '/ssl_certificate/d' \
        -e "s#/var/www/luxaeterna.es/publish/current#$PUBLISH/current#" -e "s#/var/www/luxaeterna.es/app/public#$ROOT/public#" \
-       -e "s#/var/www/luxaeterna.es/app/deploy#$ROOT/deploy#" -e "s#unix:/run/php/luxaeterna-panel.sock#unix:$T/fpm.sock#" > "$T/server.conf"
+       -e "s#/var/www/luxaeterna.es/app/deploy#$ROOT/deploy#" -e "s#unix:/run/php/luxaeterna-panel.sock#unix:$T/fpm.sock#" -e "s#/etc/nginx/lux-rules/luxaeterna.es.conf#$T/rules.conf#" > "$T/server.conf"
+: > "$T/rules.conf"
 cp /etc/nginx/fastcgi_params "$T/fastcgi_params"
 cat > "$T/nginx.conf" <<EOF
 pid $T/nginx.pid; error_log $T/error.log; daemon on;
@@ -91,6 +92,19 @@ check "sin fuga de rutas en el panel" 0 "$(curl -s $B/admin/login | grep -c "$RO
 echo '<?php echo "EJECUTADO";' > "$PUBLISH/current/prueba.php"
 check "php en raíz pública ni se ejecuta ni se sirve" 404 "$(code $B/prueba.php)"
 rm -f "$PUBLISH/current/prueba.php"
+
+# 5) Reglas 301: el servicio privilegiado valida, instala y recarga Nginx de verdad.
+mkdir -p "$T/site/publish/rules"
+printf '#!/bin/sh\nexec nginx -c %s "$@"\n' "$T/nginx.conf" > "$T/nginx-wrap"; chmod +x "$T/nginx-wrap"
+apply() { printf '%s\n' "$1" > "$T/site/publish/rules/redirects.nginx.conf"; echo "tok$RANDOM x" > "$T/site/publish/rules/apply.request"
+  NGINX_BIN="$T/nginx-wrap" RELOAD_CMD="$T/nginx-wrap -s reload" OUT_FILE="$T/rules.conf" STATE_FILE="$T/state.json" LUX_DOMAIN=smoke bash "$ROOT/deploy/lux-apply-rules.sh" "$T/site" >/dev/null 2>&1; echo $?; }
+check "reglas válidas aplicadas" 0 "$(apply 'location = /viejo/ { return 301 /sobre-nosotros/; }')"; sleep 0.7
+check "301 de slug antiguo" 301 "$(code $B/viejo/)"
+check "destino del 301" "$B/sobre-nosotros/" "$(curl -sI $B/viejo/ | tr -d '\r' | awk 'tolower($1)=="location:"{print $2}')"
+check "reglas inyectadas rechazadas" 1 "$(apply 'location / { return 200 hackeado; }')"
+check "tras rechazo siguen las reglas anteriores" 301 "$(code $B/viejo/)"
+check "estado de reglas informa el fallo" 1 "$(grep -c '"ok":false' "$T/state.json")"
+check "sitio público intacto tras recargas" 200 "$(code $B/)"
 
 [ $FAIL -ne 0 ] && { echo "--- fpm.log"; tail -5 "$T/fpm.log"; echo "--- nginx error"; tail -5 "$T/error.log"; }
 [ $FAIL -eq 0 ] && echo "TODO CORRECTO" || echo "HAY FALLOS"

@@ -92,3 +92,16 @@ El informe de la Fase 14 declarará qué requisitos ASVS concretos se verificaro
 | Redirecciones abiertas / enlaces peligrosos en menús | Solo rutas internas o `https://`; sin `javascript:`, `//host` ni caracteres de control | `ContentRepoTest` |
 | Referencias a imágenes manipuladas (traversal) | `ref` con formato estricto (identificador, nunca ruta) | `ContentRepoTest` |
 | Borrado accidental o malicioso | Papelera reversible; borrado definitivo solo para administradores y desde la papelera; auditoría de cada acción | `PanelContentTest` |
+
+## Controles añadidos en la Fase 4 (publicación y reversión)
+
+| Amenaza | Control | Verificación |
+|---|---|---|
+| Sitio roto por una publicación fallida o interrumpida | Construcción en directorio temporal, preflight, activación atómica solo si todo pasa; restos `.building-*` se limpian | `ResilienceTest` (kill -9, disco lleno, plantilla rota, enlace roto) |
+| Dos publicaciones simultáneas | `flock` único; la segunda espera y se reintenta | `ResilienceTest`, `JobsTest` |
+| Trabajo huérfano tras caída | Latido + comprobación de bloqueo libre → reencolado | `JobsTest`, `ResilienceTest` |
+| Reversión a una versión corrupta o inexistente | Validación de identificador, integridad y metadatos antes de activar | `JobsTest`, `PanelContentTest` |
+| Escalada a root mediante reglas de Nginx | La app solo propone; el servicio root valida cada línea con lista blanca estricta, `nginx -t`, restauración y estado propiedad de root | `RulesTest`, `nginx-smoke.sh` |
+| Archivos privados en la versión pública | Preflight bloquea ocultos (salvo los permitidos), ejecutables, bases de datos y enlaces simbólicos | `PublishTest` |
+| Disco lleno | Guarda `min_free_mb` y fallo limpio sin tocar la versión activa | `ResilienceTest` (tmpfs real) |
+

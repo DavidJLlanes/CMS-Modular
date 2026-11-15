@@ -128,7 +128,7 @@ try {
     guardUser($root, $cmd);
     switch ($cmd) {
         case 'version':
-            echo "LuxAeterna 0.2.0-fase2\n";
+            echo "LuxAeterna 0.3.0-fase4\n";
             break;
 
         case 'doctor':

@@ -14,6 +14,7 @@ Se registra un ADR cuando una elecci처n afecta al contrato del contenido, los m�
 | [0008](0008-configuracion-y-rutas.md) | Formatos de configuraci처n y convenciones de rutas | Aceptada |
 | [0009](0009-identidad-sesiones-y-mfa.md) | Identidad, sesiones y segundo factor | Aceptada |
 | [0010](0010-contenido-revisiones-y-previsualizacion.md) | Contenido, revisiones, URLs y previsualizaci처n | Aceptada |
+| [0011](0011-motor-de-publicacion-y-reversion.md) | Motor de publicaci처n, coherencia y reversi처n | Aceptada |
 
 ## Plantilla
 
