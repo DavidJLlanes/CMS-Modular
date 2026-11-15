@@ -41,7 +41,7 @@ final class Theme
         $d = self::defaults();
         $hex = static function (mixed $v, string $what): string {
             if (!is_string($v) || !preg_match('/^#[0-9a-fA-F]{6}$/', $v)) {
-                throw new \InvalidArgumentException("Color no válido en «$what» (usa #rrggbb).");
+                throw new \InvalidArgumentException("Color no válido en «{$what}» (usa #rrggbb).");
             }
             return strtolower($v);
         };
@@ -79,7 +79,7 @@ final class Theme
         };
         $num = static function (mixed $v, float $min, float $max, string $what): float|int {
             if (!is_numeric($v) || $v < $min || $v > $max) {
-                throw new \InvalidArgumentException("«$what» fuera de rango ($min–$max).");
+                throw new \InvalidArgumentException("«{$what}» fuera de rango ({$min}–{$max}).");
             }
             return $v + 0;
         };

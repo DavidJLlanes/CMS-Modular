@@ -204,7 +204,7 @@ final class DesignRegistry
         $errs = array_merge($errs, FieldSchema::checkDefs($fields));
         foreach (array_keys(is_array($fields) ? $fields : []) as $f) {
             if (in_array($f, array_merge(self::STD_RAW, self::STD_ESC), true)) {
-                $errs[] = "El campo «$f» usa un nombre reservado.";
+                $errs[] = "El campo «{$f}» usa un nombre reservado.";
             }
         }
         $res = $m['resources'] ?? [];
@@ -258,7 +258,7 @@ final class DesignRegistry
             } elseif (!$raw && !$okEsc && !$okRaw) {
                 $errs[] = "Plantilla: marcador desconocido «{{ $n }}».";
             } elseif (!$raw && $okRaw) {
-                $errs[] = "Plantilla: «$n» es HTML preparado; usa {{{ $n }}}.";
+                $errs[] = "Plantilla: «{$n}» es HTML preparado; usa {{{ $n }}}.";
             }
         }
         if (preg_match('/<\s*(script|iframe|object|embed|form|base|meta)\b/i', $t, $m)) {
