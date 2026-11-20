@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /**
  * Texto con formato en línea como estructura (nunca HTML): lista de tramos `{t, b, i, s, u, sub, sup, c, a}`.

@@ -1,33 +1,33 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Content\ContentRepository;
-use LuxAeterna\Content\Menus;
-use LuxAeterna\Content\Settings;
-use LuxAeterna\Content\SiteBuilder;
-use LuxAeterna\Content\Taxonomy;
-use LuxAeterna\Content\TypeRegistry;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\Migrator;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Media\MediaSettings;
-use LuxAeterna\Media\MediaStore;
-use LuxAeterna\Publishing\JobStore;
-use LuxAeterna\Publishing\Preview;
-use LuxAeterna\Publishing\PublishService;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
-use LuxAeterna\Publishing\RuleSync;
-use LuxAeterna\Security\Audit;
-use LuxAeterna\Security\Csrf;
-use LuxAeterna\Security\Secrets;
-use LuxAeterna\Security\Sessions;
-use LuxAeterna\Security\Throttle;
-use LuxAeterna\Security\Tokens;
-use LuxAeterna\Security\Users;
+use CMSModular\Content\ContentRepository;
+use CMSModular\Content\Menus;
+use CMSModular\Content\Settings;
+use CMSModular\Content\SiteBuilder;
+use CMSModular\Content\Taxonomy;
+use CMSModular\Content\TypeRegistry;
+use CMSModular\Core\Config;
+use CMSModular\Core\Database;
+use CMSModular\Core\Migrator;
+use CMSModular\Core\Logger;
+use CMSModular\Media\MediaSettings;
+use CMSModular\Media\MediaStore;
+use CMSModular\Publishing\JobStore;
+use CMSModular\Publishing\Preview;
+use CMSModular\Publishing\PublishService;
+use CMSModular\Publishing\Publisher;
+use CMSModular\Publishing\ReleaseStore;
+use CMSModular\Publishing\RuleSync;
+use CMSModular\Security\Audit;
+use CMSModular\Security\Csrf;
+use CMSModular\Security\Secrets;
+use CMSModular\Security\Sessions;
+use CMSModular\Security\Throttle;
+use CMSModular\Security\Tokens;
+use CMSModular\Security\Users;
 
 /** Contenedor mínimo: construye cada servicio una sola vez, a demanda. */
 final class Services
@@ -50,8 +50,8 @@ final class Services
     private ?PublishService $publishing = null;
     private ?JobStore $jobStore = null;
     private ?MediaStore $mediaStore = null;
-    private ?\LuxAeterna\Design\DesignRegistry $designRegistry = null;
-    private ?\LuxAeterna\Gallery\GalleryStore $galleryStore = null;
+    private ?\CMSModular\Design\DesignRegistry $designRegistry = null;
+    private ?\CMSModular\Gallery\GalleryStore $galleryStore = null;
 
     public function __construct(public readonly Config $config, bool $migrate = false)
     {
@@ -95,14 +95,14 @@ final class Services
         return new MediaSettings($this->config, is_array($d) ? $d : []);
     }
 
-    public function designs(): \LuxAeterna\Design\DesignRegistry
+    public function designs(): \CMSModular\Design\DesignRegistry
     {
-        return $this->designRegistry ??= new \LuxAeterna\Design\DesignRegistry($this->config->root . '/components', $this->config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT);
+        return $this->designRegistry ??= new \CMSModular\Design\DesignRegistry($this->config->root . '/components', $this->config->path('data') . '/cache/designs.json', \CMSModular\Core\Version::CURRENT);
     }
 
-    public function galleries(): \LuxAeterna\Gallery\GalleryStore
+    public function galleries(): \CMSModular\Gallery\GalleryStore
     {
-        return $this->galleryStore ??= new \LuxAeterna\Gallery\GalleryStore($this->db, fn() => $this->designs());
+        return $this->galleryStore ??= new \CMSModular\Gallery\GalleryStore($this->db, fn() => $this->designs());
     }
 
     /** Biblioteca multimedia: originales privados en var/media y derivados WebP con huella. */
@@ -118,7 +118,7 @@ final class Services
         $st = $this->releaseStore();
         foreach ($st->all() as $id) {
             $dir = is_dir($st->releasePath($id)) ? $st->releasePath($id) : ($id === $st->currentId() ? $st->currentPath() : '');
-            $j = $dir !== '' ? json_decode((string)@file_get_contents($dir . '/' . \LuxAeterna\Publishing\ReleaseStore::MEDIA), true) : null;
+            $j = $dir !== '' ? json_decode((string)@file_get_contents($dir . '/' . \CMSModular\Publishing\ReleaseStore::MEDIA), true) : null;
             foreach ((array)$j as $list) {
                 foreach ((array)$list as $k) {
                     $keys[(string)$k] = true;

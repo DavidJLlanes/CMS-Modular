@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
 /**
  * Reglas HTTP de redirección permanentes (301) que acompañan a cada versión.
@@ -29,7 +29,7 @@ final class RuleBuilder
     /** @param list<array{from:string,to:string}> $redirects */
     public static function nginx(array $redirects): string
     {
-        $s = "# Generado por LuxAeterna. No editar a mano.\n";
+        $s = "# Generado por CMS-Modular. No editar a mano.\n";
         foreach (self::clean($redirects) as $r) {
             $s .= "location = {$r['from']} { return 301 {$r['to']}; }\n";
         }
@@ -39,7 +39,7 @@ final class RuleBuilder
     /** @param list<array{from:string,to:string}> $redirects */
     public static function apache(array $redirects, string $base = ''): string
     {
-        $s = ($base !== '' ? rtrim($base) . "\n\n" : '') . "# Redirecciones (generado por LuxAeterna)\n<IfModule mod_alias.c>\n";
+        $s = ($base !== '' ? rtrim($base) . "\n\n" : '') . "# Redirecciones (generado por CMS-Modular)\n<IfModule mod_alias.c>\n";
         foreach (self::clean($redirects) as $r) {
             $s .= "RedirectMatch 301 \"^" . str_replace('-', '\\-', $r['from']) . "$\" \"{$r['to']}\"\n";
         }

@@ -42,7 +42,7 @@ Requisitos: PHP ≥ 8.1 con `pdo_sqlite`, `mbstring`, `fileinfo`, `ctype`, `json
 | [docs/fase-8.md](docs/fase-8.md) | Entrega de la Fase 8: galerías, 6 diseños, recorte con foco, visor, peso estimado |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
 
-Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0*. Repositorio: [github.com/DavidJLlanes/CMS-Modular](https://github.com/DavidJLlanes/CMS-Modular) (antes LuxAeterna).
+Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0*. Repositorio: [github.com/DavidJLlanes/CMS-Modular](https://github.com/DavidJLlanes/CMS-Modular).
 
 ## Flujo de trabajo
 

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
 /**
  * IP del cliente. Solo se confía en X-Forwarded-For si la conexión directa viene de un proxy declarado en

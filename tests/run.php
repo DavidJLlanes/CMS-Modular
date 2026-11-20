@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 require $root . '/src/Core/Autoloader.php';
-LuxAeterna\Core\Autoloader::register($root . '/src');
+CMSModular\Core\Autoloader::register($root . '/src');
 
 final class T
 {

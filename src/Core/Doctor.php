@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
-use LuxAeterna\Publishing\Activator;
+use CMSModular\Publishing\Activator;
 
 /** Diagnóstico del entorno. Cada comprobación devuelve ok | warn | fail. */
 final class Doctor

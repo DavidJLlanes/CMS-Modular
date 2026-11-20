@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /** Versión del producto (la comparan los manifiestos de diseños y plugins en `requires.lux`). */
 final class Version

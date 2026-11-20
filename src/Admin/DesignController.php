@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Design\Contrast;
-use LuxAeterna\Design\DesignRegistry;
-use LuxAeterna\Design\DesignSettings;
-use LuxAeterna\Design\FontCatalog;
-use LuxAeterna\Design\Logo;
-use LuxAeterna\Design\Theme;
-use LuxAeterna\Publishing\ReleaseStore;
-use LuxAeterna\Security\Authorizer;
+use CMSModular\Core\LuxException;
+use CMSModular\Design\Contrast;
+use CMSModular\Design\DesignRegistry;
+use CMSModular\Design\DesignSettings;
+use CMSModular\Design\FontCatalog;
+use CMSModular\Design\Logo;
+use CMSModular\Design\Theme;
+use CMSModular\Publishing\ReleaseStore;
+use CMSModular\Security\Authorizer;
 
 /** Diseño del sitio: ranuras (cabecera, barra, hero, pie), tema, tipografía, logo, fuentes e inventario de recursos. Solo administradores. */
 final class DesignController
@@ -23,7 +23,7 @@ final class DesignController
 
     private function registry(): DesignRegistry
     {
-        return new DesignRegistry($this->sv->config->root . '/components', $this->sv->config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT);
+        return new DesignRegistry($this->sv->config->root . '/components', $this->sv->config->path('data') . '/cache/designs.json', \CMSModular\Core\Version::CURRENT);
     }
 
     private function fonts(): FontCatalog

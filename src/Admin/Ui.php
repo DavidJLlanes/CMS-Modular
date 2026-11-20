@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
 /** Pequeños constructores de HTML para formularios del panel (todo escapado). */
 final class Ui

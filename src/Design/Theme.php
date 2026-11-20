@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
 /**
  * Tema del sitio: colores por rol y por componente, y tipografía. Todo se traduce a variables CSS (--lux-*) y a un

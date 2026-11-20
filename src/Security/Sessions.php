@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
-use LuxAeterna\Core\Database;
+use CMSModular\Core\Database;
 
 /**
  * Sesiones en base de datos (no usa $_SESSION: funciona igual en hosting compartido).

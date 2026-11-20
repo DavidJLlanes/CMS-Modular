@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Media;
+namespace CMSModular\Media;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /**
  * Procesador de imágenes con GD: decodifica el original UNA vez, aplica la orientación y genera todos los derivados

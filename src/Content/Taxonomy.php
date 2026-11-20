@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
 
 /** Categorías y etiquetas. Las entradas se asocian al contenido (no a cada revisión). */
 final class Taxonomy

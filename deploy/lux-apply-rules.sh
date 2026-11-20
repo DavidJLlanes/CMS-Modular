@@ -1,7 +1,7 @@
 #!/bin/bash
-# LuxAeterna · aplica las redirecciones 301 propuestas por la aplicación a Nginx. Se ejecuta COMO ROOT (unit systemd).
+# CMS-Modular · aplica las redirecciones 301 propuestas por la aplicación a Nginx. Se ejecuta COMO ROOT (unit systemd).
 # La aplicación solo puede escribir una propuesta; este script la valida línea a línea y solo entonces la instala.
-# Uso: lux-apply-rules.sh <base>   (base = /var/www/luxaeterna.es)
+# Uso: lux-apply-rules.sh <base>   (base = /var/www/tu-dominio.es)
 # Variables para pruebas: NGINX_BIN, RELOAD_CMD, OUT_FILE, STATE_FILE.
 set -u
 BASE="${1:?uso: $0 <base>}"

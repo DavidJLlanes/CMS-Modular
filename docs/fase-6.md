@@ -43,11 +43,11 @@ Un solo trabajador de imágenes (bloqueo `var/media/.lock`) construye los deriva
 
 ## Verificar en el VPS
 ```bash
-runuser -u luxaeterna -- php /var/www/luxaeterna.es/app/bin/lux doctor
+runuser -u cms-modular -- php /var/www/tu-dominio.es/app/bin/lux doctor
 ```
 1. En `/admin/media` sube una foto grande; abre su ficha y comprueba la miniatura y «Descargar el original».
 2. Pega en una página `[imagen:ID|texto alternativo|pie]` (el ID sale en la ficha), publica y mira el HTML: `srcset`, `sizes`, `width`, `height`.
-3. `curl -sI https://luxaeterna.es/media/<archivo>.webp` → `image/webp` y `immutable`; `curl -s -o /dev/null -w '%{http_code}' https://luxaeterna.es/var/media/` → 404.
+3. `curl -sI https://tu-dominio.es/media/<archivo>.webp` → `image/webp` y `immutable`; `curl -s -o /dev/null -w '%{http_code}' https://tu-dominio.es/var/media/` → 404.
 4. Cambia la calidad en `/admin/media`, publica y comprueba que aparecen archivos nuevos y el original no cambia: `bin/lux media:check`.
 5. `bin/lux media:add foto.jpg` en el servidor imprime tiempo y RAM por lote.
 

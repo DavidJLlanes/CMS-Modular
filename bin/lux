@@ -2,24 +2,24 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\Autoloader;
-use LuxAeterna\Admin\Services;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Doctor;
-use LuxAeterna\Core\Installer;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\Operation;
-use LuxAeterna\Publishing\Activator;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
+use CMSModular\Core\Autoloader;
+use CMSModular\Admin\Services;
+use CMSModular\Core\Config;
+use CMSModular\Core\Doctor;
+use CMSModular\Core\Installer;
+use CMSModular\Core\Logger;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\Operation;
+use CMSModular\Publishing\Activator;
+use CMSModular\Publishing\Publisher;
+use CMSModular\Publishing\ReleaseStore;
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
 }
 if (version_compare(PHP_VERSION, '8.1.0', '<')) {
-    fwrite(STDERR, "LuxAeterna requiere PHP 8.1 o superior (actual: " . PHP_VERSION . ").\n");
+    fwrite(STDERR, "CMS-Modular requiere PHP 8.1 o superior (actual: " . PHP_VERSION . ").\n");
     exit(1);
 }
 
@@ -137,7 +137,7 @@ try {
     guardUser($root, $cmd);
     switch ($cmd) {
         case 'version':
-            echo "LuxAeterna " . \LuxAeterna\Core\Version::LABEL . "\n";
+            echo "CMS-Modular " . \CMSModular\Core\Version::LABEL . "\n";
             break;
 
         case 'doctor':
@@ -261,7 +261,7 @@ try {
         case 'designs':
         case 'designs:refresh':
             $config = Config::load($root);
-            $reg = new \LuxAeterna\Design\DesignRegistry($root . '/components', $config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT);
+            $reg = new \CMSModular\Design\DesignRegistry($root . '/components', $config->path('data') . '/cache/designs.json', \CMSModular\Core\Version::CURRENT);
             $idx = $cmd === 'designs:refresh' ? $reg->refresh() : $reg->index();
             foreach ($idx['designs'] as $d) {
                 printf("%-18s %-8s v%-7s %s  (%s)\n", $d['id'], $d['type'], $d['version'], $d['name'], $d['dir']);
@@ -274,7 +274,7 @@ try {
 
         case 'fonts':
         case 'fonts:check':
-            $cat = new \LuxAeterna\Design\FontCatalog($root . '/components/fonts');
+            $cat = new \CMSModular\Design\FontCatalog($root . '/components/fonts');
             foreach ($cat->all() as $f) {
                 printf("%-18s %-11s %-9s %d variantes  faltan: %s\n", $f['slug'], $f['category'], $f['license'], count($f['variants']), implode('', $cat->missingChars($f['slug'], ['es'])) ?: 'ninguno');
             }
@@ -287,7 +287,7 @@ try {
         case 'fonts:add':
             $fam = $pos[1] ?? '';
             $w = array_values(array_filter(array_map('intval', explode(',', (string)($opts['weights'] ?? '400,700')))));
-            $slug = (new \LuxAeterna\Design\FontCatalog($root . '/components/fonts'))->importFromGoogle($fam, $w, (string)($opts['license'] ?? ''), (string)($opts['category'] ?? 'sans-serif'));
+            $slug = (new \CMSModular\Design\FontCatalog($root . '/components/fonts'))->importFromGoogle($fam, $w, (string)($opts['license'] ?? ''), (string)($opts['category'] ?? 'sans-serif'));
             echo "Fuente añadida al catálogo local: $slug. Revisa la licencia en components/fonts/$slug/.\n";
             break;
 
@@ -347,7 +347,7 @@ try {
             $sv = services($root, true);
             $t0 = microtime(true);
             $snap = $sv->site->build();
-            $r = new \LuxAeterna\Publishing\SiteRenderer($sv->config, $root . '/components/layouts/base', $snap->design, false, $snap->media, $sv->media());
+            $r = new \CMSModular\Publishing\SiteRenderer($sv->config, $root . '/components/layouts/base', $snap->design, false, $snap->media, $sv->media());
             $site = $r->siteVars($snap);
             foreach ($snap->pages as $pg) {
                 $r->page($pg, $site);
@@ -388,7 +388,7 @@ try {
             }
             $sv = services($root, true);
             try {
-                $norm = \LuxAeterna\Design\DesignSettings::validate($json, new \LuxAeterna\Design\DesignRegistry($root . '/components', $sv->config->path('data') . '/cache/designs.json', \LuxAeterna\Core\Version::CURRENT), new \LuxAeterna\Design\FontCatalog($root . '/components/fonts'), $root . '/components/logos');
+                $norm = \CMSModular\Design\DesignSettings::validate($json, new \CMSModular\Design\DesignRegistry($root . '/components', $sv->config->path('data') . '/cache/designs.json', \CMSModular\Core\Version::CURRENT), new \CMSModular\Design\FontCatalog($root . '/components/fonts'), $root . '/components/logos');
             } catch (\InvalidArgumentException $e) {
                 fwrite(STDERR, 'Ajustes no válidos: ' . $e->getMessage() . "\n");
                 exit(1);
@@ -400,7 +400,7 @@ try {
 
         case 'migrate':
             $sv = services($root);
-            $done = (new \LuxAeterna\Core\Migrator($sv->db, $root . '/migrations'))->migrate();
+            $done = (new \CMSModular\Core\Migrator($sv->db, $root . '/migrations'))->migrate();
             echo $done === [] ? "Base de datos al día.\n" : 'Migraciones aplicadas: ' . implode(', ', $done) . "\n";
             break;
 

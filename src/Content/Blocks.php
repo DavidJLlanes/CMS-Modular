@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /**
  * Biblioteca de bloques como estructura serializable (schema 2). Las imágenes y galerías se referencian por

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Media\Recipe;
+use CMSModular\Media\Recipe;
 
-/** Prepara un sitio con portada publicada que usa una imagen subida. @return array{0:\LuxAeterna\Admin\Services,1:string,2:Client,3:string,4:int} */
+/** Prepara un sitio con portada publicada que usa una imagen subida. @return array{0:\CMSModular\Admin\Services,1:string,2:Client,3:string,4:int} */
 function lux_media_site(array $cfg = [], int $w = 1800, int $h = 1200): array
 {
     [$sv, $dir] = lux_app(['media' => $cfg]);

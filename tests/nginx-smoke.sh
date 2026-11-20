@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# Prueba de humo con Nginx y PHP-FPM reales (Fase 1). Usa deploy/nginx/luxaeterna.conf adaptado a rutas y puerto temporales.
+# Prueba de humo con Nginx y PHP-FPM reales (Fase 1). Usa deploy/nginx/cms-modular.conf adaptado a rutas y puerto temporales.
 # Requiere: nginx, php-fpm, curl. Ejecutar como root o con permisos para lanzar ambos en puertos altos.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 T="$(mktemp -d)"; chmod 755 "$T"
 PORT=8088
-PUBLISH="$(php -r 'require "'"$ROOT"'/src/Core/Autoloader.php"; LuxAeterna\Core\Autoloader::register("'"$ROOT"'/src"); echo LuxAeterna\Core\Config::load("'"$ROOT"'")->path("publish");')"
+PUBLISH="$(php -r 'require "'"$ROOT"'/src/Core/Autoloader.php"; CMSModular\Core\Autoloader::register("'"$ROOT"'/src"); echo CMSModular\Core\Config::load("'"$ROOT"'")->path("publish");')"
 FPM=$(command -v php-fpm8.3 || command -v php-fpm8.2 || command -v php-fpm8.1 || command -v php-fpm)
 FAIL=0
 cleanup() { [ -f "$T/nginx.pid" ] && kill "$(cat "$T/nginx.pid")" 2>/dev/null; [ -f "$T/fpm.pid" ] && kill "$(cat "$T/fpm.pid")" 2>/dev/null; sleep 0.3; rm -rf "$T"; }
 trap cleanup EXIT
 
 # Servidor: solo el bloque HTTPS, sin TLS, con rutas y socket temporales.
-awk '/^server \{/{n++} n>=2' "$ROOT/deploy/nginx/luxaeterna.conf" \
+awk '/^server \{/{n++} n>=2' "$ROOT/deploy/nginx/cms-modular.conf" \
  | sed -e "s#listen 443 ssl http2;#listen 127.0.0.1:$PORT;#" -e '/listen \[::\]:443/d' -e '/ssl_certificate/d' \
-       -e "s#/var/www/luxaeterna.es/publish/current#$PUBLISH/current#" -e "s#/var/www/luxaeterna.es/app/public#$ROOT/public#" \
-       -e "s#/var/www/luxaeterna.es/app/deploy#$ROOT/deploy#" -e "s#unix:/run/php/luxaeterna-panel.sock#unix:$T/fpm.sock#" -e "s#/etc/nginx/lux-rules/luxaeterna.es.conf#$T/rules.conf#" > "$T/server.conf"
+       -e "s#/var/www/tu-dominio.es/publish/current#$PUBLISH/current#" -e "s#/var/www/tu-dominio.es/app/public#$ROOT/public#" \
+       -e "s#/var/www/tu-dominio.es/app/deploy#$ROOT/deploy#" -e "s#unix:/run/php/cms-modular-panel.sock#unix:$T/fpm.sock#" -e "s#/etc/nginx/lux-rules/tu-dominio.es.conf#$T/rules.conf#" > "$T/server.conf"
 : > "$T/rules.conf"
 cp /etc/nginx/fastcgi_params "$T/fastcgi_params"
 cat > "$T/nginx.conf" <<EOF
@@ -50,18 +50,18 @@ code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 B="http://127.0.0.1:$PORT"
 
 # Publica una versión con tema tipográfico propio (fuentes locales) y una imagen de la biblioteca para comprobar su entrega real.
-php -r 'require "'"$ROOT"'/src/Core/Autoloader.php"; LuxAeterna\Core\Autoloader::register("'"$ROOT"'/src");
-$c=LuxAeterna\Core\Config::load("'"$ROOT"'"); $st=new LuxAeterna\Publishing\ReleaseStore($c->path("publish"));
-$sv=new LuxAeterna\Admin\Services($c,true);
+php -r 'require "'"$ROOT"'/src/Core/Autoloader.php"; CMSModular\Core\Autoloader::register("'"$ROOT"'/src");
+$c=CMSModular\Core\Config::load("'"$ROOT"'"); $st=new CMSModular\Publishing\ReleaseStore($c->path("publish"));
+$sv=new CMSModular\Admin\Services($c,true);
 $im=imagecreatetruecolor(1800,1200); for($i=0;$i<200;$i++) imagefilledellipse($im,mt_rand(0,1800),mt_rand(0,1200),mt_rand(40,300),mt_rand(40,300),mt_rand(0,0xFFFFFF)); imagejpeg($im,"'"$T"'/smoke.jpg",88);
 $m=$sv->media()->add("'"$T"'/smoke.jpg","smoke.jpg");
 file_put_contents("'"$T"'/smoke.uid",$m["uid"]); file_put_contents("'"$T"'/smoke.orig",$sv->media()->originalPath($m));
-$pages=(new LuxAeterna\Content\ContentLoader())->load("'"$ROOT"'/examples/sitio-demo/content.json");
-$img=new LuxAeterna\Content\Page("img","imagen","Con imagen","Prueba",[["type"=>"image","ref"=>$m["uid"],"alt"=>"Prueba de imagen","caption"=>""]],false);
+$pages=(new CMSModular\Content\ContentLoader())->load("'"$ROOT"'/examples/sitio-demo/content.json");
+$img=new CMSModular\Content\Page("img","imagen","Con imagen","Prueba",[["type"=>"image","ref"=>$m["uid"],"alt"=>"Prueba de imagen","caption"=>""]],false);
 $pages[]=$img;
 $d=["theme"=>["typography"=>["body"=>["family"=>"inter","size"=>17,"line"=>1.6,"align"=>"left"],"heading"=>["family"=>"lora","weight"=>700]]]];
 $media=["items"=>[$m["uid"]=>$sv->media()->get($m["uid"])],"quality"=>82,"max_width"=>1600];
-(new LuxAeterna\Publishing\Publisher($c,$st,new LuxAeterna\Core\Logger($c->path("data")."/logs"),"'"$ROOT"'/components/layouts/base",$sv->media()))->publishSnapshot(new LuxAeterna\Content\SiteSnapshot($pages,[],[],[],$d,$media),["force"=>true]);' >/dev/null || { echo "No se pudo publicar con fuentes e imagen"; exit 2; }
+(new CMSModular\Publishing\Publisher($c,$st,new CMSModular\Core\Logger($c->path("data")."/logs"),"'"$ROOT"'/components/layouts/base",$sv->media()))->publishSnapshot(new CMSModular\Content\SiteSnapshot($pages,[],[],[],$d,$media),["force"=>true]);' >/dev/null || { echo "No se pudo publicar con fuentes e imagen"; exit 2; }
 
 # 1) Con el panel y PHP-FPM detenidos, el sitio público sigue sirviéndose.
 kill "$(cat "$T/fpm.pid")"; sleep 0.5; rm -f "$T/fpm.pid"
@@ -98,7 +98,7 @@ check "cabecera nosniff" 1 "$(curl -sI $B/ | grep -ci 'x-content-type-options: n
 check "sin versión de nginx" 0 "$(curl -sI $B/ | grep -ci 'nginx/')"
 
 # 2) Bloqueos de rutas privadas y ocultas.
-for p in /.lux-release.json /var/ /var/db/ /src/Core/Config.php /config/lux.json /bin/lux /publish/ /releases/ /docs/ /deploy/nginx/luxaeterna.conf /.git/config; do
+for p in /.lux-release.json /var/ /var/db/ /src/Core/Config.php /config/lux.json /bin/lux /publish/ /releases/ /docs/ /deploy/nginx/cms-modular.conf /.git/config; do
   check "bloqueada $p" 404 "$(code $B$p)"
 done
 

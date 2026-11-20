@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Config;
+use CMSModular\Core\LuxException;
 
 T::test('config: normaliza la URL base (https, sin barra final)', function () {
-    T::eq('https://luxaeterna.es', Config::normalizeBaseUrl('https://LuxAeterna.es/'));
+    T::eq('https://tu-dominio.es', Config::normalizeBaseUrl('https://Tu-Dominio.es/'));
     T::eq('http://localhost:8088', Config::normalizeBaseUrl('http://localhost:8088'));
 });
 T::test('config: rechaza subcarpeta, http remoto, credenciales y basura', function () {
-    foreach (['https://luxaeterna.es/web', 'http://luxaeterna.es', 'https://u:p@luxaeterna.es', 'luxaeterna.es', '', 'https://luxaeterna.es/?a=1', 'ftp://x.es'] as $bad) {
+    foreach (['https://tu-dominio.es/web', 'http://tu-dominio.es', 'https://u:p@tu-dominio.es', 'tu-dominio.es', '', 'https://tu-dominio.es/?a=1', 'ftp://x.es'] as $bad) {
         T::throws(LuxException::class, fn() => Config::normalizeBaseUrl($bad));
     }
 });

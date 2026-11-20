@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Core\Fs;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Fs;
+use CMSModular\Core\LuxException;
 
 /**
  * Activa una versión de forma atómica (ADR-0003 y enmienda ADR-0007).

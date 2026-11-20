@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# LuxAeterna · instalación/actualización en un VPS Ubuntu/Debian con Nginx ya instalado (perfil A).
+# CMS-Modular · instalación/actualización en un VPS Ubuntu/Debian con Nginx ya instalado (perfil A).
 # Idempotente: repetirlo actualiza el código y reaplica la configuración. No toca otros sitios de Nginx.
 #
 # Uso (como root):
-#   bash install-vps.sh --domain=luxaeterna.es [--base=/var/www/luxaeterna.es] [--email=tu@correo]
-#                       [--repo=https://github.com/DavidJLlanes/LuxAeterna.git] [--branch=main] [--skip-ssl] [--no-ipv6] [--replace-vhost]
+#   bash install-vps.sh --domain=tu-dominio.es [--base=/var/www/tu-dominio.es] [--email=tu@correo]
+#                       [--repo=https://github.com/DavidJLlanes/CMS-Modular.git] [--branch=main] [--skip-ssl] [--no-ipv6] [--replace-vhost]
 #                       [--cert-dir=/etc/letsencrypt/live/NOMBRE]   (certificado existente; si no, se detecta con certbot)
 #
 # Variables solo para pruebas: LUX_NO_SERVICES=1 (no recarga servicios), LUX_SKIP_DNS=1.
 set -euo pipefail
 
-DOMAIN="luxaeterna.es"
-BASE="/var/www/luxaeterna.es"
-REPO="https://github.com/DavidJLlanes/LuxAeterna.git"
+DOMAIN="tu-dominio.es"
+BASE="/var/www/tu-dominio.es"
+REPO="https://github.com/DavidJLlanes/CMS-Modular.git"
 BRANCH="main"
 EMAIL=""
 CERT_DIR_OPT=""
@@ -34,7 +34,7 @@ for a in "$@"; do
   esac
 done
 BASE="${BASE%/}"
-APP_USER="luxaeterna"
+APP_USER="cms-modular"
 NOSVC="${LUX_NO_SERVICES:-0}"
 
 say() { printf '\n== %s\n' "$*"; }
@@ -114,7 +114,7 @@ if [ ! -f "$CFG" ]; then
   cat > "$CFG" <<JSON
 {
   "schema": 1,
-  "site": { "base_url": "https://$DOMAIN", "lang": "es", "name": "LuxAeterna" },
+  "site": { "base_url": "https://$DOMAIN", "lang": "es", "name": "CMS-Modular" },
   "paths": { "data": "$BASE/var", "publish": "$BASE/publish" },
   "admin": { "prefix": "/admin" },
   "publishing": { "keep_releases": 5, "activation": "auto" }
@@ -131,8 +131,8 @@ php -r '$f=$argv[1];$c=json_decode(file_get_contents($f),true);if(!is_array($c))
 runuser -u "$APP_USER" -- php "$BASE/app/bin/lux" install --url="https://$DOMAIN"
 
 say "6/9 Pool de PHP-FPM (usuario $APP_USER, solo el panel)"
-POOL="$POOLDIR/luxaeterna-panel.conf"
-sed -e "s#/var/www/luxaeterna.es#$BASE#g" "$BASE/app/deploy/nginx/php-fpm-pool.conf" > "$POOL"
+POOL="$POOLDIR/cms-modular-panel.conf"
+sed -e "s#/var/www/tu-dominio.es#$BASE#g" "$BASE/app/deploy/nginx/php-fpm-pool.conf" > "$POOL"
 "$FPM_BIN" -t >/dev/null 2>&1 || { rm -f "$POOL"; die "La configuración de PHP-FPM no es válida; se ha retirado el pool."; }
 svc reload "php$PHPV-fpm"
 
@@ -175,11 +175,11 @@ reload_nginx() {
   cat /tmp/lux-nginx-test.log >&2; return 1
 }
 render_final() {
-  sed -e "s#/var/www/luxaeterna.es#$BASE#g" -e "s#luxaeterna\.es#$DOMAIN#g" "$BASE/app/deploy/nginx/luxaeterna.conf" > "$VHOST"
+  sed -e "s#/var/www/tu-dominio.es#$BASE#g" -e "s#cms-modular\.es#$DOMAIN#g" "$BASE/app/deploy/nginx/cms-modular.conf" > "$VHOST"
   sed -i "s#/etc/letsencrypt/live/$DOMAIN/#$CERT_DIR/#g" "$VHOST"
   [ "$NO_IPV6" = 0 ] || sed -i '/listen \[::\]/d' "$VHOST"
 }
-# Certificado existente: se reutiliza el de certbot que cubra el dominio, aunque no se llame igual (p. ej. luxaeterna.es-0001).
+# Certificado existente: se reutiliza el de certbot que cubra el dominio, aunque no se llame igual (p. ej. tu-dominio.es-0001).
 find_cert_dir() {
   command -v certbot >/dev/null 2>&1 || return 0
   certbot certificates 2>/dev/null | awk -v d="$DOMAIN" '

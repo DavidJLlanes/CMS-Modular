@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
 /** Hash de contraseñas (Argon2id si existe; si no, bcrypt) y política mínima. */
 final class Password
 {
     public const MIN_LENGTH = 12;
     public const MAX_LENGTH = 128;
-    private const COMMON = ['password1234', '123456789012', 'qwertyuiop12', 'contraseña123', 'luxaeterna123', 'administrador', 'passwordpassword', 'abcdefghijkl'];
+    private const COMMON = ['password1234', '123456789012', 'qwertyuiop12', 'contraseña123', 'cms-modular123', 'administrador', 'passwordpassword', 'abcdefghijkl'];
 
     public static function hash(string $plain): string
     {

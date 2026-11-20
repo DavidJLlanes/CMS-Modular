@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /**
  * Catálogo local de fuentes: components/fonts/<slug>/font.json + archivos WOFF2 + licencia. No hay peticiones a

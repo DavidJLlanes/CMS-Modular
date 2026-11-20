@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Admin\App;
-use LuxAeterna\Admin\Request;
-use LuxAeterna\Admin\Response;
-use LuxAeterna\Admin\Services;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Security\Totp;
+use CMSModular\Admin\App;
+use CMSModular\Admin\Request;
+use CMSModular\Admin\Response;
+use CMSModular\Admin\Services;
+use CMSModular\Core\Config;
+use CMSModular\Security\Totp;
 
 const PW = 'Un-Buen_Pasaje.Largo9';
 
@@ -25,7 +25,7 @@ final class Client
         $post = self::wire($post);
         $h = ['user-agent' => 'Mozilla/5.0 (iPhone) Safari'] + $headers;
         if ($method === 'POST' && !isset($h['origin'])) {
-            $h['origin'] = 'https://luxaeterna.es';
+            $h['origin'] = 'https://tu-dominio.es';
         }
         $res = (new App($this->sv))->handle(new Request($method, $path, $query, $post, $this->cookies, $h, $this->ip, $files));
         if ($res->status === 500) { // un 500 inesperado en pruebas: mostrar el detalle del log privado
@@ -96,7 +96,7 @@ function lux_app(array $cfg = []): array
     }
     $conf = Config::fromArray(array_replace_recursive([
         'schema' => 1,
-        'site' => ['base_url' => 'https://luxaeterna.es'],
+        'site' => ['base_url' => 'https://tu-dominio.es'],
         'paths' => ['data' => $d, 'publish' => "$d/publish"],
         'admin' => ['prefix' => '/admin'],
     ], $cfg), dirname(__DIR__));
@@ -266,7 +266,7 @@ T::test('CSRF y origen: peticiones falsificadas son rechazadas', function () {
     $r = $c->req('POST', '/admin/login', ['csrf' => $csrf, 'email' => 'a@b.es', 'password' => PW], ['origin' => 'https://evil.example']);
     T::eq(403, $r->status);
     T::eq([], $c->cookies);
-    $r = $c->req('POST', '/admin/login', ['csrf' => $csrf, 'email' => 'a@b.es', 'password' => PW], ['origin' => '', 'referer' => 'https://luxaeterna.es.evil.example/x']);
+    $r = $c->req('POST', '/admin/login', ['csrf' => $csrf, 'email' => 'a@b.es', 'password' => PW], ['origin' => '', 'referer' => 'https://tu-dominio.es.evil.example/x']);
     T::eq(403, $r->status, 'Referer que solo empieza igual');
     // sesión válida: POST sin token, con token de otra sesión y con token anónimo
     [$id, $secret] = [1, null];
@@ -369,11 +369,11 @@ T::test('sesiones propias: no se pueden revocar las de otra persona (IDOR)', fun
     $b = new Client($sv, '198.51.100.9');
     $b->login('b@b.es', PW);
     $b->post('/admin/login/mfa', ['code' => nextCode($sb, 0)], '/admin/login/mfa');
-    $prefixB = substr(\LuxAeterna\Security\Sessions::hash($b->cookies['__Secure-lux_sid']), 0, 16);
+    $prefixB = substr(\CMSModular\Security\Sessions::hash($b->cookies['__Secure-lux_sid']), 0, 16);
     $a->post('/admin/account/sessions/revoke', ['sid' => $prefixB], '/admin/account');
     T::eq(200, $b->get('/admin/account')->status, 'la sesión de B sigue viva');
     // y A tampoco puede cerrar la suya por esta vía (se usa logout)
-    $prefixA = substr(\LuxAeterna\Security\Sessions::hash($a->cookies['__Secure-lux_sid']), 0, 16);
+    $prefixA = substr(\CMSModular\Security\Sessions::hash($a->cookies['__Secure-lux_sid']), 0, 16);
     $a->post('/admin/account/sessions/revoke', ['sid' => $prefixA], '/admin/account');
     T::eq(200, $a->get('/admin/account')->status);
 });

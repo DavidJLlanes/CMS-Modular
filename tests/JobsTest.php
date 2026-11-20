@@ -1,18 +1,18 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\Migrator;
-use LuxAeterna\Core\TransientException;
-use LuxAeterna\Content\ContentLoader;
-use LuxAeterna\Publishing\JobStore;
-use LuxAeterna\Publishing\PublishService;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Core\Config;
+use CMSModular\Core\Database;
+use CMSModular\Core\Logger;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\Migrator;
+use CMSModular\Core\TransientException;
+use CMSModular\Content\ContentLoader;
+use CMSModular\Publishing\JobStore;
+use CMSModular\Publishing\PublishService;
+use CMSModular\Publishing\Publisher;
+use CMSModular\Publishing\ReleaseStore;
 
 /** @param ?\Closure():SiteSnapshot $snap */
 function lux_jobs(?Closure $snap = null, ?string $layout = null, array $pubCfg = []): stdClass
@@ -21,7 +21,7 @@ function lux_jobs(?Closure $snap = null, ?string $layout = null, array $pubCfg =
     $root = dirname(__DIR__);
     $db = new Database("$d/lux.sqlite");
     (new Migrator($db, "$root/migrations"))->migrate();
-    $c = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => $pubCfg + ['activation' => 'symlink', 'keep_releases' => 5]], $root);
+    $c = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => $pubCfg + ['activation' => 'symlink', 'keep_releases' => 5]], $root);
     $store = new ReleaseStore("$d/pub");
     $log = new Logger("$d/var/logs");
     $pub = new Publisher($c, $store, $log, $layout ?? "$root/components/layouts/base");

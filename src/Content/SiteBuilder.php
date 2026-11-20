@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
 
 /**
  * Construye la instantánea publicable SOLO con revisiones publicadas. Los borradores, las revisiones en edición,
@@ -19,7 +19,7 @@ final class SiteBuilder
         private readonly Settings $settings,
         /** @var ?\Closure():array{quality:int,max_width:int} ajustes de procesado de imágenes */
         private readonly ?\Closure $mediaSettings = null,
-        /** @var ?\Closure():\LuxAeterna\Gallery\GalleryStore galerías (Fase 8) */
+        /** @var ?\Closure():\CMSModular\Gallery\GalleryStore galerías (Fase 8) */
         private readonly ?\Closure $galleries = null,
     ) {
     }

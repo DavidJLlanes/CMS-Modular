@@ -10,7 +10,7 @@
   "css": "style.css",
   "preview": "preview.webp",
   "fields": {
-    "texto": { "type": "text", "label": "Texto del pie", "max": 200, "default": "Hecho con LuxAeterna" }
+    "texto": { "type": "text", "label": "Texto del pie", "max": 200, "default": "Hecho con CMS-Modular" }
   },
   "resources": { "fonts": [], "images": [] }
 }

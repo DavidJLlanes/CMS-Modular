@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /** Carga y valida contenido de ejemplo en JSON (formato versionado, schema 1). */
 final class ContentLoader

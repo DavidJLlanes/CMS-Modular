@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Content\ContentLoader;
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Fs;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\TransientException;
-use LuxAeterna\Media\MediaStore;
+use CMSModular\Content\ContentLoader;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Core\Config;
+use CMSModular\Core\Fs;
+use CMSModular\Core\Logger;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\TransientException;
+use CMSModular\Media\MediaStore;
 
 /**
  * Flujo vertical mínimo: contenido → plantilla → versión en un directorio temporal →

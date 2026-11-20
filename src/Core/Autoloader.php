@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
-/** Autoloader PSR-4 mínimo para el espacio de nombres LuxAeterna\ (sin Composer en producción). */
+/** Autoloader PSR-4 mínimo para el espacio de nombres CMSModular\ (sin Composer en producción). */
 final class Autoloader
 {
     public static function register(string $srcDir): void
     {
         $srcDir = rtrim($srcDir, '/');
         spl_autoload_register(static function (string $class) use ($srcDir): void {
-            $prefix = 'LuxAeterna\\';
+            $prefix = 'CMSModular\\';
             if (strncmp($class, $prefix, strlen($prefix)) !== 0) {
                 return;
             }

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
 /** Campos configurables de un diseño: definición (manifiesto) y validación/coerción de valores. */
 final class FieldSchema

@@ -1,5 +1,5 @@
 [Unit]
-Description=LuxAeterna · aplicar reglas HTTP validadas (@BASE@)
+Description=CMS-Modular · aplicar reglas HTTP validadas (@BASE@)
 
 [Service]
 Type=oneshot

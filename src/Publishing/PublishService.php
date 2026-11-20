@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\TransientException;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Core\Config;
+use CMSModular\Core\Logger;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\TransientException;
 
 /**
  * Ejecuta trabajos de publicación y reversión. Los fallos transitorios (bloqueo ocupado, E/S) se reintentan de

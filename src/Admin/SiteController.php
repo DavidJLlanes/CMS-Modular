@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Content\Menus;
-use LuxAeterna\Content\Taxonomy;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Security\Authorizer;
+use CMSModular\Content\Menus;
+use CMSModular\Content\Taxonomy;
+use CMSModular\Core\LuxException;
+use CMSModular\Security\Authorizer;
 
 /** Categorías y etiquetas, menús, ajustes del sitio y generación manual del sitio. */
 final class SiteController

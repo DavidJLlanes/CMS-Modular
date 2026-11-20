@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Media;
+namespace CMSModular\Media;
 
 /**
  * Receta de un derivado: dimensiones, recorte, foco, calidad y versión del procesado. La clave del derivado es

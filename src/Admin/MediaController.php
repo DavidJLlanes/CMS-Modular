@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Media\MediaSettings;
-use LuxAeterna\Media\MediaStore;
-use LuxAeterna\Security\Authorizer;
+use CMSModular\Core\LuxException;
+use CMSModular\Media\MediaSettings;
+use CMSModular\Media\MediaStore;
+use CMSModular\Security\Authorizer;
 
 /** Biblioteca multimedia del panel: subida validada, búsqueda, metadatos editoriales, reemplazo y borrado con aviso de referencias. */
 final class MediaController

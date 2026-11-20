@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Gallery;
+namespace CMSModular\Gallery;
 
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Design\DesignRegistry;
-use LuxAeterna\Media\ImageRenderer;
-use LuxAeterna\Publishing\Template;
+use CMSModular\Core\LuxException;
+use CMSModular\Design\DesignRegistry;
+use CMSModular\Media\ImageRenderer;
+use CMSModular\Publishing\Template;
 
 /**
  * HTML de una galería: el diseño (plantilla de carpeta + plantilla de foto) recibe fragmentos ya preparados y escapados.

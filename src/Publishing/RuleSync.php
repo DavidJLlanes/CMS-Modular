@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Core\Fs;
+use CMSModular\Core\Fs;
 
 /**
  * Entrega al servidor las reglas HTTP (301) de la versión activa.

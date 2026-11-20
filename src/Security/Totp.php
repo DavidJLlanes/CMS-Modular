@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
 /** TOTP (RFC 6238, SHA-1, 6 dígitos, 30 s) sin dependencias. Con protección contra reutilización del código. */
 final class Totp

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /**
  * Error controlado. `getMessage()` es el mensaje breve para el operador (sin rutas ni secretos);

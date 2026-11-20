@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Media\DerivativeBuilder;
-use LuxAeterna\Media\ImageInspector;
-use LuxAeterna\Media\MediaSettings;
-use LuxAeterna\Media\Recipe;
+use CMSModular\Core\LuxException;
+use CMSModular\Media\DerivativeBuilder;
+use CMSModular\Media\ImageInspector;
+use CMSModular\Media\MediaSettings;
+use CMSModular\Media\Recipe;
 
 /** Imagen de prueba: degradado con un recuadro rojo (para comprobar recortes y orientación). */
 function lux_img(string $file, int $w, int $h, string $type = 'jpg', array $o = []): string

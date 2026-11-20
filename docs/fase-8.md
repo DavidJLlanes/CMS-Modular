@@ -40,7 +40,7 @@
 
 ## Actualizar el servidor
 ```
-git -C /var/www/luxaeterna.es/app pull -q && bash /var/www/luxaeterna.es/app/deploy/install-vps.sh --domain=luxaeterna.es --base=/var/www/luxaeterna.es
+git -C /var/www/tu-dominio.es/app pull -q && bash /var/www/tu-dominio.es/app/deploy/install-vps.sh --domain=tu-dominio.es --base=/var/www/tu-dominio.es
 ```
 
 ## Qué probar a mano

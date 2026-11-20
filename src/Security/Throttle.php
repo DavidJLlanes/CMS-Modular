@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
-use LuxAeterna\Core\Database;
+use CMSModular\Core\Database;
 
 /** Límite de intentos por cubo y clave (la clave se guarda con hash: no se almacenan correos ni IP en claro). */
 final class Throttle

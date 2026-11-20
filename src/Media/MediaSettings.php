@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Media;
+namespace CMSModular\Media;
 
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Config;
+use CMSModular\Core\LuxException;
 
 /**
  * Ajustes de la biblioteca: calidad WebP y tamaño máximo (editables en el panel) y límites de ingesta (configuración).

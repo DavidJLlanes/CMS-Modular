@@ -40,7 +40,7 @@
 ```
 cp -r components/cabeceras/cabecera-corporativa components/cabeceras/mi-cabecera   # en el servidor, como root
 # edita manifest.json (id nuevo), template.html y style.css
-runuser -u luxaeterna -- php /var/www/luxaeterna.es/app/bin/lux designs:refresh
+runuser -u cms-modular -- php /var/www/tu-dominio.es/app/bin/lux designs:refresh
 ```
 Aparece en el panel > Diseño. Si algo no cumple el contrato, `designs` lo lista con el motivo.
 
@@ -66,7 +66,7 @@ Ejemplo de `design:set` con ajustes por página e instancia:
 
 ## Actualizar el VPS
 ```
-git -C /var/www/luxaeterna.es/app pull -q && bash /var/www/luxaeterna.es/app/deploy/install-vps.sh --domain=luxaeterna.es --base=/var/www/luxaeterna.es
+git -C /var/www/tu-dominio.es/app pull -q && bash /var/www/tu-dominio.es/app/deploy/install-vps.sh --domain=tu-dominio.es --base=/var/www/tu-dominio.es
 ```
 
 ## Qué se probó

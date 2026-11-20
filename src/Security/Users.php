@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
 
 final class Users
 {

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
 /** Autorización de servidor por acción y por objeto. Todo lo no listado está denegado. */
 final class Authorizer

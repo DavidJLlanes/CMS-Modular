@@ -5,7 +5,7 @@ Estado: **completada en el perfil A (VPS con Nginx)**; perfil B (hosting compart
 ## 1. Resultado ejecutable
 
 ```bash
-bin/lux install --url=https://luxaeterna.es   # configuración + directorios privados + diagnóstico
+bin/lux install --url=https://tu-dominio.es   # configuración + directorios privados + diagnóstico
 bin/lux publish                               # genera y activa el sitio de ejemplo
 bin/lux releases                              # lista versiones (* = activa)
 bin/lux rollback <id>                         # reactiva una versión
@@ -32,7 +32,7 @@ Flujo vertical: `examples/sitio-demo/content.json` → plantilla `components/lay
 
 ## 2b. Despliegue en el VPS
 
-`deploy/install-vps.sh` instala o actualiza en `/var/www/luxaeterna.es/` (ver `deploy/README.md`). Se probó aquí con Nginx, PHP-FPM y un certificado autofirmado: HTTP/2 correcto, panel ejecutándose como el usuario `luxaeterna`, `/var/`, `/config/` y archivos ocultos con 404, y segunda ejecución sin cambios ni errores. En la prueba se encontraron y corrigieron dos fallos: la repetición del script dejaba la configuración ilegible para el usuario de la aplicación, y un fallo de DNS cortaba el script sin mensaje. No se ha ejecutado todavía en el servidor real.
+`deploy/install-vps.sh` instala o actualiza en `/var/www/tu-dominio.es/` (ver `deploy/README.md`). Se probó aquí con Nginx, PHP-FPM y un certificado autofirmado: HTTP/2 correcto, panel ejecutándose como el usuario `cms-modular`, `/var/`, `/config/` y archivos ocultos con 404, y segunda ejecución sin cambios ni errores. En la prueba se encontraron y corrigieron dos fallos: la repetición del script dejaba la configuración ilegible para el usuario de la aplicación, y un fallo de DNS cortaba el script sin mensaje. No se ha ejecutado todavía en el servidor real.
 
 ### Verificación en el VPS real (`vps-real`, IONOS, servidor de Nginx y correo)
 
@@ -42,7 +42,7 @@ Ejecución del 2026-11-15 de `deploy/install-vps.sh --replace-vhost` (se sustitu
 |---|---|
 | Entorno | PHP 8.3.6, GD con WebP, Argon2id, ~100 GB libres, activación por enlace simbólico |
 | `bin/lux doctor --http` | 11 comprobaciones correctas, incluida la de exposición de `var/` por HTTP (canario no servido) |
-| `https://luxaeterna.es/`, `/sobre-nosotros/`, `/admin/` | 200, 200, 200 |
+| `https://tu-dominio.es/`, `/sobre-nosotros/`, `/admin/` | 200, 200, 200 |
 | `/var/`, `/.lux-release.json` | 404, 404 |
 | `tests/nginx-smoke.sh` | Pendiente de repetir con el sitio ya publicado. La primera ejecución fue antes de publicar y solo fueron concluyentes las comprobaciones del panel (todas correctas) |
 

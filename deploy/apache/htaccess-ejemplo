@@ -1,4 +1,4 @@
-# LuxAeterna · perfil B (hosting compartido, Apache/LiteSpeed). Plantilla orientativa.
+# CMS-Modular · perfil B (hosting compartido, Apache/LiteSpeed). Plantilla orientativa.
 # El diseño definitivo del docroot en hosting compartido se cierra en la Fase 4 (ver docs/fase-1.md).
 
 Options -Indexes

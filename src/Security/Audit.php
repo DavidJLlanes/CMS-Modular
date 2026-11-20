@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
-use LuxAeterna\Core\Database;
+use CMSModular\Core\Database;
 
 /** Registro de auditoría: cuentas, accesos, permisos, publicación, plugins y claves. Nunca guarda secretos. */
 final class Audit

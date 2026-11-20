@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /**
  * Configuración en JSON (config/lux.json). JSON y no PHP: un archivo de configuración no debe poder ejecutar código.
@@ -54,7 +54,7 @@ final class Config
     {
         $p = parse_url(trim($url));
         if ($p === false || !isset($p['scheme'], $p['host'])) {
-            throw new LuxException('La URL base no es válida. Ejemplo: https://luxaeterna.es');
+            throw new LuxException('La URL base no es válida. Ejemplo: https://tu-dominio.es');
         }
         $scheme = strtolower($p['scheme']);
         $host = strtolower($p['host']);

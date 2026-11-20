@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /**
  * Esquema 2 de bloques: valida y normaliza con lista blanca (los atributos desconocidos se descartan, el HTML no existe

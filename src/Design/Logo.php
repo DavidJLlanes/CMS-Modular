@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
 /**
  * Logo del sitio: texto o imagen de components/logos/. El tamaño se fija por ubicación y dispositivo SOLO como ancho;

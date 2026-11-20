@@ -1,4 +1,4 @@
-/* LuxAeterna · visor de galerías. Sin dependencias. Mejora progresiva: sin JS, cada foto es un enlace a la imagen grande. */
+/* CMS-Modular · visor de galerías. Sin dependencias. Mejora progresiva: sin JS, cada foto es un enlace a la imagen grande. */
 (function () {
   'use strict';
   var T = (document.documentElement.lang || 'es').slice(0, 2) === 'es'

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
 /** Vistas del panel. Todo texto dinámico pasa por h(); no hay JavaScript ni estilos en línea (CSP estricta). */
 final class View
@@ -23,8 +23,8 @@ final class View
                 . '<form method="post" action="' . self::h($p) . '/logout" class="inline"><input type="hidden" name="csrf" value="' . self::h((string)$ctx['csrf']) . '"><button class="link">Salir</button></form></nav>';
         }
         return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<meta name="robots" content="noindex,nofollow"><title>' . self::h($title) . ' · LuxAeterna</title>'
-            . '<link rel="stylesheet" href="' . self::h($p) . '/assets/admin.css">' . (!empty($ctx['extra_css']) ? '<link rel="stylesheet" href="' . self::h((string)$ctx['extra_css']) . '">' : '') . '</head><body><header><strong>LuxAeterna</strong>' . $nav . '</header>'
+            . '<meta name="robots" content="noindex,nofollow"><title>' . self::h($title) . ' · CMS-Modular</title>'
+            . '<link rel="stylesheet" href="' . self::h($p) . '/assets/admin.css">' . (!empty($ctx['extra_css']) ? '<link rel="stylesheet" href="' . self::h((string)$ctx['extra_css']) . '">' : '') . '</head><body><header><strong>CMS-Modular</strong>' . $nav . '</header>'
             . '<main>' . (isset($ctx['flash']) ? '<p class="flash">' . self::h((string)$ctx['flash']) . '</p>' : '')
             . (isset($ctx['error']) ? '<p class="error" role="alert">' . self::h((string)$ctx['error']) . '</p>' : '')
             . $body . '</main></body></html>';

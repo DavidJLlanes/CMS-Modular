@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Media;
+namespace CMSModular\Media;
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\Fs;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Database;
+use CMSModular\Core\Fs;
+use CMSModular\Core\LuxException;
 
 /**
  * Biblioteca multimedia. Los originales se guardan FUERA de la web con identificadores generados (nunca con el

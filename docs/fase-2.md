@@ -22,9 +22,9 @@ Casos exigidos por el plan: acceso sin sesión (redirige al login), sesión cadu
 
 ## Puesta en marcha en el VPS
 ```
-git -C /var/www/luxaeterna.es/app pull -q
-bash /var/www/luxaeterna.es/app/deploy/install-vps.sh --domain=luxaeterna.es --base=/var/www/luxaeterna.es
-runuser -u luxaeterna -- php /var/www/luxaeterna.es/app/bin/lux admin:create TU_CORREO --role=admin
+git -C /var/www/tu-dominio.es/app pull -q
+bash /var/www/tu-dominio.es/app/deploy/install-vps.sh --domain=tu-dominio.es --base=/var/www/tu-dominio.es
+runuser -u cms-modular -- php /var/www/tu-dominio.es/app/bin/lux admin:create TU_CORREO --role=admin
 ```
 Abre el enlace que imprime (caduca en 60 min), fija la contraseña, entra y configura el segundo factor.
 

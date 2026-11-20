@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
 /**
  * Ajustes de diseño y su precedencia. Niveles, de menor a mayor prioridad:

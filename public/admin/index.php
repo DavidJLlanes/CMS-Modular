@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 /** Controlador frontal del panel. Toda la lógica vive en src/Admin/App.php. */
 
-use LuxAeterna\Admin\App;
-use LuxAeterna\Admin\Request;
-use LuxAeterna\Admin\Response;
-use LuxAeterna\Admin\Services;
-use LuxAeterna\Core\Autoloader;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\Operation;
+use CMSModular\Admin\App;
+use CMSModular\Admin\Request;
+use CMSModular\Admin\Response;
+use CMSModular\Admin\Services;
+use CMSModular\Core\Autoloader;
+use CMSModular\Core\Config;
+use CMSModular\Core\Logger;
+use CMSModular\Core\Operation;
 
 $root = dirname(__DIR__, 2);
 try {
@@ -18,7 +18,7 @@ try {
     Autoloader::register($root . '/src');
     $config = Config::load($root);
     $sv = new Services($config);
-    $migrator = new \LuxAeterna\Core\Migrator($sv->db, $root . '/migrations');
+    $migrator = new \CMSModular\Core\Migrator($sv->db, $root . '/migrations');
     if (!$migrator->isCurrent()) {
         throw new \RuntimeException('Base de datos sin migrar: ejecuta bin/lux migrate');
     }

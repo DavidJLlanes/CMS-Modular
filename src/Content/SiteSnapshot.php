@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
 /** Estado publicable del sitio en un instante: páginas, menús y redirecciones. */
 final class SiteSnapshot

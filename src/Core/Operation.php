@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /** Identificador de operación: une el mensaje mostrado al operador con el detalle del log. */
 final class Operation

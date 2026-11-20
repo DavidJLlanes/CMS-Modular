@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Content\Blocks;
-use LuxAeterna\Content\ConflictException;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Security\Authorizer;
+use CMSModular\Content\Blocks;
+use CMSModular\Content\ConflictException;
+use CMSModular\Core\LuxException;
+use CMSModular\Security\Authorizer;
 
 /** Rutas editoriales: listado, edición, autoguardado, revisiones, papelera, publicación y previsualización. */
 final class ContentController
@@ -382,7 +382,7 @@ final class ContentController
         foreach (self::EDITOR_JS as $m) {
             $tail .= '<script src="' . View::h($base . $m . '.js') . '"></script>';
         }
-        $html = $this->sv->preview->html((string)$c['type'], $rev, \LuxAeterna\Publishing\Preview::CSS_URL, (string)$c['uid'], [
+        $html = $this->sv->preview->html((string)$c['type'], $rev, \CMSModular\Publishing\Preview::CSS_URL, (string)$c['uid'], [
             'head' => '<link rel="stylesheet" href="' . View::h($base . 'editor.css') . '">',
             'tail' => $tail,
         ]);
@@ -408,7 +408,7 @@ final class ContentController
             if ($rev === null) {
                 return new Response(404, 'Revisión no encontrada', ['Content-Type' => 'text/plain; charset=utf-8']);
             }
-            return new Response(200, $this->sv->preview->html((string)$c['type'], $rev, \LuxAeterna\Publishing\Preview::CSS_URL, (string)$c['uid']), [
+            return new Response(200, $this->sv->preview->html((string)$c['type'], $rev, \CMSModular\Publishing\Preview::CSS_URL, (string)$c['uid']), [
                 'Content-Type' => 'text/html; charset=utf-8',
                 'Content-Security-Policy' => "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
                 'X-Frame-Options' => 'SAMEORIGIN',

@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "site": {
-    "base_url": "https://luxaeterna.es",
+    "base_url": "https://tu-dominio.es",
     "lang": "es",
-    "name": "LuxAeterna"
+    "name": "CMS-Modular"
   },
   "paths": {
     "data": "var",

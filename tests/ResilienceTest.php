@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\ContentLoader;
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Core\Fs;
+use CMSModular\Content\ContentLoader;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Core\Fs;
 
 /** Copia la plantilla base y sustituye style.css por una tubería: el proceso que la lea se bloquea ahí (con el bloqueo de publicación tomado). */
 function lux_blocking_layout(string $d): string
@@ -95,10 +95,10 @@ T::test('resiliencia: disco casi lleno (tmpfs pequeño) → la publicación fall
     }
     try {
         $root = dirname(__DIR__);
-        $c = LuxAeterna\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/mnt/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 0]], $root);
-        $store = new LuxAeterna\Publishing\ReleaseStore("$d/mnt/pub");
-        $log = new LuxAeterna\Core\Logger("$d/var/logs");
-        $pub = new LuxAeterna\Publishing\Publisher($c, $store, $log, "$root/components/layouts/base");
+        $c = CMSModular\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/mnt/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 0]], $root);
+        $store = new CMSModular\Publishing\ReleaseStore("$d/mnt/pub");
+        $log = new CMSModular\Core\Logger("$d/var/logs");
+        $pub = new CMSModular\Publishing\Publisher($c, $store, $log, "$root/components/layouts/base");
         $pages = (new ContentLoader())->load("$root/examples/sitio-demo/content.json");
         $ok = $pub->publishSnapshot(new SiteSnapshot($pages, []))['id'];
         $big = new SiteSnapshot($pages, []);
@@ -128,9 +128,9 @@ T::test('resiliencia: error de configuración (plantilla inexistente) → trabaj
     $good = $s->store->currentId();
     // mismo almacenamiento y base de datos, plantilla rota
     $root = dirname(__DIR__);
-    $c = LuxAeterna\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$s->d/var", 'publish' => "$s->d/pub"], 'publishing' => ['activation' => 'symlink']], $root);
-    $log = new LuxAeterna\Core\Logger("$s->d/var/logs");
-    $svc = new LuxAeterna\Publishing\PublishService($c, $s->jobs, $s->store, new LuxAeterna\Publishing\Publisher($c, $s->store, $log, "$s->d/no-existe"),
+    $c = CMSModular\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => "$s->d/var", 'publish' => "$s->d/pub"], 'publishing' => ['activation' => 'symlink']], $root);
+    $log = new CMSModular\Core\Logger("$s->d/var/logs");
+    $svc = new CMSModular\Publishing\PublishService($c, $s->jobs, $s->store, new CMSModular\Publishing\Publisher($c, $s->store, $log, "$s->d/no-existe"),
         fn() => new SiteSnapshot((new ContentLoader())->load("$root/examples/sitio-demo/content.json"), []), $log);
     $j = $svc->runNext($svc->enqueuePublish('cli', null, '', true));
     T::eq('failed', $j['status']);
@@ -149,10 +149,10 @@ T::test('resiliencia: dependencia inexistente (enlace interno roto) → la compr
     $s->svc->runNext($s->svc->enqueuePublish('cli', null));
     $good = $s->store->currentId();
     $root = dirname(__DIR__);
-    $c = LuxAeterna\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$s->d/var", 'publish' => "$s->d/pub"], 'publishing' => ['activation' => 'symlink']], $root);
-    $log = new LuxAeterna\Core\Logger("$s->d/var/logs");
+    $c = CMSModular\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => "$s->d/var", 'publish' => "$s->d/pub"], 'publishing' => ['activation' => 'symlink']], $root);
+    $log = new CMSModular\Core\Logger("$s->d/var/logs");
     $snap = fn() => new SiteSnapshot((new ContentLoader())->load("$root/examples/sitio-demo/content.json"), ['main' => [['label' => 'Roto', 'url' => '/no-existe/']]]);
-    $svc = new LuxAeterna\Publishing\PublishService($c, $s->jobs, $s->store, new LuxAeterna\Publishing\Publisher($c, $s->store, $log, "$root/components/layouts/base"), $snap, $log);
+    $svc = new CMSModular\Publishing\PublishService($c, $s->jobs, $s->store, new CMSModular\Publishing\Publisher($c, $s->store, $log, "$root/components/layouts/base"), $snap, $log);
     $j = $svc->runNext($svc->enqueuePublish('cli', null, '', true));
     T::eq('failed', $j['status']);
     T::contains('Enlace interno roto /no-existe/', (string)$j['error'] . json_encode($s->jobs->logs((int)$j['id'])) . '', 'el motivo consta en el registro') ;

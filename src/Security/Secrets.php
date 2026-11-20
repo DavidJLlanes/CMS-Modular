@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
-use LuxAeterna\Core\Fs;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Fs;
+use CMSModular\Core\LuxException;
 
 /**
  * Clave maestra de la aplicación (var/secrets/app.key, 0600, fuera de la raíz web y de Git).
@@ -35,7 +35,7 @@ final class Secrets
 
     public function derive(string $purpose, int $length = 32): string
     {
-        return hash_hkdf('sha256', $this->master(), $length, 'luxaeterna:' . $purpose);
+        return hash_hkdf('sha256', $this->master(), $length, 'cms-modular:' . $purpose);
     }
 
     public function hmac(string $purpose, string $data): string

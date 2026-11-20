@@ -1,20 +1,20 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\Migrator;
-use LuxAeterna\Security\Audit;
-use LuxAeterna\Security\Authorizer;
-use LuxAeterna\Security\ClientIp;
-use LuxAeterna\Security\Csrf;
-use LuxAeterna\Security\Password;
-use LuxAeterna\Security\Secrets;
-use LuxAeterna\Security\Sessions;
-use LuxAeterna\Security\Throttle;
-use LuxAeterna\Security\Tokens;
-use LuxAeterna\Security\Totp;
-use LuxAeterna\Security\Users;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\Migrator;
+use CMSModular\Security\Audit;
+use CMSModular\Security\Authorizer;
+use CMSModular\Security\ClientIp;
+use CMSModular\Security\Csrf;
+use CMSModular\Security\Password;
+use CMSModular\Security\Secrets;
+use CMSModular\Security\Sessions;
+use CMSModular\Security\Throttle;
+use CMSModular\Security\Tokens;
+use CMSModular\Security\Totp;
+use CMSModular\Security\Users;
 
 /** @return array{0:Database,1:Secrets,2:string} */
 function lux_env(): array
@@ -59,7 +59,7 @@ T::test('totp: vectores del RFC 6238 y verificación con ventana y sin reutiliza
     T::eq(null, Totp::verify($s, 'abcdef', 0, $now));
     T::eq(null, Totp::verify('!!!', '123456', 0, $now));
     T::eq($s, Totp::base32Encode(Totp::base32Decode($s)));
-    T::ok(str_starts_with(Totp::uri('LuxAeterna', 'a@b.es', $s), 'otpauth://totp/LuxAeterna%3Aa%40b.es?secret='));
+    T::ok(str_starts_with(Totp::uri('CMS-Modular', 'a@b.es', $s), 'otpauth://totp/CMS-Modular%3Aa%40b.es?secret='));
 });
 T::test('contraseñas: política, hash y verificación', function () {
     T::ok(Password::validate('corta') !== null);

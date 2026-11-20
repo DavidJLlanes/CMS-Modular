@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Config;
+use CMSModular\Core\LuxException;
 
 /**
  * Tipos de contenido y campos configurables mediante esquema validado (config `content.types`).

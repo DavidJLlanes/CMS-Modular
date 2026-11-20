@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 $root = dirname(__DIR__);
 require $root . '/src/Core/Autoloader.php';
-LuxAeterna\Core\Autoloader::register($root . '/src');
+CMSModular\Core\Autoloader::register($root . '/src');
 
 /** RAM máxima real del proceso (GD reserva fuera del gestor de memoria de PHP, así que memory_get_peak_usage no la ve). */
 function rss(): float
@@ -35,8 +35,8 @@ for ($i = 0; $i < $n; $i++) {
     passthru(escapeshellarg(PHP_BINARY) . ' -d memory_limit=-1 -r ' . escapeshellarg($gen) . ' ' . escapeshellarg($files[$i]) . " $w $h $i");
 }
 ini_set('memory_limit', $mem);
-$c = LuxAeterna\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => $dir, 'publish' => "$dir/publish"], 'media' => ['max_pixels' => 60000000]], $root);
-$sv = new LuxAeterna\Admin\Services($c, true);
+$c = CMSModular\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => $dir, 'publish' => "$dir/publish"], 'media' => ['max_pixels' => 60000000]], $root);
+$sv = new CMSModular\Admin\Services($c, true);
 printf("Fotos de %d×%d (%.1f MP, %.1f MB), memory_limit=%s, GD %s\n", $w, $h, $w * $h / 1e6, filesize($files[0]) / 1048576, $mem, GD_VERSION);
 $t0 = microtime(true);
 $tot = 0;
@@ -44,7 +44,7 @@ foreach ($files as $i => $f) {
     $t = microtime(true);
     $m = $sv->media()->add($f, basename($f));
     $ti = microtime(true) - $t;
-    $recipes = array_map(static fn($wd) => LuxAeterna\Media\Recipe::make($wd, 0, 'inside', 50, 50, 82), LuxAeterna\Media\Recipe::widths($w, 1600, 736));
+    $recipes = array_map(static fn($wd) => CMSModular\Media\Recipe::make($wd, 0, 'inside', 50, 50, 82), CMSModular\Media\Recipe::widths($w, 1600, 736));
     $t = microtime(true);
     $d = $sv->media()->ensure($m, $recipes);
     $td = microtime(true) - $t;

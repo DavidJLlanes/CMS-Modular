@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\BlockValidator;
-use LuxAeterna\Content\Blocks;
-use LuxAeterna\Content\Inline;
-use LuxAeterna\Content\Page;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Publishing\BlockRenderer;
+use CMSModular\Content\BlockValidator;
+use CMSModular\Content\Blocks;
+use CMSModular\Content\Inline;
+use CMSModular\Content\Page;
+use CMSModular\Core\LuxException;
+use CMSModular\Publishing\BlockRenderer;
 
 function lux_render(array $blocks): string
 {
@@ -63,7 +63,7 @@ T::test('editor: imágenes y colores dentro de columnas se detectan; sin formato
 });
 
 T::test('editor: H1 permitido con aviso; extensiones solo si están registradas', function () {
-    $w = LuxAeterna\Content\SiteBuilder::editorialWarnings('Inicio', Blocks::validate([['type' => 'heading', 'level' => 1, 'text' => 'X'], ['type' => 'heading', 'level' => 4, 'text' => 'Y']]));
+    $w = CMSModular\Content\SiteBuilder::editorialWarnings('Inicio', Blocks::validate([['type' => 'heading', 'level' => 1, 'text' => 'X'], ['type' => 'heading', 'level' => 4, 'text' => 'Y']]));
     T::eq(2, count($w));
     T::contains('nivel 1', $w[0]);
     T::throws(LuxException::class, fn() => Blocks::validate([['type' => 'extension', 'kind' => 'mapa', 'data' => []]]), 'no está instalada');

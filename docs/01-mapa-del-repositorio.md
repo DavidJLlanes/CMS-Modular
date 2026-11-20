@@ -35,4 +35,4 @@ Las carpetas se crean cuando exista una responsabilidad real. Esta es la estruct
 
 - Idioma de documentación y mensajes al operador: español. Identificadores de código: inglés.
 - Rutas de contenido en minúsculas ASCII, guiones; claves internas estables separadas de las rutas públicas.
-- Namespace PHP raíz: `LuxAeterna\` mapeado a `src/` (PSR-4, autoloader propio mínimo; sin Composer obligatorio en producción).
+- Namespace PHP raíz: `CMSModular\` mapeado a `src/` (PSR-4, autoloader propio mínimo; sin Composer obligatorio en producción).

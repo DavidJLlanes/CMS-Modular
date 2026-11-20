@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Publishing\RuleBuilder;
+use CMSModular\Publishing\RuleBuilder;
 
 /** Ejecuta deploy/lux-apply-rules.sh con nginx y recarga simulados. @return array{code:int,status:array,out:string} */
 function lux_apply(string $rules, bool $nginxOk = true, bool $reloadOk = true, ?string $prevOut = null): array

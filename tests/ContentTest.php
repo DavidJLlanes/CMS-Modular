@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\ContentLoader;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Publishing\Template;
+use CMSModular\Content\ContentLoader;
+use CMSModular\Core\LuxException;
+use CMSModular\Publishing\Template;
 
 $row = fn(string $id, string $slug, string $title = 'T') => ['id' => $id, 'slug' => $slug, 'title' => $title, 'body' => []];
 

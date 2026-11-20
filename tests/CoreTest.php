@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Doctor;
-use LuxAeterna\Core\Installer;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\Operation;
+use CMSModular\Core\Config;
+use CMSModular\Core\Doctor;
+use CMSModular\Core\Installer;
+use CMSModular\Core\Logger;
+use CMSModular\Core\Operation;
 
 T::test('logger: JSON por líneas con identificador de operación', function () {
     $d = T::tmpDir();

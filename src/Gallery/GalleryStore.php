@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Gallery;
+namespace CMSModular\Gallery;
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Design\DesignRegistry;
-use LuxAeterna\Design\FieldSchema;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
+use CMSModular\Design\DesignRegistry;
+use CMSModular\Design\FieldSchema;
 
 /**
  * Galerías: conjuntos ordenados de imágenes de la biblioteca con un diseño por carpeta, recorte, foco por foto,
@@ -229,7 +229,7 @@ final class GalleryStore
         $out = [];
         foreach ($rows as $r) {
             $found = false;
-            \LuxAeterna\Content\Blocks::walk((array)json_decode((string)$r['blocks'], true), static function (array $b) use ($uid, &$found): void {
+            \CMSModular\Content\Blocks::walk((array)json_decode((string)$r['blocks'], true), static function (array $b) use ($uid, &$found): void {
                 $found = $found || (($b['type'] ?? '') === 'gallery' && ($b['ref'] ?? '') === $uid);
             });
             if (!$found) {

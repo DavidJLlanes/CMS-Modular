@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
-use LuxAeterna\Core\Fs;
+use CMSModular\Core\Fs;
 
 /**
  * Detecta diseños por carpeta: components/<familia>/<carpeta>/manifest.json. Valida cada contrato, cachea el índice
@@ -188,7 +188,7 @@ final class DesignRegistry
         if (!is_string($min) || !preg_match('/^\d+\.\d+\.\d+$/', $min)) {
             $errs[] = 'requires.lux no válido.';
         } elseif (version_compare($min, $this->luxVersion, '>')) {
-            $errs[] = "Requiere LuxAeterna $min o superior (instalado: $this->luxVersion).";
+            $errs[] = "Requiere CMS-Modular $min o superior (instalado: $this->luxVersion).";
         }
         $files = [];
         $isGallery = ($m['type'] ?? '') === 'gallery';

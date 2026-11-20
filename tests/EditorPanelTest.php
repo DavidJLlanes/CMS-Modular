@@ -12,7 +12,7 @@ T::test('editor panel: guardar y reabrir contenido rico sin perder formato; el s
         ['type' => 'columns', 'layout' => '1-1', 'gap' => 'm', 'valign' => 'top', 'cols' => [[['type' => 'paragraph', 'text' => 'A']], [['type' => 'button', 'label' => 'Ir', 'href' => '/x/', 'variant' => 'outline']]]],
         ['type' => 'table', 'caption' => 'T', 'header_row' => true, 'header_col' => false, 'aligns' => ['left', 'right'], 'rows' => [['a', 'b'], ['c', ['inlines' => [['t' => 'd', 'i' => true]]]]]],
     ];
-    $blocks = \LuxAeterna\Content\Blocks::validate($blocks); // forma normalizada
+    $blocks = \CMSModular\Content\Blocks::validate($blocks); // forma normalizada
     $r = lux_save($a, $id, ['body_json' => json_encode($blocks)]);
     T::eq(303, $r->status);
     $html = $a->get("/admin/content/$id/edit")->body;

@@ -26,10 +26,10 @@ Estado: **implementada y probada en el sandbox** (Nginx + PHP-FPM reales). Pendi
 
 ## Puesta en marcha en el VPS
 ```
-git -C /var/www/luxaeterna.es/app pull -q
-bash /var/www/luxaeterna.es/app/deploy/install-vps.sh --domain=luxaeterna.es --base=/var/www/luxaeterna.es
+git -C /var/www/tu-dominio.es/app pull -q
+bash /var/www/tu-dominio.es/app/deploy/install-vps.sh --domain=tu-dominio.es --base=/var/www/tu-dominio.es
 ```
-La migración 002 se aplica sola. Después, en el panel: **Contenido → Nuevo: Página**, escribe, **Publicar**; en **Ajustes** elige la portada y pulsa **Generar y activar ahora** (o `runuser -u luxaeterna -- php /var/www/luxaeterna.es/app/bin/lux publish`).
+La migración 002 se aplica sola. Después, en el panel: **Contenido → Nuevo: Página**, escribe, **Publicar**; en **Ajustes** elige la portada y pulsa **Generar y activar ahora** (o `runuser -u cms-modular -- php /var/www/tu-dominio.es/app/bin/lux publish`).
 
 ## Sintaxis del editor
 Bloques separados por una línea en blanco: `## Título` (hasta `######`), `- elemento` (lista), `> cita`, `[imagen:ref|alternativo|pie]` y `[galeria:ref]` (estos dos, reservados para la Fase 6), o texto normal (párrafo). Para empezar un párrafo con uno de esos marcadores, antepón `\`.

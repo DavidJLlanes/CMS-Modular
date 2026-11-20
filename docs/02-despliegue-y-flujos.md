@@ -2,8 +2,8 @@
 
 ## Dominio y rutas
 
-- Sitio público: `https://luxaeterna.es/` (raíz del dominio, sin subcarpeta).
-- Panel: `https://luxaeterna.es/admin` (prefijo configurable).
+- Sitio público: `https://tu-dominio.es/` (raíz del dominio, sin subcarpeta).
+- Panel: `https://tu-dominio.es/admin` (prefijo configurable).
 - Proveedor: IONOS.
 
 ## Perfiles de despliegue (ADR-0007)
@@ -69,8 +69,8 @@ Con PHP-FPM, SQLite, cola y generador detenidos, Nginx sigue sirviendo `current`
 | Usuario | Lee | Escribe |
 |---|---|---|
 | `www-data` (Nginx) | `releases/current`, `public/admin` | — |
-| `luxaeterna-panel` (PHP-FPM) | código, `var/` | `var/` |
-| `luxaeterna-publish` (CLI) | código, `var/` | `releases/` (+ `var/` temporales) |
+| `cms-modular-panel` (PHP-FPM) | código, `var/` | `var/` |
+| `cms-modular-publish` (CLI) | código, `var/` | `releases/` (+ `var/` temporales) |
 | Despliegue (operador) | todo | código en actualizaciones |
 
 El diseño detallado de permisos y ejemplos de Nginx se entregan en la Fase 1 (`deploy/`).

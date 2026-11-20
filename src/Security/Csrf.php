@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
 /**
  * Tokens CSRF sin estado: expiración.nonce.HMAC(clave de aplicación, contexto|expiración|nonce).

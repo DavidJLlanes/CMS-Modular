@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Media;
+namespace CMSModular\Media;
 
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\LuxException;
 
 /**
  * Convierte bloques de imagen en HTML responsive (srcset, sizes, width/height, carga diferida y prioridad para el LCP)

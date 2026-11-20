@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /** Utilidades de sistema de archivos. Nunca sigue enlaces simbólicos al borrar. */
 final class Fs

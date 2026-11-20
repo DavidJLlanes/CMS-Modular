@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Core\Database;
+use CMSModular\Core\Database;
 
 /** Cola persistente de trabajos de publicación/reversión con estados, registro y recuperación tras caídas. */
 final class JobStore

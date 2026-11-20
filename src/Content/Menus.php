@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Content;
+namespace CMSModular\Content;
 
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
 
 /** Menús configurables. Cada elemento apunta a un contenido por identificador estable o a una URL. */
 final class Menus

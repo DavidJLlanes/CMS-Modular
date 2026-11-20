@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Gallery\GalleryRenderer;
-use LuxAeterna\Gallery\GalleryStore;
-use LuxAeterna\Media\ImageRenderer;
-use LuxAeterna\Security\Authorizer;
+use CMSModular\Core\LuxException;
+use CMSModular\Gallery\GalleryRenderer;
+use CMSModular\Gallery\GalleryStore;
+use CMSModular\Media\ImageRenderer;
+use CMSModular\Security\Authorizer;
 
 /** Galerías del panel: crear, elegir diseño y recorte, añadir y ordenar fotos, foco y textos por foto, visor, disuasión y peso estimado. */
 final class GalleryController

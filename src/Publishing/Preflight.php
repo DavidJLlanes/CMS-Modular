@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
 /**
  * Comprobaciones previas a activar una versión. Distingue ERRORES (bloquean la activación) de AVISOS editoriales

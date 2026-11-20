@@ -1,5 +1,5 @@
 [Unit]
-Description=LuxAeterna · vigilar propuestas de reglas HTTP (@BASE@)
+Description=CMS-Modular · vigilar propuestas de reglas HTTP (@BASE@)
 
 [Path]
 PathChanged=@BASE@/publish/rules/apply.request

@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Content\BlockValidator;
-use LuxAeterna\Content\Inline;
-use LuxAeterna\Content\Page;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Media\ImageRenderer;
+use CMSModular\Content\BlockValidator;
+use CMSModular\Content\Inline;
+use CMSModular\Content\Page;
+use CMSModular\Core\LuxException;
+use CMSModular\Media\ImageRenderer;
 
 /** Convierte el modelo estructurado de bloques en HTML semántico. Todo texto se escapa; no hay HTML libre. */
 final class BlockRenderer
@@ -17,7 +17,7 @@ final class BlockRenderer
         return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    public static function render(Page $page, ?ImageRenderer $images = null, ?\LuxAeterna\Gallery\GalleryRenderer $galleries = null): string
+    public static function render(Page $page, ?ImageRenderer $images = null, ?\CMSModular\Gallery\GalleryRenderer $galleries = null): string
     {
         $html = '';
         if ($page->type !== 'page' && $page->type !== 'listing' && $page->date !== null) {

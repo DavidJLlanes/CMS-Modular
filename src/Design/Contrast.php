@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
 /** Contraste WCAG 2.x entre colores #rrggbb. */
 final class Contrast

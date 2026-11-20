@@ -1,21 +1,21 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\Blocks;
-use LuxAeterna\Content\ContentRepository;
-use LuxAeterna\Content\Menus;
-use LuxAeterna\Content\Settings;
-use LuxAeterna\Content\SiteBuilder;
-use LuxAeterna\Content\Taxonomy;
-use LuxAeterna\Content\TypeRegistry;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\Migrator;
-use LuxAeterna\Publishing\Preview;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
+use CMSModular\Content\Blocks;
+use CMSModular\Content\ContentRepository;
+use CMSModular\Content\Menus;
+use CMSModular\Content\Settings;
+use CMSModular\Content\SiteBuilder;
+use CMSModular\Content\Taxonomy;
+use CMSModular\Content\TypeRegistry;
+use CMSModular\Core\Config;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\Logger;
+use CMSModular\Core\Migrator;
+use CMSModular\Publishing\Preview;
+use CMSModular\Publishing\Publisher;
+use CMSModular\Publishing\ReleaseStore;
 
 /** Entorno completo en un directorio temporal. */
 function lux_site(array $types = []): object
@@ -24,7 +24,7 @@ function lux_site(array $types = []): object
     $root = dirname(__DIR__);
     $config = Config::fromArray([
         'schema' => 1,
-        'site' => ['base_url' => 'https://luxaeterna.es', 'name' => 'Sitio de prueba'],
+        'site' => ['base_url' => 'https://tu-dominio.es', 'name' => 'Sitio de prueba'],
         'paths' => ['data' => "$d/var", 'publish' => "$d/publish"],
         'publishing' => ['keep_releases' => 5, 'activation' => 'auto'],
     ], $root);
@@ -42,7 +42,7 @@ function lux_site(array $types = []): object
     $o->menus = $menus;
     $o->settings = $settings;
     $o->types = $reg;
-    $o->galleries = new \LuxAeterna\Gallery\GalleryStore($db, fn() => new \LuxAeterna\Design\DesignRegistry($root . '/components', null, \LuxAeterna\Core\Version::CURRENT));
+    $o->galleries = new \CMSModular\Gallery\GalleryStore($db, fn() => new \CMSModular\Design\DesignRegistry($root . '/components', null, \CMSModular\Core\Version::CURRENT));
     $o->builder = new SiteBuilder($db, $reg, $menus, $settings, null, fn() => $o->galleries);
     $o->store = new ReleaseStore("$d/publish");
     $o->publisher = new Publisher($config, $o->store, new Logger("$d/logs"), $root . '/components/layouts/base');

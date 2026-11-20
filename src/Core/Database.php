@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /** SQLite por PDO con consultas preparadas siempre. Un sitio por instancia (ADR-0001). */
 final class Database

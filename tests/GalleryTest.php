@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Design\DesignRegistry;
-use LuxAeterna\Gallery\GalleryStore;
+use CMSModular\Core\LuxException;
+use CMSModular\Design\DesignRegistry;
+use CMSModular\Gallery\GalleryStore;
 
-/** Sitio con $n fotos subidas, una galería ya creada y una portada que la usa (publicada). @return array{0:\LuxAeterna\Admin\Services,1:string,2:Client,3:list<string>,4:string,5:int} */
+/** Sitio con $n fotos subidas, una galería ya creada y una portada que la usa (publicada). @return array{0:\CMSModular\Admin\Services,1:string,2:Client,3:list<string>,4:string,5:int} */
 function lux_gal_site(int $n = 3, string $layout = 'rejilla', array $lightbox = []): array
 {
     [$sv, $dir] = lux_app();

@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 $root = dirname(__DIR__);
 require $root . '/src/Core/Autoloader.php';
-LuxAeterna\Core\Autoloader::register($root . '/src');
+CMSModular\Core\Autoloader::register($root . '/src');
 
 $n = (int)($argv[1] ?? 60);
 $mp = (float)($argv[2] ?? 6);
@@ -21,8 +21,8 @@ foreach (['db', 'secrets', 'logs'] as $s) {
 $gen = 'mt_srand((int)$argv[4]); $w=(int)$argv[2]; $h=(int)$argv[3]; $im=imagecreatetruecolor($w,$h);
 for($y=0;$y<$h;$y+=8)for($x=0;$x<$w;$x+=8)imagefilledrectangle($im,$x,$y,$x+7,$y+7,(int)imagecolorallocate($im,($x*255/$w+mt_rand(0,40))%256,($y*255/$h+mt_rand(0,40))%256,mt_rand(0,255)));
 imagejpeg($im,$argv[1],88);';
-$c = LuxAeterna\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => $dir, 'publish' => "$dir/publish"], 'media' => ['max_pixels' => 60000000]], $root);
-$sv = new LuxAeterna\Admin\Services($c, true);
+$c = CMSModular\Core\Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => $dir, 'publish' => "$dir/publish"], 'media' => ['max_pixels' => 60000000]], $root);
+$sv = new CMSModular\Admin\Services($c, true);
 $uids = [];
 $t = microtime(true);
 for ($i = 0; $i < $n; $i++) {
@@ -39,7 +39,7 @@ $id = $sv->content->create('page', ['title' => 'Inicio', 'blocks' => [['type' =>
 $sv->content->publish($id, 1);
 $sv->settings->set('home_uid', (string)$sv->db->val("SELECT uid FROM contents WHERE id = $id"));
 $snap = $sv->site->build();
-$pub = new LuxAeterna\Publishing\Publisher($c, new LuxAeterna\Publishing\ReleaseStore("$dir/publish"), new LuxAeterna\Core\Logger("$dir/logs"), $root . '/components/layouts/base', $sv->media());
+$pub = new CMSModular\Publishing\Publisher($c, new CMSModular\Publishing\ReleaseStore("$dir/publish"), new CMSModular\Core\Logger("$dir/logs"), $root . '/components/layouts/base', $sv->media());
 $t = microtime(true);
 $pub->publishSnapshot($snap);
 $sec = microtime(true) - $t;
@@ -63,8 +63,8 @@ foreach (glob("$cur/assets/c/*") as $x) {
 }
 $st = $sv->galleries()->snapshot([$g['uid']]);
 $s = $sv->mediaSettings();
-$img = new LuxAeterna\Media\ImageRenderer($st['media'], $s->quality(), $s->maxWidth(), 736, null, true);
-$gr = new LuxAeterna\Gallery\GalleryRenderer($st['galleries'], $st['media'], $sv->designs(), "$root/components", $img, static fn(): string => '', true);
+$img = new CMSModular\Media\ImageRenderer($st['media'], $s->quality(), $s->maxWidth(), 736, null, true);
+$gr = new CMSModular\Gallery\GalleryRenderer($st['galleries'], $st['media'], $sv->designs(), "$root/components", $img, static fn(): string => '', true);
 $gr->render($g['uid']);
 $e = $img->estimate();
 printf("Publicación: %.1f s · %d derivados (%.1f MB) · HTML %.0f KB · css+js de galería y visor %.1f KB\n", $sec, $files, $bytes / 1048576, strlen($html) / 1024, $assets / 1024);

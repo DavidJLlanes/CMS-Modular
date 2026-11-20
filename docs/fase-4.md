@@ -22,7 +22,7 @@
 
 ## Actualizar el VPS
 ```
-git -C /var/www/luxaeterna.es/app pull -q && bash /var/www/luxaeterna.es/app/deploy/install-vps.sh --domain=luxaeterna.es --base=/var/www/luxaeterna.es
+git -C /var/www/tu-dominio.es/app pull -q && bash /var/www/tu-dominio.es/app/deploy/install-vps.sh --domain=tu-dominio.es --base=/var/www/tu-dominio.es
 ```
 El instalador migra la base (003), crea `/etc/nginx/lux-rules/`, añade `include` al vhost, instala el servicio de reglas y lo activa.
 

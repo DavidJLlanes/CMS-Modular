@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Design;
+namespace CMSModular\Design;
 
-use LuxAeterna\Content\Page;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Publishing\BlockRenderer;
-use LuxAeterna\Publishing\Template;
+use CMSModular\Content\Page;
+use CMSModular\Core\Config;
+use CMSModular\Publishing\BlockRenderer;
+use CMSModular\Publishing\Template;
 
 /**
  * Une ajustes de diseño, tema, fuentes y logo en el HTML y los recursos de cada página.
@@ -48,7 +48,7 @@ final class DesignAssembler
             $cache = $config->path('data') . '/cache/designs.json';
         } catch (\Throwable) {
         }
-        $this->registry = new DesignRegistry($componentsDir, $cache, \LuxAeterna\Core\Version::CURRENT);
+        $this->registry = new DesignRegistry($componentsDir, $cache, \CMSModular\Core\Version::CURRENT);
         $this->fonts = new FontCatalog($componentsDir . '/fonts');
         $this->settings = new DesignSettings($raw, $this->registry);
         try {
@@ -83,7 +83,7 @@ final class DesignAssembler
         $this->instanceCss = [];
         $this->contentColors = [];
         foreach ($pages as $pg) {
-            foreach (\LuxAeterna\Content\Blocks::colors($pg->blocks) as $col) {
+            foreach (\CMSModular\Content\Blocks::colors($pg->blocks) as $col) {
                 $this->contentColors[$col] = true;
             }
         }
@@ -149,7 +149,7 @@ final class DesignAssembler
     private function galleryComponents(Page $p, array $galleries): array
     {
         $ids = [];
-        \LuxAeterna\Content\Blocks::walk($p->blocks, function (array $b) use ($galleries, &$ids): void {
+        \CMSModular\Content\Blocks::walk($p->blocks, function (array $b) use ($galleries, &$ids): void {
             $g = $b['type'] === 'gallery' ? ($galleries[(string)$b['ref']] ?? null) : null;
             $d = $g === null ? null : $this->registry->get((string)$g['layout']);
             if ($d === null || $d['type'] !== 'gallery' || $g['items'] === []) {
@@ -157,7 +157,7 @@ final class DesignAssembler
             }
             $ids[] = $d['id'];
             $this->galleryClass($d, array_replace($d['defaults'], array_intersect_key((array)$g['options'], $d['fields'])));
-            $v = $this->registry->get(\LuxAeterna\Gallery\GalleryRenderer::VIEWER);
+            $v = $this->registry->get(\CMSModular\Gallery\GalleryRenderer::VIEWER);
             if (!empty($g['lightbox']['enabled']) && $v !== null && $v['type'] === 'viewer') {
                 $ids[] = $v['id'];
             }
@@ -428,7 +428,7 @@ final class DesignAssembler
         }
         ksort($this->contentColors);
         foreach (array_keys($this->contentColors) as $col) {
-            $css .= '.' . \LuxAeterna\Content\Inline::colorClass((string)$col) . '{color:' . $col . "}\n";
+            $css .= '.' . \CMSModular\Content\Inline::colorClass((string)$col) . '{color:' . $col . "}\n";
         }
         ksort($this->instanceCss);
         $css .= implode("\n", $this->instanceCss) . "\n";

@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Core\Fs;
-use LuxAeterna\Core\LuxException;
+use CMSModular\Core\Fs;
+use CMSModular\Core\LuxException;
 
 /**
  * Directorio operativo de publicación (separado del código):

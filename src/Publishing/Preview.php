@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Content\Menus;
-use LuxAeterna\Content\Page;
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Content\TypeRegistry;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Database;
-use LuxAeterna\Media\ImageRenderer;
-use LuxAeterna\Media\MediaStore;
-use LuxAeterna\Media\Recipe;
+use CMSModular\Content\Menus;
+use CMSModular\Content\Page;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Content\TypeRegistry;
+use CMSModular\Core\Config;
+use CMSModular\Core\Database;
+use CMSModular\Media\ImageRenderer;
+use CMSModular\Media\MediaStore;
+use CMSModular\Media\Recipe;
 
 /**
  * Previsualización con las MISMAS plantillas y el mismo renderizador que la publicación. Devuelve HTML en memoria:
@@ -48,7 +48,7 @@ final class Preview
         $s = $store?->settings();
         $items = [];
         $gal = [];
-        \LuxAeterna\Content\Blocks::walk($blocks, static function (array $b) use ($store, &$items, &$gal): void {
+        \CMSModular\Content\Blocks::walk($blocks, static function (array $b) use ($store, &$items, &$gal): void {
             if ($store !== null && $b['type'] === 'image' && ($m = $store->get((string)$b['ref'])) !== null) {
                 $items[(string)$m['uid']] = $m;
             }
@@ -120,7 +120,7 @@ final class Preview
             }
             return null;
         }
-        $i = \LuxAeterna\Design\Logo::inspect($this->layoutDir . '/../../logos', $name);
+        $i = \CMSModular\Design\Logo::inspect($this->layoutDir . '/../../logos', $name);
         return $i === null ? null : [$i['mime'], (string)file_get_contents($this->layoutDir . '/../../logos/' . $name)];
     }
 
@@ -128,7 +128,7 @@ final class Preview
     public function html(string $type, array $rev, string $cssUrl = self::CSS_URL, string $uid = 'preview', ?array $edit = null): string
     {
         $blocks = (array)$rev['blocks'];
-        $colors = \LuxAeterna\Content\Blocks::colors($blocks);
+        $colors = \CMSModular\Content\Blocks::colors($blocks);
         if ($edit !== null) { // edición visual: la plantilla real con el editor montado en lugar del contenido
             $blocks = [['type' => 'mount']];
         }

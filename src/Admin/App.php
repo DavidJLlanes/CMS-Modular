@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Admin;
+namespace CMSModular\Admin;
 
-use LuxAeterna\Security\Authorizer;
-use LuxAeterna\Security\ClientIp;
-use LuxAeterna\Security\Password;
-use LuxAeterna\Security\Sessions;
-use LuxAeterna\Security\Totp;
+use CMSModular\Security\Authorizer;
+use CMSModular\Security\ClientIp;
+use CMSModular\Security\Password;
+use CMSModular\Security\Sessions;
+use CMSModular\Security\Totp;
 
 /** Controlador frontal del panel. handle() es puro respecto a PHP global: facilita las pruebas. */
 final class App
@@ -44,8 +44,8 @@ final class App
         try {
             $res = $this->route($r);
         } catch (\Throwable $e) {
-            $op = \LuxAeterna\Core\Operation::id();
-            (new \LuxAeterna\Core\Logger($this->sv->config->path('data') . '/logs'))->error('error en el panel', ['type' => get_class($e), 'msg' => $e->getMessage(), 'at' => $e->getFile() . ':' . $e->getLine()]);
+            $op = \CMSModular\Core\Operation::id();
+            (new \CMSModular\Core\Logger($this->sv->config->path('data') . '/logs'))->error('error en el panel', ['type' => get_class($e), 'msg' => $e->getMessage(), 'at' => $e->getFile() . ':' . $e->getLine()]);
             $res = new Response(500, View::page('Error', '<h1>Algo ha fallado</h1><p>Referencia de la operación: <code>' . View::h($op) . '</code></p>', $this->ctx()));
         }
         return $this->secure($res);
@@ -376,7 +376,7 @@ final class App
             $secret = Totp::generateSecret();
             $this->sv->users->stageTotp((int)$user['id'], $secret);
         }
-        $uri = Totp::uri('LuxAeterna', (string)$user['email'], $secret);
+        $uri = Totp::uri('CMS-Modular', (string)$user['email'], $secret);
         $body = '<h1>Configurar el segundo factor</h1><p>En tu aplicación de autenticación (Google Authenticator, Aegis, 1Password…) añade una cuenta con esta clave:</p>'
             . '<p class="secret"><code>' . View::h(trim(chunk_split($secret, 4, ' '))) . '</code></p>'
             . '<p>Desde este mismo móvil puedes abrir directamente: <a href="' . View::h($uri) . '">añadir a mi aplicación</a>.</p>'

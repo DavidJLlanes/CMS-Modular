@@ -1,18 +1,18 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Publishing\Activator;
-use LuxAeterna\Publishing\Preflight;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
+use CMSModular\Core\Config;
+use CMSModular\Core\Logger;
+use CMSModular\Core\LuxException;
+use CMSModular\Publishing\Activator;
+use CMSModular\Publishing\Preflight;
+use CMSModular\Publishing\Publisher;
+use CMSModular\Publishing\ReleaseStore;
 
 $ctx = function (string $mode, int $keep = 5): array {
     $d = T::tmpDir();
     $root = dirname(__DIR__);
-    $c = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => $mode, 'keep_releases' => $keep]], $root);
+    $c = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => $mode, 'keep_releases' => $keep]], $root);
     $store = new ReleaseStore("$d/pub");
     $pub = new Publisher($c, $store, new Logger("$d/var/logs"), $root . '/components/layouts/base');
     return [$d, $c, $store, $pub, $root . '/examples/sitio-demo/content.json'];
@@ -28,7 +28,7 @@ foreach (['symlink', 'rename'] as $mode) {
         T::ok(is_file("$d/pub/current/404.html"));
         T::eq($mode, $r['strategy']);
         $html = file_get_contents("$d/pub/current/sobre-nosotros/index.html");
-        T::ok(str_contains($html, 'rel="canonical" href="https://luxaeterna.es/sobre-nosotros/"'));
+        T::ok(str_contains($html, 'rel="canonical" href="https://tu-dominio.es/sobre-nosotros/"'));
         T::ok(str_contains($html, '&lt;etiquetas&gt; &amp;'), 'texto escapado');
         T::ok(!str_contains($html, '<etiquetas>'));
     });
@@ -110,9 +110,9 @@ T::test('borrado seguro: no sale del área ni sigue enlaces', function () {
     mkdir("$d/fuera", 0755);
     file_put_contents("$d/fuera/a.txt", 'a');
     symlink("$d/fuera", "$d/in/sub/lnk");
-    LuxAeterna\Core\Fs::removeTree("$d/in/sub", "$d/in");
+    CMSModular\Core\Fs::removeTree("$d/in/sub", "$d/in");
     T::ok(is_file("$d/fuera/a.txt"), 'el destino del enlace sigue intacto');
-    T::throws(LuxException::class, fn() => LuxAeterna\Core\Fs::removeTree("$d/fuera", "$d/in"), 'fuera del área');
+    T::throws(LuxException::class, fn() => CMSModular\Core\Fs::removeTree("$d/fuera", "$d/in"), 'fuera del área');
 });
 
 T::test('publicación: contenido idéntico se omite salvo force', function () use ($ctx) {
@@ -150,7 +150,7 @@ T::test('publicación: recursos con hash de versiones previas se conservan y con
 });
 T::test('publicación: la guarda de espacio impide publicar y deja el sitio activo', function () use ($ctx) {
     [$d, $c, $store, , $content] = $ctx('symlink');
-    $cfg = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 999999999]], dirname(__DIR__));
+    $cfg = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 999999999]], dirname(__DIR__));
     $ok = (new Publisher($c, $store, new Logger("$d/var/logs"), dirname(__DIR__) . '/components/layouts/base'))->publish($content);
     $bad = new Publisher($cfg, $store, new Logger("$d/var/logs"), dirname(__DIR__) . '/components/layouts/base');
     T::throws(LuxException::class, fn() => $bad->publish($content, true), 'Espacio');

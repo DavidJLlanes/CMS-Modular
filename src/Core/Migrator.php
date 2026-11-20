@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /** Aplica migraciones SQL numeradas (migrations/NNN_nombre.sql), cada una en su transacción. */
 final class Migrator

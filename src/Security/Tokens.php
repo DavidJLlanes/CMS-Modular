@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Security;
+namespace CMSModular\Security;
 
-use LuxAeterna\Core\Database;
+use CMSModular\Core\Database;
 
 /** Tokens de un solo uso con caducidad para alta de cuenta (setup) y recuperación (reset). Solo se guarda su hash. */
 final class Tokens

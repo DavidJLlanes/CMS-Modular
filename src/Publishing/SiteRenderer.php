@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Publishing;
+namespace CMSModular\Publishing;
 
-use LuxAeterna\Content\Page;
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Design\DesignAssembler;
-use LuxAeterna\Media\ImageRenderer;
-use LuxAeterna\Media\MediaStore;
+use CMSModular\Content\Page;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Core\Config;
+use CMSModular\Core\LuxException;
+use CMSModular\Design\DesignAssembler;
+use CMSModular\Media\ImageRenderer;
+use CMSModular\Media\MediaStore;
 
 /** Renderiza páginas con la plantilla del diseño. Lo usan por igual la publicación y la previsualización. */
 final class SiteRenderer
@@ -17,7 +17,7 @@ final class SiteRenderer
     private string $template;
     public readonly DesignAssembler $design;
     public readonly ImageRenderer $images;
-    public readonly \LuxAeterna\Gallery\GalleryRenderer $galleries;
+    public readonly \CMSModular\Gallery\GalleryRenderer $galleries;
     private bool $planned = false;
     /** @var array<string,mixed> */
     private array $media = [];
@@ -33,7 +33,7 @@ final class SiteRenderer
         $this->design = new DesignAssembler($config, dirname($layoutDir, 2), $designSettings, $preview);
         $width = (int)round((float)($this->design->theme()['width'] ?? 46) * 16);
         $this->images = new ImageRenderer((array)($media['items'] ?? []), (int)($media['quality'] ?? 82), (int)($media['max_width'] ?? 1600), $width, $store, $preview);
-        $this->galleries = new \LuxAeterna\Gallery\GalleryRenderer((array)($media['galleries'] ?? []), (array)($media['items'] ?? []), $this->design->registry, dirname($layoutDir, 2), $this->images, fn(array $d, array $v): string => $this->design->galleryClass($d, $v), $preview);
+        $this->galleries = new \CMSModular\Gallery\GalleryRenderer((array)($media['galleries'] ?? []), (array)($media['items'] ?? []), $this->design->registry, dirname($layoutDir, 2), $this->images, fn(array $d, array $v): string => $this->design->galleryClass($d, $v), $preview);
         $this->media = $media;
     }
 
@@ -58,7 +58,7 @@ final class SiteRenderer
     {
         $site = [
             'lang' => (string)$this->config->get('site.lang', 'es'),
-            'site_name' => (string)$this->config->get('site.name', 'LuxAeterna'),
+            'site_name' => (string)$this->config->get('site.name', 'CMS-Modular'),
             'nav' => self::navHtml($s->menus['main'] ?? []),
             'footer_nav' => self::navHtml($s->menus['footer'] ?? []),
             'head_extra' => $headExtra,

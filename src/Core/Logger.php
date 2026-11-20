@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace LuxAeterna\Core;
+namespace CMSModular\Core;
 
 /** Log privado en JSON por líneas, un archivo por día, dentro de var/logs. */
 final class Logger

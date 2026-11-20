@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\Blocks;
-use LuxAeterna\Content\ConflictException;
-use LuxAeterna\Content\ContentRepository;
-use LuxAeterna\Content\Menus;
-use LuxAeterna\Content\Settings;
-use LuxAeterna\Content\Slug;
-use LuxAeterna\Content\Taxonomy;
-use LuxAeterna\Content\TypeRegistry;
-use LuxAeterna\Core\Database;
-use LuxAeterna\Core\LuxException;
-use LuxAeterna\Core\Migrator;
+use CMSModular\Content\Blocks;
+use CMSModular\Content\ConflictException;
+use CMSModular\Content\ContentRepository;
+use CMSModular\Content\Menus;
+use CMSModular\Content\Settings;
+use CMSModular\Content\Slug;
+use CMSModular\Content\Taxonomy;
+use CMSModular\Content\TypeRegistry;
+use CMSModular\Core\Database;
+use CMSModular\Core\LuxException;
+use CMSModular\Core\Migrator;
 
 /** @return array{0:ContentRepository,1:Database,2:Taxonomy,3:TypeRegistry} */
 function lux_repo(array $customTypes = []): array

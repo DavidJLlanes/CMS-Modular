@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Admin\Services;
-use LuxAeterna\Security\Totp;
+use CMSModular\Admin\Services;
+use CMSModular\Security\Totp;
 
 /** Cliente con sesión completa (usuario nuevo con MFA activo). */
 function lux_logged(Services $sv, string $email, string $role = 'admin', string $ip = '203.0.113.7'): Client
@@ -29,13 +29,13 @@ function lux_edit_form(Client $c, int $id): array
     return ['version' => (int)($m[1] ?? 0), 'html' => $html];
 }
 
-function lux_save(Client $c, int $id, array $over = [], ?int $version = null): \LuxAeterna\Admin\Response
+function lux_save(Client $c, int $id, array $over = [], ?int $version = null): \CMSModular\Admin\Response
 {
     $f = lux_edit_form($c, $id);
     return $c->post("/admin/content/$id/save", $over + ['version' => $version ?? $f['version'], 'title' => 'Sin título', 'slug' => '', 'summary' => '', 'body' => ''], "/admin/content/$id/edit");
 }
 
-function lux_act(Client $c, int $id, string $action): \LuxAeterna\Admin\Response
+function lux_act(Client $c, int $id, string $action): \CMSModular\Admin\Response
 {
     return $c->post("/admin/content/$id/$action", ['version' => lux_edit_form($c, $id)['version']], "/admin/content/$id/edit");
 }

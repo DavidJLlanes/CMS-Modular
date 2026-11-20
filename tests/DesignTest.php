@@ -1,21 +1,21 @@
 <?php
 declare(strict_types=1);
 
-use LuxAeterna\Content\ContentLoader;
-use LuxAeterna\Content\Page;
-use LuxAeterna\Content\SiteSnapshot;
-use LuxAeterna\Core\Config;
-use LuxAeterna\Core\Logger;
-use LuxAeterna\Design\Contrast;
-use LuxAeterna\Design\DesignRegistry;
-use LuxAeterna\Design\DesignSettings;
-use LuxAeterna\Design\FieldSchema;
-use LuxAeterna\Design\FontCatalog;
-use LuxAeterna\Design\Logo;
-use LuxAeterna\Design\Theme;
-use LuxAeterna\Publishing\Preflight;
-use LuxAeterna\Publishing\Publisher;
-use LuxAeterna\Publishing\ReleaseStore;
+use CMSModular\Content\ContentLoader;
+use CMSModular\Content\Page;
+use CMSModular\Content\SiteSnapshot;
+use CMSModular\Core\Config;
+use CMSModular\Core\Logger;
+use CMSModular\Design\Contrast;
+use CMSModular\Design\DesignRegistry;
+use CMSModular\Design\DesignSettings;
+use CMSModular\Design\FieldSchema;
+use CMSModular\Design\FontCatalog;
+use CMSModular\Design\Logo;
+use CMSModular\Design\Theme;
+use CMSModular\Publishing\Preflight;
+use CMSModular\Publishing\Publisher;
+use CMSModular\Publishing\ReleaseStore;
 
 /** Copia del directorio components/ en un temporal para añadir o romper diseños sin tocar el repositorio. */
 function lux_components(): string
@@ -263,7 +263,7 @@ function lux_publish_design(array $design, ?callable $prepare = null): array
     if ($prepare !== null) {
         $prepare($comp);
     }
-    $cfg = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://luxaeterna.es', 'name' => 'Lux'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 0]], dirname(__DIR__));
+    $cfg = Config::fromArray(['schema' => 1, 'site' => ['base_url' => 'https://tu-dominio.es', 'name' => 'Lux'], 'paths' => ['data' => "$d/var", 'publish' => "$d/pub"], 'publishing' => ['activation' => 'symlink', 'min_free_mb' => 0]], dirname(__DIR__));
     $store = new ReleaseStore("$d/pub");
     $pages = (new ContentLoader())->load(dirname(__DIR__) . '/examples/sitio-demo/content.json');
     $pub = new Publisher($cfg, $store, new Logger("$d/var/logs"), "$comp/layouts/base");
@@ -325,7 +325,7 @@ T::test('publicación con diseños: solo se publican las fuentes realmente usada
     T::contains('font-display:swap', $core);
     T::contains('unicode-range:U+0000-00FF', $core);
     T::ok(!preg_match('#https?://#', $core), 'CSS sin URL remotas');
-    T::ok(!preg_match('#<(?:link|script)[^>]+(?:href|src)="https?://(?!luxaeterna)#', $home));
+    T::ok(!preg_match('#<(?:link|script)[^>]+(?:href|src)="https?://(?!tu-dominio)#', $home));
     T::eq([], array_filter((new Preflight())->check($cur), fn($e) => str_contains($e, 'remota')));
 });
 T::test('publicación con diseños: logo de imagen con proporción y tamaño por ubicación y dispositivo', function () {
