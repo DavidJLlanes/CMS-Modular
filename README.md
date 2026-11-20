@@ -1,6 +1,6 @@
-# LuxAeterna
+# CMS-Modular
 
-CMS estático de uso general, autohospedable en un VPS económico (Ubuntu + Nginx), con atención especial a portfolios fotográficos y galerías.
+CMS estático modular de uso general, autohospedable en un VPS económico (Ubuntu + Nginx), con atención especial a portfolios fotográficos y galerías.
 
 El panel administra el contenido; el generador lo publica como HTML, CSS, JS y recursos estáticos. **Nginx sirve la web pública con el panel, la base de datos y el generador apagados.**
 
@@ -42,7 +42,7 @@ Requisitos: PHP ≥ 8.1 con `pdo_sqlite`, `mbstring`, `fileinfo`, `ctype`, `json
 | [docs/fase-8.md](docs/fase-8.md) | Entrega de la Fase 8: galerías, 6 diseños, recorte con foco, visor, peso estimado |
 | [CHANGELOG.md](CHANGELOG.md) | Historial de cambios |
 
-Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0* (proyecto LuxAeterna en Claude).
+Especificación de origen: *Prompt maestro y plan de ejecución del CMS estático v1.0*. Repositorio: [github.com/DavidJLlanes/CMS-Modular](https://github.com/DavidJLlanes/CMS-Modular) (antes LuxAeterna).
 
 ## Flujo de trabajo
 
